@@ -21,9 +21,9 @@ followers = sa.Table(
 )
 
 # Roles definition
-roles_users = db.Table('roles_users',
-                       db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-                       db.Column('role_id', db.Integer(), db.ForeignKey('roles.id')))
+RoleUser = db.Table('role_user',
+                    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                    db.Column('role_id', db.Integer(), db.ForeignKey('roles.id')))
 
 
 class Role(db.Model):
@@ -31,7 +31,7 @@ class Role(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True)
     users: so.Mapped[List['User']] = so.relationship(
-        secondary='roles_users',
+        secondary='role_user',
         back_populates='roles',
         uselist=True
     )
@@ -51,7 +51,7 @@ class User(UserMixin, db.Model):
         default=lambda: datetime.now(timezone.utc))
 
     roles: so.Mapped[List['Role']] = so.relationship(
-        secondary=roles_users,
+        secondary='role_user',
         back_populates='users',
         uselist=True
     )

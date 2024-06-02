@@ -9,14 +9,13 @@ from flask_login import logout_user
 from flask_login import login_required
 # db imports
 from app import db
-from app.models import User
+from app.models import User, Role
 import sqlalchemy as sa
 # RBAC imports
-from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed
+from flask_principal import Identity, AnonymousIdentity, identity_changed
 from flask_principal import identity_loaded, RoleNeed, UserNeed
-from flask import Flask, current_app, request, session
+from flask import session
 from .permissions import admin_permission
-from .models import Role
 # redirecting imports
 from flask import request
 from urllib.parse import urlsplit
@@ -41,6 +40,7 @@ def on_identity_loaded(sender, identity):
         identity.provides.add(RoleNeed('user'))
 
 
+
 # protect a view with a principal for that need
 @app.route('/admin')
 @admin_permission.require()
@@ -51,7 +51,7 @@ def do_admin_index():
 @app.route('/something')
 def something():
     name = 'Anon' if current_user.is_anonymous else current_user.username
-    return render_template('basis.html')
+    return render_template("layout.html", logged_in=True)
 
 
 @app.route('/')

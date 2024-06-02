@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+    {% for month in months %}
+        <h2>{{ month.name }}</h2>
+        {% include "month_schedule.html" with events=month.events %}
+    {% endfor %}
+{% endblock %}

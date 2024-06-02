@@ -5,14 +5,13 @@ from flask_migrate import Migrate
 
 # auth imports
 from flask_login import LoginManager
-from flask_restful import Api, Resource
+from flask_restful import Api
 #from flask_rbac import RBAC
 from flask_principal import Principal
-
+from flask_cors import CORS
 
 # logging errors by email imports
 import logging
-from logging.handlers import SMTPHandler
 # logging to file
 import os
 from logging.handlers import RotatingFileHandler
@@ -21,6 +20,8 @@ from logging.handlers import RotatingFileHandler
 # initialize an app obj
 app = Flask(__name__)
 app.config.from_object(Config)
+api = Api(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # initialize extensions
 db = SQLAlchemy(app)  # create a db entry point (could use an engine obj but this (actually a db engine is created)
@@ -31,40 +32,16 @@ login.login_view = 'login'
 
 principals = Principal(app)
 
-# email logging
-'''if not app.debug:
-    if app.config['MAIL_SERVER']:
-        auth = None
-        if app.config['MAIL_USERNAME'] or app.config['MAIL_PASSWORD']:
-            auth = (app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
-        secure = None
-        if app.config['MAIL_USE_TLS']:
-            secure = ()
-        mail_handler = SMTPHandler(
-            mailhost=(app.config['MAIL_SERVER'], app.config['MAIL_PORT']),
-            fromaddr='no-reply@' + app.config['MAIL_SERVER'],
-            toaddrs=app.config['ADMINS'], subject='Microblog Failure',
-            credentials=auth, secure=secure)
-        mail_handler.setLevel(logging.ERROR)
-        app.logger.addHandler(mail_handler)
-'''
 
-# file logging
-if not app.debug:
+# register bps and initialize routes
+from .duties import duties_bp
+app.register_blueprint(duties_bp)
 
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
-    file_handler = RotatingFileHandler('logs/microblog.log', maxBytes=10240,
-                                       backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
-    file_handler.setLevel(logging.INFO)
-    app.logger.addHandler(file_handler)
+'''# initialize scheduler routes
+from .duties.routes import initialize_routes
+initialize_routes(duties_bp, api)'''
 
-    app.logger.setLevel(logging.INFO)
-    app.logger.info('Microblog startup')
+from app import routes, models, errors  # Todo: replace this with a bp
 
-from app import routes, models, errors
-
-print(db.__dict__)
 print('imported everything))')
+

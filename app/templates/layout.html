@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en, ru">
+    <head>
+        <title>{% block title %}Мои Утки🐥{% endblock %}</title>
+        {% block meta %}
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">  <!-- some bootstrap metas -->
+        {% endblock %}
+
+        {% include "common/css.html" %}
+        {% include "common/js.html" %}
+        {% block css %}{% endblock %}  <!-- in case a page has its own css -->
+    </head>
+    <body>
+
+    {% block header %}
+        {% if logged_in %}
+            {% include "common/navbar-full.html" %}
+        {% else %}
+            {% include "common/navbar-simple.html" %}
+        {% endif %}
+    {% endblock %}
+
+    <div class="container-fluid">  <!-- to make bootstrap work -->
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    {% block footer %}
+    {% endblock %}
+
+    {% include "common/js.html" %}
+    {% block js %}{% endblock %}
+    </body>
+
+</html>
