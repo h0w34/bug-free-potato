@@ -30,7 +30,7 @@
 
   <edit-duty-dialog
     v-model="dialog"
-    :edited-item="editedItem"
+    :selected-item="editedItem"
     @save="saveItem"
   ></edit-duty-dialog>
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Boolean
+from sqlalchemy import Column, Boolean, Enum
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -9,6 +9,33 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from app import db
 
 
+class ReplacementType(db.Model):
+    __tablename__ = 'replacement_types'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), nullable=False)
+
+'''class ReplacementDoc(db.Model):
+    __tablename__ = "replacement_docs"
+    id = Column(Integer, primary_key=True)'''
+
+
+class DutyReplacement(db.Model):
+    __tablename__ = "duty_replacements"
+    id = Column(Integer, primary_key=True)
+    duty_id = Column(Integer, ForeignKey('duties.id'), nullable=False)
+    replaced_id = Column(Integer, ForeignKey('cadets.id'), nullable=False)
+    replacing_id = Column(Integer, ForeignKey('cadets.id'), nullable=False)
+    duty_role_id = Column(Integer, ForeignKey('duty_roles.id'), nullable=False)
+    replacement_type_id = Column(Integer, ForeignKey('replacement_types.id'))
+    # cadet_id = Column(Integer, ForeignKey('cadets.id'))
+    #replacement_doc_id = Column(Integer, ForeignKey('replacement_docs.id'), nullable=False)
+    contents = Column(String(500))
+    start_date = Column(Date)
+    end_date = Column(Date)
+
+    duty = relationship('Duty', back_populates='cadet_replacements')
+
+
 class Location(db.Model):
     __tablename__ = "locations"
     id = Column(Integer, primary_key=True)
@@ -17,6 +44,10 @@ class Location(db.Model):
     faculties = relationship('Faculty', back_populates='location')
 
     duty_types = relationship('DutyType')
+
+    @property
+    def duty_type_ids(self):
+        return [duty_type.id for duty_type in self.duty_types]
 
     def to_dict(self):
         return {
@@ -41,7 +72,8 @@ class DutyRole(db.Model):
             'name': self.name
         }
 
-
+# we assume that the role ids are incremental correspondingly to their order in a duty
+# i.e. if the first added role is КПП4, then it will stay like that
 class DutyType(db.Model):
     __tablename__ = "duty_types"
     id = Column(Integer, primary_key=True)
@@ -51,6 +83,10 @@ class DutyType(db.Model):
     description = Column(String(250))
 
     location = relationship('Location')
+
+    @property
+    def duty_roles_ids(self):
+        return [role.id for role in self.duty_roles]
 
     def to_dict(self):
         return {
@@ -69,67 +105,157 @@ class DutyType(db.Model):
             'duty_roles': [role.to_dict() for role in self.duty_roles]
         }
 
+
 class Duty(db.Model):
     __tablename__ = "duties"
 
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
     duty_type_id = Column(Integer, ForeignKey('duty_types.id'), nullable=False)
+    female_duty = Column(Boolean, default=0)
     archived = Column(Boolean, default=False)
 
     duty_type = relationship('DutyType')
-    # cadets = association_proxy('cadet_duties', 'cadet')
     cadets = relationship('Cadet', secondary='cadet_duty', back_populates='duties')
-    cadet_duties = relationship('CadetDuty', back_populates='duty')
+    cadet_duties = relationship('CadetDuty', back_populates='duty', cascade='all, delete-orphan')
 
-    @property
+    reserve_cadet_duties = relationship('ReserveCadetDuty', back_populates='duty', cascade='all, delete-orphan')
+    cadet_replacements = relationship('DutyReplacement', back_populates='duty', cascade='all, delete-orphan')
+
+    @property  # todo if something went wrong with locations return the location_id prop and its usages
     def location(self):
         return self.duty_type.location
-
-    @property
-    def location_id(self):
-        return self.location.id
 
     @property
     def duty_roles(self):
         return [duty_role for duty_role in self.duty_type.duty_roles]
 
-    @hybrid_property  # remove hybrid?
-    def cadets_with_roles(self):
-        return [(cadet_duty.cadet, cadet_duty.duty_role) for cadet_duty in self.cadet_duties]
+    # ------ replacements -------
+    # TODO
+    def replace_cadets(self, replaced_id, replacing_id):
+        #print(replaced_id, replacing_id)
+        #print([cd.cadet for cd in self.cadet_duties])
+        #print(Cadet.query.get(replaced_id), Cadet.query.get(replacing_id))
+        cadet_duty = next((cd for cd in self.cadet_duties if cd.cadet.id == replaced_id), None)
+        #print(cadet_duty)
+        #rint('REPLACING', cadet_duty.cadet.surname)
+        if cadet_duty:
+            cadet_duty.cadet_id = replacing_id
+            #new_cadet_duty = CadetDuty(replacing_id, self.id, cadet_duty.duty_role_id)
+            #db.session.add(new_cadet_duty)
+            db.session.add(cadet_duty)
+            #db.session.delete(cadet_duty)
+            db.session.commit()
 
-    def get_cadets_with_roles(self):
-        return [(cadet_duty.cadet.to_dict(), cadet_duty.duty_role.to_dict()) for cadet_duty in self.cadet_duties]
+        '''with db.session.begin():
+            cadet_duty: CadetDuty = next((cd for cd in self.cadet_duties if cd.cadet.id == replaced_id), None)
+            if cadet_duty:
+                db.session.delete(cadet_duty)
+                new_cadet_duty = CadetDuty(replacing_id, self.id, cadet_duty.duty_role_id)
+                self.cadet_duties.append(new_cadet_duty)
+            db.session.commit()'''
 
-    def get_cadets_by_roles(self):
-        return
+    def create_replacement(self, type_id=3, comment="Commentary placeholder", start_date=None, end_date=None):
+        ...
 
+    # ------- methods --------
     @staticmethod
     def create_duty(date, duty_type_id, cadet_roles_ids):
         new_duty = Duty(date=date, duty_type_id=duty_type_id)
         db.session.add(new_duty)
         db.session.commit()
-
+        # cadet_roles_ids is a list of tuples like [(34, 1), (25, 2) ...]
         for cadet_id, role_id in cadet_roles_ids:
-            cadet_duty = CadetDuty(cadet_id=cadet_id, duty=new_duty, duty_role_id=role_id)
+            cadet_duty = CadetDuty(cadet_id=cadet_id, duty_id=new_duty.id, duty_role_id=role_id)
             db.session.add(cadet_duty)
         db.session.commit()
 
-    def to_dict(self):
+    def delete_duty(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def add_cadet(self, cadet_id):
+        cadet_duty = CadetDuty.query.filter_by(cadet_id=cadet_id, duty_id=self.id).first()
+        if cadet_duty:
+            db.session.delete(cadet_duty)
+            db.session.commit()
+
+    def remove_cadet(self, cadet_id):
+        cadet_duty = CadetDuty.query.filter_by(cadet_id=cadet_id, duty_id=self.id).first()
+        if cadet_duty:
+            db.session.delete(cadet_duty)
+            db.session.commit()
+
+    # ------- reserves --------
+    @property
+    def reserve_cadets(self):
+        return [reserve_cadet_duty.cadet for reserve_cadet_duty in self.reserve_cadet_duties]
+
+    def add_reserve_cadet(self, cadet_id, duty_role_id, priority=1):
+        reserve_cadet_duty = ReserveCadetDuty(cadet_id=cadet_id, duty_role_id=duty_role_id, priority=priority)
+        self.reserve_cadet_duties.append(reserve_cadet_duty)
+        db.session.commit()
+
+    # using cadet_id instead of role+priority
+    def remove_reserve_cadet(self, cadet_id):
+        #with db.session.no_autoflush:
+        reserve_cadet_duty = next((rc for rc in self.reserve_cadet_duties if rc.cadet_id == cadet_id), None)
+        if reserve_cadet_duty:
+            db.session.delete(reserve_cadet_duty)
+        #db.session.commit()
+        print('REMOVED))')
+
+    def free_reserves(self):
+        for reserve_cadet_duty in self.reserve_cadet_duties:
+            reserve_cadet_duty.delete()
+
+    '''def fill_reserves(self):
+        ...'''
+
+    # similar to the 'reserve' prop in get_cadets_with_roles_and_reserves() method, consider removing
+    def get_reserves_for_role(self, duty_role_id):
+        reserves = []
+        for reserve_cadet_duty in self.reserve_cadet_duties:
+            if reserve_cadet_duty.duty_role_id == duty_role_id:
+                reserves.append(reserve_cadet_duty.cadet)
+        return sorted(reserves, key=lambda x: reserve_cadet_duty.priority)
+
+    def get_cadets_with_roles(self):
+        return [{'cadet': cadet_duty.cadet.to_dict(), 'role': cadet_duty.duty_role.to_dict()} for cadet_duty in
+                self.cadet_duties]
+
+    def get_roles_with_cadets(self):
+        return [{'role': cadet_duty.duty_role.to_dict()} for cadet_duty in
+                self.cadet_duties]
+
+    def get_cadets_with_roles_and_reserves(self):
+        return [
+            {
+                "cadet": cadet_duty.cadet.to_dict(),
+                "role": cadet_duty.duty_role.to_dict(),
+                "reserve": [
+                    reserve_cadet_duty.to_dict() for reserve_cadet_duty in self.reserve_cadet_duties
+                    if reserve_cadet_duty.duty_role_id == cadet_duty.duty_role_id
+                ]
+            } for cadet_duty in self.cadet_duties
+        ]
+
+    def to_dict(self):  # assume the detailed dict is used for editing a duty
         return {
             'id': self.id,
             'date': self.date.strftime('%Y-%m-%d'),
             'archived': self.archived,
             'location': self.duty_type.location.to_dict(),
             'duty_type': self.duty_type.to_dict(),
-            'cadets_with_roles': self.get_cadets_with_roles()
+            'cadets_with_roles': self.get_cadets_with_roles_and_reserves()
         }
 
-    def to_table_dict(self):
-        return{
+    def to_table_dict(self):  # a short dict for the table filling requests
+        return {
             'id': self.id,
             'date': self.date.strftime('%Y-%m-%d'),
             'archived': self.archived,
+            #'roles_with_cadets': self.get_roles_with_cadets()
             'cadets_with_roles': self.get_cadets_with_roles()
         }
 
@@ -140,9 +266,15 @@ class Duty(db.Model):
     UniqueConstraint('date', 'duty_type_id', name='unique_duty_type')  # can have multiple types for the same date
 
 
-# общее хранилище пар наряд-курсант, промежуточная таблица
+# общее хранилище пар наряд-курсант с ролями, большая промежуточная таблица
 class CadetDuty(db.Model):
     __tablename__ = "cadet_duty"
+
+    def __init__(self, cadet_id, duty_id, duty_role_id):
+        self.cadet_id = cadet_id
+        self.duty_id = duty_id
+        self.duty_role_id = duty_role_id
+
     cadet_id = Column(Integer, ForeignKey('cadets.id'), primary_key=True)
     duty_id = Column(Integer, ForeignKey('duties.id'), primary_key=True)
     duty_role_id = Column(Integer, ForeignKey('duty_roles.id'), nullable=False)
@@ -151,8 +283,50 @@ class CadetDuty(db.Model):
     duty = relationship('Duty', back_populates='cadet_duties')  # add this line
     duty_role = relationship('DutyRole', back_populates='cadet_duties')
 
+    ## reserve_cadets = relationship('ReserveCadetDuty', back_populates='cadet_duty')
     # no cadet twice at the same duty
     UniqueConstraint('cadet_id', 'duty_id', name='unique_cadet_role')
+
+
+# used to store all the reserve cadets for each role in each duty
+# single role can have multiple reserve cadets
+# each entry is a single reserve cadet
+class ReserveCadetDuty(db.Model):  # todo: may replacing it with the one below will make the code cleaner
+    __tablename__ = "reserve_cadet_duties"
+    id = Column(Integer, primary_key=True)
+    duty_id = Column(Integer, ForeignKey('duties.id'), nullable=False)
+    cadet_id = Column(Integer, ForeignKey('cadets.id'), nullable=False)
+    duty_role_id = Column(Integer, ForeignKey('duty_roles.id'), nullable=False)
+    priority = Column(Integer, nullable=False, default=1)
+
+    duty = relationship('Duty', back_populates='reserve_cadet_duties')
+    cadet = relationship('Cadet')
+    duty_role = relationship('DutyRole')
+
+    UniqueConstraint('duty_id', 'cadet_id', 'duty_role_id', name='unique_reserve_cadet_duty')
+
+    def to_dict(self):  # reserve cadet dict + priority
+        cadet_dict = {}
+        cadet_dict.update(self.cadet.to_dict())
+        cadet_dict['priority'] = self.priority
+        return cadet_dict
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+
+'''##class ReserveCadetDuty(db.Model):
+    __tablename__ = "reserve_cadet_duties"
+    id = Column(Integer, primary_key=True)
+    cadet_duty_id = Column(Integer, ForeignKey('cadet_duty.cadet_id'), nullable=False)
+    reserve_cadet_id = Column(Integer, ForeignKey('cadets.id'), nullable=False)
+    priority = Column(Integer, nullable=False, default=1)
+
+    cadet_duty = relationship('CadetDuty', backref='reserve_cadets')
+    reserve_cadet = relationship('Cadet')
+
+    UniqueConstraint('cadet_duty_id', 'reserve_cadet_id', name='unique_reserve_cadet_duty')'''
 
 
 class Cadet(db.Model):
@@ -161,6 +335,7 @@ class Cadet(db.Model):
     name = Column(String(50), nullable=False)
     surname = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
+    sex = Column(Enum('M', 'F'), nullable=True)  # TODO: make nonnull
 
     rank_id = Column(Integer, ForeignKey('ranks.id'), nullable=False)
     position_id = Column(Integer, ForeignKey('positions.id'), nullable=False)
@@ -194,14 +369,13 @@ class Cadet(db.Model):
             'main_location': self.main_location.address
         }
 
-    def to_dict_full(self):
+    def to_dict_full(self):  # for user page
         return {
             'id': self.id,
             'name': self.name
             # TODO
         }
-
-    # some columns to track statistics
+    # ... some columns to track statistics
 
 
 class PMCells(db.Model):

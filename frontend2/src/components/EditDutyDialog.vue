@@ -1,53 +1,150 @@
 <template>
-  <v-dialog v-model="localDialog" max-width="500px">
-    <v-card>
-      <v-card-title>{{ formTitle }}</v-card-title>
+  <v-dialog v-model="localDialog" max-width="800" max-height="auto" persistent>
+
+    <v-dialog v-model="isMovingCadets" max-width="750px">
+        <move-cadets-dialog/>
+    </v-dialog>
+
+    <edit-role-dialog :selected-cadet-data="selectedCadetData" :selectedDutyId="selectedDutyId"
+                      :dialog="isEditingRole" @close="closeRoleDialog" @update="updateEditDialogLayout"/>
+
+    <v-card class="rounded-xl my-4"
+      :disabled="loadingEditDialog"
+      :loading="loadingEditDialog"
+    >
+      <template v-slot:loader="{ isActive }">
+        <v-progress-linear
+          :active="isActive "
+          color="deep-purple"
+          height="4"
+          indeterminate
+        ></v-progress-linear>
+      </template>
+
+      <v-card-title class="d-flex justify-space-between align-center">
+        <div class="text-h5 text-medium-emphasis ps-3">
+          {{ currentTitle }}
+        </div>
+        <v-btn icon="mdi-close" variant="text" @click="closeDialog"></v-btn>
+      </v-card-title>
+
+      <v-card-subtitle class="d-flex justify-space-between align-center">
+        <div class="text-medium-emphasis ps-3">
+          <h6>{{currentSubTitle}}</h6>
+        </div>
+      </v-card-subtitle>
+
+      <v-divider class="mx-10"></v-divider>
+
       <v-card-text>
-        <v-container>
-          <v-row>
-            <template v-for="header in headers" :key="header.value">
-              <v-col cols="12" >
-                <v-text-field
-                  v-model="localEditedItem[header.value]"
-                  :label="header.title"
-                  required
-                ></v-text-field>
+        <v-container class="py-0" >
+          <div v-if="dutyData">
+            <v-row class="justify-content-center">
+              <v-col
+                v-for="(cadet_data, i) in dutyData['cadets_with_roles']"
+                :key="i"
+                cols="auto"
+                md="4"
+              >
+              <role-card :cadet-data="cadet_data" @edit="openRoleDialog"/>
               </v-col>
-            </template>
-          </v-row>
+            </v-row>
+          </div>
+          <div v-else-if="error">
+            <v-row align="center" justify="center" dense>
+              <v-col cols="12"  class="text-center">
+                <h6>Упс! Не удалось загрузить сутки.</h6>
+                <br>
+                <h6>Перезагрузите страницу.</h6>
+              </v-col>
+            </v-row>
+          </div>
+          <div v-else>
+              <v-row align="center" justify="center" dense>
+                <v-col
+                  v-for="i in 3"
+                  :key="i"
+                  cols="12"
+                  md="4"
+                >
+                  <v-skeleton-loader type="card@3"/>
+                </v-col>
+              </v-row>
+            <!--v-progress-circular
+              indeterminate
+              color="primary"
+            ></v-progress-circular-->
+          </div>
         </v-container>
       </v-card-text>
-      <v-card-actions>
+      <v-divider class="mx-10 my-2"></v-divider>
+      <v-card-actions class="mx-3">
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" text @click="close">Cancel</v-btn>
-        <v-btn color="blue darken-1" text @click="save">Save</v-btn>
+          <div class="my-2">
+            <v-btn class="text-none"
+              color="medium-emphasis"
+              variant="outlined"
+              @click="closeDialog"
+          >Отмена</v-btn>
+
+          <v-btn class="text-none"
+              color="medium-emphasis"
+              variant="outlined"
+              @click="saveAndShowLoader"
+          >Сохранить</v-btn>
+        </div>
+
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
+import RoleCard from "@/components/RoleCard";
+import EditRoleDialog from "@/components/EditRoleDialog";
+import MoveCadetsDialog from "@/components/MoveCadetsDialog";
+//import EditRoleDialog from "@/components/EditRoleDialog";
+
+
 export default {
-  name: 'EditItemDialog',
+  name: 'EditDutyDialog',
+  components: {MoveCadetsDialog, EditRoleDialog, RoleCard},
   props: {
     headers: {
       type: Array,
       required: true
     },
-    editedItem: {
+    selectedDuty: {
       type: Object,
       required: true,
     },
     dialog: {
       type: Boolean,
       required: true,
+    },
+    selectedDutyId: {
+      type: Number,
+      required: true
     }
   },
+
   data() {
     return {
-      localEditedItem: this.editedItem,
-      //localDialog: this.dialog
-      //dialog: false
+      localSelectedDuty: this.selectedDuty,
+      dutyData: null,
+      loadingEditDialog: false,
+
+      isEditingRole: false,
+      isMovingCadets:1,
+
+      selectedCadetData: {},
+      error: false,
+
+      monthNames: [
+          'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+          'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+      ]
+
     }
   },
   computed: {
@@ -59,29 +156,72 @@ export default {
         this.$emit('update:dialog', value);
       }
     },
-    formTitle() {
-      return this.editedItem.id ? 'Edit Item' : 'New Item'
+    currentTitle () {
+      return 'Редактировать сутки'
+    },
+    currentSubTitle() {
+      if (this.dutyData) {
+        const date = new Date(this.dutyData['date']);
+        const day = date.getDate();
+        const month = date.getMonth();
+        const address = this.dutyData['location']['address'];
+        return `Изменение суток на ${day} ${this.monthNames[month]}, ${address}`;
+      } else return '';
     }
   },
   methods: {
-
-    close() {
-      this.$emit('close')
+    showError(){
+      this.error = true
     },
-    save() {
-      this.$emit('save')
+    updateEditDialogLayout(isUpdated){
+      if(isUpdated){
+        this.loadingEditDialog = true
+      setTimeout(()=>this.loadingEditDialog = false, 500)
+       this.fetchDutyData();
+      }
+
+    },
+    closeDialog() {
+      this.loadingEditDialog = false;
+      this.$emit('close');
+    },
+    closeRoleDialog(){
+      this.isEditingRole = false
+    },
+    openRoleDialog(cadet_data){
+        console.log('SELECTED CADET DATA:')
+        console.log(cadet_data)
+        this.selectedCadetData = cadet_data;
+        this.isEditingRole = true;
+    },
+
+    saveAndShowLoader() {
+      this.loadingEditDialog = true;
+      setTimeout(() => {
+        this.$emit('save');
+        this.loadingEditDialog = false;
+      }, 1000);
+    },
+    async fetchDutyData() {
+      if (this.selectedDutyId) {
+        try {
+          const response = await fetch(`http://localhost:8080/api/duties/${this.selectedDutyId}`);
+          this.dutyData = await response.json();
+        } catch (error) {
+          this.showError()
+          console.error(error);
+        }
+      }
     }
   },
-  mounted() {
-    console.log('MOUNTED!')
-  },
   watch: {
-    /*dialog(val) {
-      this.localDialog = val
-    },
-    localDialog(val) {
-      this.$emit('input', val)
-    }*/
+    selectedDutyId: {
+      handler(){
+        console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
+        this.fetchDutyData();
+      } ,
+      immediate: true
+    }
   }
 }
 </script>

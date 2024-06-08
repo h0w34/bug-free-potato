@@ -4,9 +4,7 @@ import vuetify from './plugins/vuetify'
 import { loadFonts } from './plugins/webfontloader'
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
-
 import router from './routers.js'
-
 loadFonts()
 
 const app = createApp(App)

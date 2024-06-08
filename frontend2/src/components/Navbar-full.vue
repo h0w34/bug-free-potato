@@ -1,7 +1,7 @@
 <template>
 <nav class="navbar navbar-expand-lg bg-body-tertiary p-3">
   <div class="container d-flex justify-content-center">
-    <router-link class="navbar-brand col-2" to="/">Мои Утки🐥</router-link>
+    <router-link class="navbar-brand col-2" to="/">Мои Утки🐥 (BETA 1.0)</router-link>
 
     <form class="container-fluid col-lg-6" role="search">
       <div class="input-group">

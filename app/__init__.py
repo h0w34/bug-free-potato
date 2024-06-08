@@ -21,7 +21,8 @@ from logging.handlers import RotatingFileHandler
 app = Flask(__name__)
 app.config.from_object(Config)
 api = Api(app)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/duties/*": {"origins": "*"}})
+#CORS(app, resources={r"/*": {"origins": ["http://localhost:8080"]}})
 
 # initialize extensions
 db = SQLAlchemy(app)  # create a db entry point (could use an engine obj but this (actually a db engine is created)
