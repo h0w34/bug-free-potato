@@ -1,7 +1,7 @@
 <template>
   <!-- add a simple table here -->
-  <NavLocations :locationNames="locationNames" @selectLocation="selectLocation"
-                :dutyTypeNames="dutyTypeNames" @selectDutyType="selectDutyType"/>
+  <!--NavLocations :locationNames="locationNames" @selectLocation="selectLocation"
+                :dutyTypeNames="dutyTypeNames" @selectDutyType="selectDutyType"/-->
 
 
   <div v-if="loading">
@@ -30,13 +30,14 @@
 </template>
 
 <script>
-import NavLocations from "@/components/NavLocations";
+////import NavLocations from "@/components/NavLocations";
 import ScheduleList from "@/components/ScheduleList";
 //import mockMock from "@/components/mock";
+import DutyService from "@/services/DutyDataService";
 
 export default {
   name: "HomePage",
-  components: {NavLocations, ScheduleList},
+  components: { ScheduleList},
   data() {
     return {
       user_locations: [1, 2],  //assume these are obtained  via JWT
@@ -79,16 +80,11 @@ export default {
     async fetchDuties() {   // TODO: fetch data location by location --> refactor the api's json
       try {
         const params = new URLSearchParams();
-        this.user_locations.forEach(id => params.append('location_ids', id.toString()));
-        const response = await fetch(`http://localhost:8080/api/duties?${params}`,
-      {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        this.dutiesWithLocations = await response.json()
+        if (this.user_locations){
+          this.user_locations.forEach(id => params.append('location_ids', id.toString()));
+        }
+        const response = await DutyService.getDutiesByLocations(this.user_locations)
+        this.dutiesWithLocations = await response
         this.dutiesWithLocations = this.dutiesWithLocations['locations']
 
         this.loading = false
@@ -162,7 +158,7 @@ export default {
           sortable: false
         }))
      );
-    headers.push({title: 'Действия', key: 'actions', sortable: false})
+    headers.push({'title': 'Действия', key: 'actions', sortable: false})
       return headers
 },
   }

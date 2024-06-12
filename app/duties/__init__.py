@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask_restful import Api
 
-from .api import DutiesHomeApi, DutyApi, DutyTypesApi, DutySuitableReservesApi, LocationsApi
+from .api import DutiesHomeApi, DutyApi, DutyTypesApi, DutySuitableReservesApi, LocationsApi, DutyReplacementsApi
 from .views import some_view
 
 duties_bp = Blueprint('duties', __name__)
@@ -10,6 +10,7 @@ api = Api(duties_bp)
 api.add_resource(DutiesHomeApi, '/duties')
 api.add_resource(DutyApi, '/duties/<duty_id>')
 api.add_resource(DutySuitableReservesApi, '/duties/<duty_id>/reserves')
+api.add_resource(DutyReplacementsApi, '/duties/<duty_id>/replacements')
 api.add_resource(DutyTypesApi, '/duty-types/<duty_type_ids>')
 api.add_resource(LocationsApi, '/locations/<locations_ids>')
 

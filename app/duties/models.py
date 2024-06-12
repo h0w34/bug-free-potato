@@ -2,21 +2,49 @@ from sqlalchemy import Column, Boolean, Enum
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy import Integer
 from sqlalchemy import String
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Date
+from sqlalchemy.types import Date, DateTime
+from datetime import datetime
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db
 
 
-class ReplacementType(db.Model):
+'''class ReplacementType(db.Model):
     __tablename__ = 'replacement_types'
     id = Column(Integer, primary_key=True)
-    name = Column(String(30), nullable=False)
+    name = Column(String(30), nullable=False)'''
 
-'''class ReplacementDoc(db.Model):
+
+'''class DocType(db.Model):
+    __tablename__ = 'doc_types'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), nullable=False)'''
+
+
+# document doesn't have to be related to a replacement
+# can be added to a cadet from the userpage to exclude him from the schedule
+class ReplacementDoc(db.Model):
     __tablename__ = "replacement_docs"
-    id = Column(Integer, primary_key=True)'''
+
+    def __init__(self, cadet_id, start_date, end_date, contents=None):
+        self.cadet_id = cadet_id
+        self.start_date = start_date
+        self.end_date = end_date
+        if contents:
+            self.contents = contents
+
+    # doc_type = ...
+    id = Column(Integer, primary_key=True)
+    cadet_id = Column(Integer, ForeignKey('cadets.id'))
+    contents = Column(String(500))
+    start_date = Column(Date)
+    end_date = Column(Date)
+    # for now, we don't implement the docTypes
+
+    # image = ...
+    replacement = relationship('DutyReplacement', back_populates='replacement_doc')
 
 
 class DutyReplacement(db.Model):
@@ -26,14 +54,41 @@ class DutyReplacement(db.Model):
     replaced_id = Column(Integer, ForeignKey('cadets.id'), nullable=False)
     replacing_id = Column(Integer, ForeignKey('cadets.id'), nullable=False)
     duty_role_id = Column(Integer, ForeignKey('duty_roles.id'), nullable=False)
-    replacement_type_id = Column(Integer, ForeignKey('replacement_types.id'))
+    # replacement_type_id = Column(Integer, ForeignKey('replacement_types.id'))
+    replacement_doc_id = Column(Integer, ForeignKey('replacement_docs.id'), nullable=True) # either a doc or other reason
     # cadet_id = Column(Integer, ForeignKey('cadets.id'))
-    #replacement_doc_id = Column(Integer, ForeignKey('replacement_docs.id'), nullable=False)
-    contents = Column(String(500))
-    start_date = Column(Date)
-    end_date = Column(Date)
+    # replacement_doc_id = Column(Integer, ForeignKey('replacement_docs.id'), nullable=False)
+    commentary = Column(String(300))
+    # start_date = Column(Date)
+    # end_date = Column(Date)
+    creation_date = Column(DateTime, default=datetime.now(), nullable=False)
+    duty_role = relationship('DutyRole')
+    replaced_cadet = relationship('Cadet', foreign_keys='DutyReplacement.replaced_id')
+    replacing_cadet = relationship('Cadet', foreign_keys='DutyReplacement.replacing_id')
 
+    replacement_doc = relationship('ReplacementDoc', back_populates='replacement')
     duty = relationship('Duty', back_populates='cadet_replacements')
+
+    def __init__(self, duty_id, replaced_id, replacing_id, duty_role_id, replacement_doc_id=None, commentary=None):
+        self.duty_id = duty_id
+        self.replaced_id = replaced_id
+        self.replacing_id = replacing_id
+        self.duty_role_id = duty_role_id
+        if replacement_doc_id:
+            self.replacement_doc_id = replacement_doc_id
+        if commentary:
+            self.commentary = commentary
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'date': self.creation_date,
+            'replaced_cadet': self.replaced_cadet.to_dict(),
+            'replacing_cadet': self.replacing_cadet.to_dict(),
+            'commentary': self.commentary,
+            'replacement_doc_id': self.replacement_doc_id,
+            'duty_role': self.duty_role.to_dict()
+        }
 
 
 class Location(db.Model):
@@ -71,6 +126,7 @@ class DutyRole(db.Model):
             'id': self.id,
             'name': self.name
         }
+
 
 # we assume that the role ids are incremental correspondingly to their order in a duty
 # i.e. if the first added role is КПП4, then it will stay like that
@@ -133,27 +189,18 @@ class Duty(db.Model):
     # ------ replacements -------
     # TODO
     def replace_cadets(self, replaced_id, replacing_id):
-        #print(replaced_id, replacing_id)
-        #print([cd.cadet for cd in self.cadet_duties])
-        #print(Cadet.query.get(replaced_id), Cadet.query.get(replacing_id))
-        cadet_duty = next((cd for cd in self.cadet_duties if cd.cadet.id == replaced_id), None)
-        #print(cadet_duty)
-        #rint('REPLACING', cadet_duty.cadet.surname)
-        if cadet_duty:
-            cadet_duty.cadet_id = replacing_id
-            #new_cadet_duty = CadetDuty(replacing_id, self.id, cadet_duty.duty_role_id)
-            #db.session.add(new_cadet_duty)
-            db.session.add(cadet_duty)
-            #db.session.delete(cadet_duty)
-            db.session.commit()
-
-        '''with db.session.begin():
-            cadet_duty: CadetDuty = next((cd for cd in self.cadet_duties if cd.cadet.id == replaced_id), None)
+        try:
+            cadet_duty = next((cd for cd in self.cadet_duties if cd.cadet.id == replaced_id), None)
             if cadet_duty:
-                db.session.delete(cadet_duty)
-                new_cadet_duty = CadetDuty(replacing_id, self.id, cadet_duty.duty_role_id)
-                self.cadet_duties.append(new_cadet_duty)
-            db.session.commit()'''
+                cadet_duty.cadet_id = replacing_id
+                db.session.add(cadet_duty)
+                db.session.commit()
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            raise SQLAlchemyError(f"Database error: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Internal server error: {str(e)}")
+
 
     def create_replacement(self, type_id=3, comment="Commentary placeholder", start_date=None, end_date=None):
         ...
@@ -168,10 +215,6 @@ class Duty(db.Model):
         for cadet_id, role_id in cadet_roles_ids:
             cadet_duty = CadetDuty(cadet_id=cadet_id, duty_id=new_duty.id, duty_role_id=role_id)
             db.session.add(cadet_duty)
-        db.session.commit()
-
-    def delete_duty(self):
-        db.session.delete(self)
         db.session.commit()
 
     def add_cadet(self, cadet_id):
@@ -198,11 +241,11 @@ class Duty(db.Model):
 
     # using cadet_id instead of role+priority
     def remove_reserve_cadet(self, cadet_id):
-        #with db.session.no_autoflush:
+        # with db.session.no_autoflush:
         reserve_cadet_duty = next((rc for rc in self.reserve_cadet_duties if rc.cadet_id == cadet_id), None)
         if reserve_cadet_duty:
             db.session.delete(reserve_cadet_duty)
-        #db.session.commit()
+        # db.session.commit()
         print('REMOVED))')
 
     def free_reserves(self):
@@ -255,7 +298,7 @@ class Duty(db.Model):
             'id': self.id,
             'date': self.date.strftime('%Y-%m-%d'),
             'archived': self.archived,
-            #'roles_with_cadets': self.get_roles_with_cadets()
+            # 'roles_with_cadets': self.get_roles_with_cadets()
             'cadets_with_roles': self.get_cadets_with_roles()
         }
 

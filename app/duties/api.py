@@ -1,7 +1,11 @@
+import pprint
+
+from sqlalchemy.exc import SQLAlchemyError
+
 from app import db
 from flask import jsonify
 from flask_restful import Resource, Api, reqparse, abort
-from .models import Duty, Location, DutyType, CadetDuty, Cadet
+from .models import Duty, Location, DutyType, CadetDuty, Cadet, ReplacementDoc, DutyReplacement
 from .helpers import get_object_or_404
 from datetime import datetime, date
 
@@ -10,11 +14,11 @@ from collections import defaultdict
 
 from flask import request
 
-duties_post_args = reqparse.RequestParser()
-duties_post_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
-duties_post_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
-duties_post_args.add_argument('location_ids', type=list)
-duties_post_args.add_argument('duty_type_ids', type=list)
+duties_generate_args = reqparse.RequestParser()
+duties_generate_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
+duties_generate_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
+duties_generate_args.add_argument('location_ids', type=list)
+duties_generate_args.add_argument('duty_type_ids', type=list)
 
 duties_delete_args = reqparse.RequestParser()
 duties_delete_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
@@ -22,21 +26,20 @@ duties_delete_args.add_argument('end_date', type=str, help='Start date of the du
 duties_delete_args.add_argument('location_ids', type=list)
 duties_delete_args.add_argument('duty_type_ids', type=list)
 
-duty_post_args = reqparse.RequestParser()
-duty_post_args.add_argument('date', type=date, required=True)
-duty_post_args.add_argument('duty_type_id', type=int, required=True)
-duty_post_args.add_argument('cadet_roles_ids', type=list, required=True)
-duty_post_args.add_argument('location_ids', type=list, required=True)
-
-duty_get_args = reqparse.RequestParser()
-duty_get_args.add_argument('location_id', type=int, required=True)
-
+duties_post_args = reqparse.RequestParser()
+duties_post_args.add_argument('date', type=str, required=True)
+duties_post_args.add_argument('location_id', type=int)
+duties_post_args.add_argument('duty_type_id', type=int, required=True)
+duties_post_args.add_argument('cadet_roles_ids', type=list, required=True)
 
 # the main api: all the logic about the Roles etc. (is) must be implemented here
 # returns a schedule for a specific user grouped by locations and types
 duties_get_args = reqparse.RequestParser()
 duties_get_args.add_argument('location_ids', type=int)
+
+
 # TODO: user roles handling
+# TODO: use this one as a search endpoint so that the home page is one of the applications
 class DutiesHomeApi(Resource):
     # return the schedule for a specified location
     def get(self):
@@ -54,26 +57,23 @@ class DutiesHomeApi(Resource):
         for duty in duties:
             location_id = duty.duty_type.location.id
             duty_type_id = duty.duty_type_id
-            #print(location_id)
+            # print(location_id)
             if location_id in location_ids:
-                #print(location_id)
+                # print(location_id)
                 year = duty.date.year
                 month = duty.date.month
                 day = duty.date.day
                 duties_by_location_type[location_id][duty_type_id].setdefault(year, defaultdict(dict))
                 duties_by_location_type[location_id][duty_type_id][year].setdefault(month, defaultdict(dict))
                 duties_by_location_type[location_id][duty_type_id][year][month][day] = duty.to_table_dict()
-        #print(duties_by_location_type[1])
 
-        #response_data = {'locations': []}
         response_data = {'locations': []}
         for location_id in location_ids:
-            #print('AAA', type(location_id))
             # print(f'location_id is {location_id}!')
             location_data = Location.query.get(location_id).to_dict()
             location_data['duty_types'] = []
             for duty_type_id, data in duties_by_location_type[location_id].items():
-                #print(duty_type_id, data)
+                # print(duty_type_id, data)
                 duty_type = DutyType.query.get(duty_type_id).to_table_dict()
                 duties = {}
                 for year, months in data.items():
@@ -85,11 +85,32 @@ class DutiesHomeApi(Resource):
 
         return jsonify(response_data)
 
-    def post(self):
-        args = duties_post_args.parse_args()
+    def generateDuties(self):
+        args = {}  # duties_generate_post_args.parse_args()
         result = generate_schedule(args['start_date'], args['end_date'], args['location_ids'], args['duty_type_ids'])
         print(result)
         return result
+
+    def post(self):
+        args = duties_post_args.parse_args()
+        duty_date = args['date']
+        # Check if duty for the date already exists
+        if Duty.query.filter_by(date=duty_date).first():
+            abort(409, message=f"Duty for {duty_date} already exists.")
+
+        if args['location_id']:
+            location: Location = Location.query.get(args['location_id'])
+            if args['duty_type_id'] not in location.duty_type_ids:
+                abort(400, message=f"Failed to create a duty. Duty's type and location don't match!")
+
+        duty = Duty()
+        cadet_roles_ids = args['cadet_roles_ids']  # here is torubles how to parse it
+        duty.create_duty(date=duty_date, duty_type_id=args['duty_type_id'], cadet_roles_ids=cadet_roles_ids)
+
+        # some hard validation logic to check if a user is allowed to modify the duty
+        # ...
+
+        return {'message': f'Successfully created a duty at f{duty_date}'}, 201
 
     def delete(self):
         args = duties_delete_args.parse_args()
@@ -101,74 +122,107 @@ class DutiesHomeApi(Resource):
 duty_put_args = reqparse.RequestParser()
 duty_put_args.add_argument('replaced_id', type=int, required=True)
 duty_put_args.add_argument('replacing_id', type=int, required=True)
-duty_put_args.add_argument('reason', type=dict, required=True)
+# duty_put_args.add_argument('reason', type=dict, required=True)
+# duty_put_args.add_argument('start_date', type=dict, required=False)  # assume we use the currdate
+# duty_put_args.add_argument('reason', type=dict, required=True)
+duty_put_args.add_argument('commentary', type=str, required=False)
+# doc related stuff
+duty_put_args.add_argument('replacement_doc', type=dict, required=False)
+# duty_put_args.add_argument('doc_type_id', type=int, required=False)
+'''duty_put_args.add_argument('doc_contents', type=int, required=False)
+duty_put_args.add_argument('start_date', type=int, required=False)
+duty_put_args.add_argument('end_date', type=int, required=False)'''
+
+duty_get_args = reqparse.RequestParser()
+duty_get_args.add_argument('location_id', type=int, required=True)
+
+
 # CRUD for a single duty
 class DutyApi(Resource):
     def get(self, duty_id):
         duty: Duty = get_object_or_404(Duty, id=duty_id)
         return duty.to_dict()
 
-    # add a duty to a specific location (only for future dates)
+    # used only to update reserves??
     def put(self, duty_id):
-        #print("aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')")
         args = duty_put_args.parse_args()
-        #print('THESE ATE THE ARGS:  ', args)
-        duty: Duty = get_object_or_404(Duty, id=duty_id)
-        replaced_cadet = get_object_or_404(Cadet, id=args['replaced_id'])
-        replacing_cadet = get_object_or_404(Cadet, id=args['replacing_id'])
-
-        '''json = {
-            'replacement': {
-                'replaced_id': 303,
-                'replacing_id': 404,
-                'reason': {
-                    'type': 'sick',
-                    'start_date': '2024-04-03',
-                    'end_date': '2024-04-13'
-                }
-            }
-        }'''
-        duty.replace_cadets(args['replaced_id'], args['replacing_id'])
-        if replacing_cadet in duty.reserve_cadets:
-            duty.remove_reserve_cadet(args['replacing_id'])
-            update_reserves(duty_id)
-
-        print(f'replaced cadet {replaced_cadet.surname} with {replacing_cadet.surname}!')
-        # if a reserve cadet is chosen:
-        #  - remove the sick one
-        #  - add reserved to the duty
-        #  - update reserves for the duty
-
-        # if the substitute cadet case:
-        # - reserves kept alone
-        # - add substitute one to the duty
-        return {'message': 'Cadet replaced'}, 200, {
-            'Access-Control-Allow-Origin': '*'
-        }
-
-    def post(self, duty_id):
-        args = {}
-        duty_date = args['date']
-        # Check if duty for the date already exists
-        if Duty.query.filter_by(date=duty_date).first():
-            abort(409, message=f"Duty for {duty_date} already exists.")
-
-        duty = Duty(date=duty_date, duty_type_id=args['duty_type_id'])
-        cadet_roles_ids = args['cadet_roles_ids']
-        duty.create_duty(date=duty_date, duty_type_id=args['duty_type_id'], cadet_roles_ids=cadet_roles_ids)
-
         duty: Duty = get_object_or_404(Duty, id=duty_id)
         if duty.archived:
             abort(400, message="Can't modify an archived duty.")
-        # some hard validation logic to check if a user allowed to modify the duty or not
-        return {'message': f'Duty at {duty_date} edited successfully'}, 201
+
+        pprint.pprint(args)
+        replaced_cadet = get_object_or_404(Cadet, id=args['replaced_id'])
+        replacing_cadet = get_object_or_404(Cadet, id=args['replacing_id'])
+        role_id = next((cd.duty_role_id for cd in duty.cadet_duties if cd.cadet_id == args['replaced_id']), None)
+        print('role_id', role_id)
+        try:
+            duty.replace_cadets(args['replaced_id'], args['replacing_id'])
+            if replacing_cadet in duty.reserve_cadets:
+                duty.remove_reserve_cadet(args['replacing_id'])
+                update_reserves(duty_id)
+        except:
+            abort(500, message='Internal server error while replacing cadets')
+
+        # creating a replacement entry
+        replacement = DutyReplacement(duty_id=duty_id,
+                                        replaced_id=args['replaced_id'], replacing_id=args['replacing_id'],
+                                        duty_role_id=role_id, commentary=args.get('commentary', None))
+
+        print(f'Created a replacement {replacement}!')
+        replacement_doc_data = args['replacement_doc']
+        print(replacement_doc_data)
+        if replacement_doc_data:
+            if not (replacement_doc_data['start_date']):  # and replacement_doc_data['doc_type_id']):
+                abort(400, message='No required replacement doc properties provided')
+
+            start_date = datetime.strptime(replacement_doc_data['start_date'], '%Y-%m-%d').date()  # from str to datetime
+
+            end_date = replacement_doc_data.get('end_date', None)
+
+            if end_date:
+                end_date = datetime.strptime(replacement_doc_data['end_date'], '%Y-%m-%d').date()
+                if start_date > end_date:
+                    abort(400, message='End date cannot be before the start date')
+                    print('date order error')
+                if end_date < duty.date:
+                    abort(400, message='Whoah! This doc wont work!')
+                    print('doc error')
+            else:
+                if start_date > duty.date:
+                    abort(400, message='Whoah! This doc wont work!')
+                    print('doc error')
+
+
+            # TODO: allow not to specify the end date
+
+            doc = ReplacementDoc(cadet_id=args['replaced_id'], start_date=start_date,
+                                 end_date=end_date, contents=replacement_doc_data.get('contents', None))
+            db.session.add(doc)
+            db.session.commit()
+            print('doc_id:', doc.id)
+            print(replacement)
+            replacement.replacement_doc_id = doc.id
+
+            # TODO: some hard logic to exclude the cadet from participating in duties
+            db.session.add(doc)
+        db.session.add(replacement)
+        db.session.commit()
+
+        print(f'replaced cadet {replaced_cadet.surname} with {replacing_cadet.surname}!')
+
+        return {'message': 'Cadet replaced'}, 200
 
     def delete(self, duty_id):
-        return {'message': 'mock api'}
+        duty = get_object_or_404(Duty, id=duty_id)
+        try:
+            db.session.delete(duty)
+        except:
+            abort(500, message='Failed to delete duty')
 
 
 # TODO: implement for real
 # for now assume that only cadets from the same location are available
+# /api/duty/<id>/reserves
 class DutySuitableReservesApi(Resource):
     def get(self, duty_id):
         print('GETTING RESERVES FOR DUTY_ID: ', duty_id)
@@ -191,12 +245,27 @@ class DutySuitableReservesApi(Resource):
             if cadet.pm_cell_id not in permitted_pm_cells and cadet not in duty.reserve_cadets:
                 suitable_cadets.append(cadet.to_dict())
 
+        print(f'Got {len(suitable_cadets)} reserves!')
         return jsonify(suitable_cadets)
+
+
+class DutyReplacementsApi(Resource):
+    def get(self, duty_id):
+        duty: Duty = get_object_or_404(Duty, id=duty_id)
+
+        replacements = db.session.query(DutyReplacement).filter_by(duty_id=duty_id).\
+            order_by(DutyReplacement.creation_date).all()
+        print(f'Replacements for duty {duty_id}: ', replacements)
+
+        if not replacements:
+            abort(404, message='No replacements for this duty available')
+
+        return jsonify([rpl.to_dict() for rpl in replacements])
+
 
 
 # TODO: search API
 class DutySearchApi(Resource):
-
     def get(self):
         return {'message': 'mock api'}
 

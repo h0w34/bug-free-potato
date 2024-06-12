@@ -85,7 +85,7 @@ def delete_duties(start_date, end_date, location_ids=None, duty_type_ids=None):
     # ...
 
 
-# dummy update
+# dummy updating -- random choice
 def update_reserves(duty_ids: list = None, reserve_num=3):
     if duty_ids:
         duties = [Duty.query.filter_by(archived=False, id=duty_id).first() for duty_id in duty_ids]

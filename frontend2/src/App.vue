@@ -1,19 +1,19 @@
 <template>
   <navbar-full/>
-  <nav-main/>
+  <!--nav-main/-->
   <router-view/>
 </template>
 
 <script>
 
 import NavbarFull from "@/components/Navbar-full";
-import NavMain from "@/components/NavMain";
+//import NavMain from "@/components/NavMain";
 
 export default {
   name: 'App',
   components: {
     NavbarFull,
-    NavMain
+  //  NavMain
   },
   data() {
     return {}

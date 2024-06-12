@@ -6,18 +6,18 @@
     >
       <v-card max-height="700px" class="rounded-xl my-4" color="grey-lighten-5">
         <v-card-title class="d-flex justify-space-between align-center">
-      <div class="d-flex align-center gap-3">
-        <div class="text-h5 font-weight-regular text-medium-emphasis ps-3">Заменить курсанта</div>
-        <v-chip
-          color="secondary"
-          variant="tonal"
-          label
-        >
-          {{selectedCadetData['role']['name'] }}
-        </v-chip>
-      </div>
-      <v-btn icon="mdi-close" variant="text" @click="closeDialog(false)"></v-btn>
-    </v-card-title>
+          <div class="d-flex align-center gap-3">
+            <div class="text-h5 font-weight-regular text-medium-emphasis ps-3">Заменить курсанта</div>
+            <v-chip
+              color="secondary"
+              variant="tonal"
+              label
+            >
+              {{selectedCadetData['role']['name'] }}
+            </v-chip>
+          </div>
+          <v-btn icon="mdi-close" variant="text" @click="closeDialog(false)"></v-btn>
+        </v-card-title>
 
         <v-card-subtitle v-if="this.step!==1" class=" d-flex ma-0 justify-space-between align-center">
           <div class="text-light-emphasis px-3 py-1" >
@@ -40,7 +40,7 @@
             :items="items"
             show-actions
           >
-           <template v-slot:prev="{ on, attrs}">
+           <template v-slot:prev="{on, attrs}">
               <v-btn
                 color="primary"
                 variant="text"
@@ -60,10 +60,10 @@
                 v-bind="attrs"
                 v-on="on"
                 @click="handleNextClick"
-                :disabled="step === 1 && !confirmedCadet"
+                :disabled="step === 1 && !confirmedCadet || step===2 && selectedDocType in [1,2] && !startDate"
                 :key="step === items.length - 1 ? 'confirm' : 'next'"
               >
-               {{ step === 1 ? 'Дальше' : step === 2 ? 'Подтвердить' : 'Отлично!' }}
+               {{ confirmButtonLabel }}
               </v-btn>
             </template>
 
@@ -197,63 +197,114 @@
             </v-data-iterator >
           </v-container>
         </div>
-
-
         </template>
+
         <template v-slot:[`item.2`]>
           <v-container>
-            <v-combobox
+            <div class="d-flex text-light-emphasis justify-content-between">
+              <v-select
+              density="compact"
               v-model="selectedVariant"
               :items="['Болезнь', 'Рапорт', 'Иная причина']"
               variant="outlined"
               @input="handleVariantChange"
-            ></v-combobox>
+              class="w-25"
+            ></v-select>
 
-            <v-text-field
-              v-if="selectedVariant === 'Болезнь'"
-              v-model="diseaseDescription"
-              placeholder="Описание болезни"
-              variant="outlined"
-            ></v-text-field>
+            <div v-if="selectedVariant==='Болезнь' || selectedVariant==='Рапорт'" class="d-flex justify-content-end gap-1">
+              <div>
 
-            <v-text-field
-              v-if="selectedVariant === 'Рапорт'"
-              v-model="reportDescription"
-              placeholder="Описание рапорта"
-              variant="outlined"
-            ></v-text-field>
-            <v-textarea label="Label" variant="solo-filled"></v-textarea>
-            <v-text-field
-              v-if="selectedVariant === 'Иная причина'"
-              v-model="otherReasonDescription"
-              placeholder="Описание иной причины"
-              variant="outlined"
-            ></v-text-field>
+              </div>
+              <VueDatePicker
+                  v-model="startDate"
+                  locale="ru"
+                  :enable-time-picker="false"
+                  placeholder="Начальная дата"
+                  auto-apply
+                  class="w-25"
+                  style="min-width:155px"
 
+                  :min-date="new Date()"
+                ></VueDatePicker>
+              <div v-if="show_end_date">
+                <VueDatePicker
+                  v-model="endDate"
+                  locale="ru"
+                  :enable-time-picker="false"
+                  placeholder="Конечная дата"
+                  auto-apply
+                  class="w-25"
+                  style="min-width:155px"
+
+                  :min-date="new Date(Date.now() + 86400000)"
+                ></VueDatePicker>
+              </div>
+              <v-btn
+                  @click="show_end_date = !show_end_date"
+                  variant="outlined"
+                  color="grey-lighten-1"
+                  class="rounded-3"
+                  >{{ show_end_date ? 'Скрыть' : 'По...' }}
+              </v-btn>
+            </div>
+
+            </div>
+
+            <!--v-date-picker
+              v-model="date"
+              range
+              scrollable
+              locale="ru-RU"
+              first-day-of-week=1
+            ></v-date-picker-->
+            <v-textarea
+                v-model="commentaryContents"
+                label="Комментарий"
+                placeholder="Распишите информацию, если нужно"
+                variant="outlined"
+                rows="10"
+            >
+            </v-textarea>
           </v-container>
-
-
-
         </template>
+
+        <!--v-stepper-item
+          :rules="[() => isUpdated]"
+          subtitle="Сожалеем об этом"
+          title="Ошибка при обновлении"
+          value="2"
+        >
+          <v-container class="text-medium-emphasis text-center">
+              <h5>Упс! Возникла ошибка во время </h5>
+              <h5>обновления суток. Попробуйте попозже.</h5>
+          </v-container>
+        </v-stepper-item-->
 
         <template v-slot:[`item.3`]>
           <v-container class="text-medium-emphasis text-center">
-            <h3>Все сделано!</h3>
-            <h3>Уведомления придут в Telegram.</h3>
-            <h5>(но не забудьте напомнить и лично)</h5>
+            <div v-if="isUpdated">
+              <h3>Все сделано!</h3>
+              <h3>Уведомления придут в Telegram.</h3>
+              <h5>(но не забудьте напомнить и лично)</h5>
+            </div>
+            <div v-else>
+              <h5>Упс! Возникла ошибка во время </h5>
+              <h5>обновления суток. Попробуйте позже.</h5>
+            </div>
           </v-container>
         </template>
       </v-stepper>
-
       </div>
 
     </v-card>
   </v-dialog>
 </template>
 
-<script>
 
+<script>
 import CadetCard from "@/components/CadetCard";
+import DutyService from "@/services/DutyDataService";
+//import { ref } from 'vue';
 
 export default {
   name: "EditRoleDialog",
@@ -267,6 +318,10 @@ export default {
       type: Number,
       required: true
     },
+    selectedDuty:{
+      type: Object,
+      required: true
+    },
     dialog:{
       type: Boolean,
       required: true
@@ -275,25 +330,31 @@ export default {
   data() {
     return{
       search: '',
-      loading: 0,
+      loading: false,
       suitableCadets: null,
-      isConfirmed: false,
-      shipping: 0,
+      //isConfirmed: false,
       step: 1,
       confirmedCadet: null,
       isUpdated: false,
+
+      startDate: new Date(),
+      endDate: null,
+      show_end_date: false,
+
       items: [
         'Выбрать замену',
         'Указать причину',
         'Готово!',
       ],
-      selectedVariant: '',
-      diseaseDescription: '',
-      reportDescription: '',
-      otherReasonDescription: '',
+      selectedVariant: 'Болезнь',
+      commentaryContents: ''
+      //this.selectedDocType = ???
     }
   },
-  async mounted() {
+  mounted() {
+    /*this.startDate = Date.now()
+    this.endDate = this.startDate + 7;*/
+    //this.dp = this.$refs.dp;
     // await this.fetchSuitableCadets(this.selectedCadetData['role']['id']);
   },
   methods: {
@@ -323,7 +384,11 @@ export default {
         // Perform the action here
         //this.confirmAction();
         this.closeDialog()
-      } else {
+      } else if (this.step === 2){
+        this.confirmedCadet = null
+        this.step--;
+      }
+      else {
         this.step--;
       }
     },
@@ -344,7 +409,7 @@ export default {
     },
     confirmCadet (cadetData) {
       this.confirmedCadet = cadetData;
-      this.isConfirmed = true;
+      //this.isConfirmed = true;
       this.step++;
     },
     closeDialog() {
@@ -354,81 +419,90 @@ export default {
     },
     clearDialogData(){
       this.step = 1; // Reset step to 1 when dialog is closed
-        this.isUpdated = false;
-        this.confirmedCadet=null
+      this.isUpdated = false;
+      this.confirmedCadet=null;
+      this.commentaryContents = '';
+      this.startDate = new Date()
+      this.endDate = null
+      this.selectedVariant = 'Болезнь'
     },
 
     async fetchSuitableCadets() {
-  try {
-    console.log('FETCHING SUITABLES IN EDITrOLEdIaLOG')
-    console.log('for duty id:', this.selectedDutyId)
-    console.log('and the role', this.selectedCadetData['role']['id'])
-    console.log('and the cadet id:', this.selectedCadetData['cadet']['id'])
+      try {
+        console.log('FETCHING SUITABLES IN EDITrOLEdIaLOG')
+        console.log('for duty id:', this.selectedDutyId)
+        console.log('and the role', this.selectedCadetData['role']['id'])
+        console.log('and the cadet id:', this.selectedCadetData['cadet']['id'])
 
-    const params = new URLSearchParams();
-    params.append('role_id', this.selectedCadetData['role']['id']);
+        const params = new URLSearchParams();
+        params.append('role_id', this.selectedCadetData['role']['id']);
 
-    const response = await fetch(
-      `http://localhost:8080/api/duties/${this.selectedDutyId}/reserves?${params.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP error status: ${response.status}`);
+        const response = await DutyService.getSuitableReserves(this.selectedDutyId, this.selectedCadetData['role']['id'])
+        this.suitableCadets = await response
+        console.log('SUITABLES: ', await response)
+        this.suitableCadets = await response
+      } catch (error) {
+        console.error(error);
+      } finally {
+        console.log('Disabling loading...')
+        this.loading = false;
+        console.log('Complete loading!')
     }
-    this.suitableCadets = await response.json();
-  } catch (error) {
-    console.error(error);
-  } finally {
-    console.log('Disabling loading...')
-    this.loading = false;
-    console.log('Complete loading!')
-  }
-},
-
-
+  },
     async updateDuty() {
       try {
         // console.log(JSON.stringify(this.selectedCadetData['cadet']['id']))
         // console.log(JSON.stringify(this.confirmedCadet['id']))
-        const response = await fetch(`http://localhost:8080/api/duties/${this.selectedDutyId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            'replaced_id': this.selectedCadetData['cadet']['id'],
-            'replacing_id': this.confirmedCadet['id'],
-            'reason': {
-              'type': 'sick',
-              'start_date': '2024-04-03',
-              'end_date': '2024-04-13'
-            }
-          })
-        });
-        //confirm('Ответ сервера:' + response.json());
-        if (!response.ok) {
-          throw new Error(`Error updating duty: ${response.status} - ${response.statusText}`);
+        console.log(this.startDate, this.endDate)
+        if (this.selectedDocType === 1 || this.selectedDocType === 2) {
+          let startDate =  this.startDate ? this.startDate.toISOString().slice(0, 10) : ''  // Convert to ISO 8601 format or use default date
+          //let endDate = this.endDate && this.show_end_date? this.endDate.toISOString().slice(0, 10) : ''
+          let replacementDoc = {  // Variable declaration
+            'start_date': startDate,
+            //'end_date': endDate
+          }
+          if (this.endDate && this.show_end_date){
+            replacementDoc['end_date'] = this.endDate.toISOString().slice(0, 10)
+          }
+          replacementDoc['contents'] = this.commentaryContents ||
+              (this.selectedDocType===2? 'Рапорт на спание. Освобожмдён от трудовой деятелбности.' :
+                  'Очемнь при очемнб болен. Лежатб до новаво гомда.')
+
+          await DutyService.updateDuty(this.selectedDutyId, this.selectedCadetData['cadet']['id'],
+              this.confirmedCadet['id'], null, replacementDoc)
+        } else if (this.selectedDocType === 3) {
+          let commentary = this.commentaryContents
+          await DutyService.updateDuty(this.selectedDutyId, this.selectedCadetData['cadet']['id'],
+              this.confirmedCadet['id'], commentary, null)
         }
-          //this.$emit('update', 1);
-          this.isUpdated=true;
+        this.isUpdated = true;
       } catch (error) {
         console.error('Error:', error);
       }
-    },
-
+    }
   },
   computed:{
+    datepicker1State(){
+      return this.startDate
+    },
+    datepicker2State(){
+      return !this.endDate && this.show_end_date ? true: null
+    },
     formSubTitle(){
       switch (this.step){
         case 1: return "Позиция –– " + this.selectedCadetData['role']['name'];
         case 2: return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group'] +
              ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group'] + ')'
-        case 3: return null
+        case 3: {
+          if (this.isUpdated){
+            return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group'] +
+             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group'] + ')' + '✅☑'
+          }
+          else {
+            return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group'] +
+             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group'] + ')' + '❌⚠'
+          }
+        }
         default: return "Замена курсанта"
       }
     },
@@ -440,6 +514,12 @@ export default {
         this.$emit('update:dialog', value);
       }
     },
+    confirmButtonLabel() {
+      return this.step === 1 ? 'Дальше' : this.step === 2 ? 'Подтвердить' : (this.isUpdated ? 'Отлично!' : 'Понятно');
+    },
+    // TODO: actually fetch the docTypes and display them
+    selectedDocType(){
+      return this.selectedVariant === 'Болезнь' ? 1 : this.selectedVariant === 'Рапорт' ? 2 : 3    }
   },
   watch: {
     selectedCadetData: {
@@ -461,5 +541,14 @@ export default {
 </script>
 
 <style scoped>
-
+  .dp__theme_light {
+    --dp-border-radius: 12px;
+    --dp-cell-border-radius: 20%;
+  }
+  .custom-select {
+      cursor: pointer;
+      color: darkcyan;
+      margin: 0;
+      display: inline-block;
+    }
 </style>

@@ -1,24 +1,16 @@
 <template>
   <v-dialog v-model="localDialog" max-width="800" max-height="auto" persistent>
 
-    <v-dialog v-model="movingDialog">
+    <v-dialog v-model="isMovingCadets" max-width="750px">
         <move-cadets-dialog/>
     </v-dialog>
 
-    <v-dialog max-width="700" max-height="auto" v-model="replacementHistoryDialog">
-      <replacements-history-dialog
-          @close="closeHistoryDialog"
-          :selectedDutyId="selectedDutyId"
-          :selectedDuty="selectedDuty"
-      />
-    </v-dialog>
-
     <edit-role-dialog :selected-cadet-data="selectedCadetData" :selectedDutyId="selectedDutyId"
-                      :dialog="roleDialog" @close="closeRoleDialog" @update="updateLayout"/>
+                      :dialog="isEditingRole" @close="closeRoleDialog" @update="updateEditDialogLayout"/>
 
     <v-card class="rounded-xl my-4"
-      :disabled="loading"
-      :loading="loading"
+      :disabled="loadingEditDialog"
+      :loading="loadingEditDialog"
     >
       <template v-slot:loader="{ isActive }">
         <v-progress-linear
@@ -33,24 +25,7 @@
         <div class="text-h5 text-medium-emphasis ps-3">
           {{ currentTitle }}
         </div>
-        <div>
-          <v-btn
-            variant="tonal"
-            class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
-            @click="openHistoryDialog"
-            :disabled="loading"
-          >
-              История замен
-              <v-icon
-                  class="text-medium-emphasis ml-2"
-                  size="large"
-                >
-                mdi-history
-            </v-icon>
-          </v-btn>
-
-          <v-btn icon="mdi-close" variant="text" @click="closeDialog"/>
-        </div>
+        <v-btn icon="mdi-close" variant="text" @click="closeDialog"></v-btn>
       </v-card-title>
 
       <v-card-subtitle class="d-flex justify-space-between align-center">
@@ -76,10 +51,13 @@
             </v-row>
           </div>
           <div v-else-if="error">
-            <v-container class="text-medium-emphasis text-center">
-                <h5>Упс! Не удалось загрузить сутки.</h5>
-                <h5>Перезагрузите страницу.</h5>
-              </v-container>
+            <v-row align="center" justify="center" dense>
+              <v-col cols="12"  class="text-center">
+                <h6>Упс! Не удалось загрузить сутки.</h6>
+                <br>
+                <h6>Перезагрузите страницу.</h6>
+              </v-col>
+            </v-row>
           </div>
           <div v-else>
               <v-row align="center" justify="center" dense>
@@ -102,21 +80,20 @@
       <v-divider class="mx-10 my-2"></v-divider>
       <v-card-actions class="mx-3">
         <v-spacer></v-spacer>
-        <div class="my-2">
+          <div class="my-2">
+            <v-btn class="text-none"
+              color="medium-emphasis"
+              variant="outlined"
+              @click="closeDialog"
+          >Отмена</v-btn>
+
           <v-btn class="text-none"
-            color="medium-emphasis"
-            variant="outlined"
-            @click="closeDialog"
-          >
-            {{error ? 'Отмена' : 'Выйти'}}
-          </v-btn>
-          <v-btn v-if="!error" class="text-none"
-            color="medium-emphasis"
-            variant="outlined"
-            @click="saveAndShowLoader"
-          >Сохранить
-          </v-btn>
+              color="medium-emphasis"
+              variant="outlined"
+              @click="saveAndShowLoader"
+          >Сохранить</v-btn>
         </div>
+
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -126,14 +103,12 @@
 import RoleCard from "@/components/RoleCard";
 import EditRoleDialog from "@/components/EditRoleDialog";
 import MoveCadetsDialog from "@/components/MoveCadetsDialog";
-import ReplacementsHistoryDialog from "@/components/ReplacementsHistoryDialog";
-import DutyService from "@/services/DutyDataService";
 //import EditRoleDialog from "@/components/EditRoleDialog";
 
 
 export default {
   name: 'EditDutyDialog',
-  components: {ReplacementsHistoryDialog, MoveCadetsDialog, EditRoleDialog, RoleCard},
+  components: {MoveCadetsDialog, EditRoleDialog, RoleCard},
   props: {
     headers: {
       type: Array,
@@ -152,18 +127,18 @@ export default {
       required: true
     }
   },
+
   data() {
     return {
       localSelectedDuty: this.selectedDuty,
       dutyData: null,
-      loading: false,
-      error: false,
+      loadingEditDialog: false,
 
-      roleDialog: false,
-      movingDialog: false,
-      replacementHistoryDialog: false,
+      isEditingRole: false,
+      isMovingCadets:false,
 
       selectedCadetData: {},
+      error: false,
 
       monthNames: [
           'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -198,13 +173,34 @@ export default {
     showError(){
       this.error = true
     },
-    clearDialogData(){
-      this.error = false
-      this.loading = false
-      this.dutyData = false
-      this.roleDialog = false
-      this.movingDialog=  false
-      this.replacementHistoryDialog = false
+    updateEditDialogLayout(isUpdated){
+      if(isUpdated){
+        this.loadingEditDialog = true
+      setTimeout(()=>this.loadingEditDialog = false, 500)
+       this.fetchDutyData();
+      }
+
+    },
+    closeDialog() {
+      this.loadingEditDialog = false;
+      this.$emit('close');
+    },
+    closeRoleDialog(){
+      this.isEditingRole = false
+    },
+    openRoleDialog(cadet_data){
+        console.log('SELECTED CADET DATA:')
+        console.log(cadet_data)
+        this.selectedCadetData = cadet_data;
+        this.isEditingRole = true;
+    },
+
+    saveAndShowLoader() {
+      this.loadingEditDialog = true;
+      setTimeout(() => {
+        this.$emit('save');
+        this.loadingEditDialog = false;
+      }, 1000);
     },
     async updateLayout(isUpdated){
       if(isUpdated){
@@ -212,46 +208,10 @@ export default {
         this.loadingStartTime = performance.now();
         await this.fetchDutyData();
         // Set a minimum delay of 500ms before setting loading to false
-        await new Promise(resolve => setTimeout(resolve, Math.max(800 - (performance.now() - this.loadingStartTime), 0)));
+        await new Promise(resolve => setTimeout(resolve, Math.max(500 - (performance.now() - this.loadingStartTime), 0)));
         this.loading = false;
-      }
-    },
-    closeDialog() {
-      this.loading = false;
-      this.$emit('close');
-    },
-    closeRoleDialog(){
-      this.roleDialog = false
-    },
-    openRoleDialog(cadet_data){
-        console.log('SELECTED CADET DATA:')
-        console.log(cadet_data)
-        this.selectedCadetData = cadet_data;
-        this.roleDialog = true;
-    },
-    openHistoryDialog(){
-      this.replacementHistoryDialog = true;
-    },
-    closeHistoryDialog(){
-      this.replacementHistoryDialog = false;
-    },
-    saveAndShowLoader() {
-      this.loading = true;
-      setTimeout(() => {
-        this.$emit('save');
-        this.loading = false;
-      }, 1000);
-    },
-    async fetchDutyData() {
-      if (this.selectedDutyId) {
-        try {
-          this.dutyData = await DutyService.getDutyById(this.selectedDutyId);
-        } catch (error) {
-          this.error = true;
-          console.error(error);
-        }
-      }
     }
+}
   },
   watch: {
     selectedDutyId: {
@@ -265,3 +225,18 @@ export default {
   }
 }
 </script>
+
+<template>
+
+
+</template>
+
+<script>
+export default {
+  name: "DutyInfoDialog"
+}
+</script>
+
+<style scoped>
+
+</style>
