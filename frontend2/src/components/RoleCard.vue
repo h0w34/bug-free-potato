@@ -5,17 +5,17 @@
     hover
   >
 
-    <v-card-title>
+    <v-card-title class="pb-1">
       <!--v-chip
-          color="default"
-          variant="outlined"
+          color="secondary"
+          variant="tonal"
+          density="comfortable"
           label
           class="my-0"
         >
           <div class="my-0">{{cadetData['role']['name']}}</div>
         </v-chip-->
-      {{cadetData['role']['name']}}
-
+      <div class="my-0">{{cadetData['role']['name']}}</div>
     </v-card-title>
     <v-divider class="my-0 mx-2"/>
     <v-card-subtitle class="my-2">
@@ -31,16 +31,23 @@
         <div>
           <h6 class="ma-0">{{cadetData['cadet']['name'] + ' ' + cadetData['cadet']['surname']}}</h6>
           <div class="text-medium-emphasis">
-            {{"@obormotik"}}
+            <router-link
+                :to="{ name: 'user', params: { username: 'johndoe' } }" style="color:#00406b; text-decoration: none">
+              {{"@obormotik"}}
+            </router-link>
           </div>
         </div>
         <v-avatar
           class="ma-3"
-          size="40"
+          size="55"
         >
-          <v-img
+          <!--v-img
             alt="doggy"
             :src="`https://thispersondoesnotexist.com/?${Date.now() + Math.random()}`"
+          ></v-img-->
+          <v-img
+            alt="doggy"
+            :src="`https://steamuserimages-a.akamaihd.net/ugc/1483325328769942736/3A592FE50FDB0010B49C7D86777B0CC1D7510276/`"
           ></v-img>
         </v-avatar>
       </div>
@@ -69,6 +76,8 @@
 
 <script>
 //import editRoleDialog from "@/components/EditRoleDialog";
+import router from "@/routers";
+
 export default {
   name: "RoleCard",
   //components:{editRoleDialog}
@@ -79,6 +88,11 @@ export default {
   },
   computed: {
 
+  },
+  methods: {
+    navigateToUserPage() {
+         router.push({ name: 'home', params: { username: 'johndoe' } });
+    }
   }
 }
 </script>

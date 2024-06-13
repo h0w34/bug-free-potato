@@ -8,6 +8,10 @@ export async function loadFonts () {
   const webFontLoader = await import(/* webpackChunkName: "webfontloader" */'webfontloader')
 
   webFontLoader.load({
+    custom: {
+      families: ['YandexSans'],
+      urls: ['fonts/YandexSansDisplay-Regular.ttf']
+    },
     google: {
       families: ['Roboto:100,300,400,500,700,900&display=swap'],
     },

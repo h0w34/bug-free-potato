@@ -1,40 +1,10 @@
 // src/services/duty.service.js
 import http from '../http-common';
 
-class DutyDataService {
-  // Get duties for a specified location
-  async getDutiesByLocations(locationIds) {
+class UserDataService {
+  async getUserByUsername(username) {
     try {
-      const params = new URLSearchParams();
-      locationIds.forEach(id => params.append('location_ids', id.toString()));
-      const response = await http.get(`duties?${params}`);
-      return response.data;
-
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  }
-
-  // Create a duty
-  async createDuty(dutyDate, dutyTypeId, cadetRolesIds) {
-    try {
-      const response = await http.post('duties', {
-        date: dutyDate,
-        duty_type_id: dutyTypeId,
-        cadet_roles_ids: cadetRolesIds,
-      });
-      return response.data;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  }
-
-  // Get a single duty
-  async getDutyById(dutyId) {
-    try {
-      const response = await http.get(`duties/${dutyId}`);
+      const response = await http.get(`users/${username}`);
       return response.data;
     } catch (error) {
       console.error(error);
@@ -43,7 +13,7 @@ class DutyDataService {
   }
 
   // Update a duty
-  async updateDuty(dutyId, replacedId, replacingId, commentary=null, replacement_doc=null) {
+  /*async updateDuty(dutyId, replacedId, replacingId, commentary=null, replacement_doc=null) {
     try {
       const data = {
         replaced_id: replacedId,
@@ -95,9 +65,9 @@ class DutyDataService {
       console.error(error);
       throw error;
     }
-  }
+  }*/
 
 
 }
 
-export default new DutyDataService();
+export default new UserDataService();

@@ -10,12 +10,10 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db
 
-
 '''class ReplacementType(db.Model):
     __tablename__ = 'replacement_types'
     id = Column(Integer, primary_key=True)
     name = Column(String(30), nullable=False)'''
-
 
 '''class DocType(db.Model):
     __tablename__ = 'doc_types'
@@ -55,7 +53,8 @@ class DutyReplacement(db.Model):
     replacing_id = Column(Integer, ForeignKey('cadets.id'), nullable=False)
     duty_role_id = Column(Integer, ForeignKey('duty_roles.id'), nullable=False)
     # replacement_type_id = Column(Integer, ForeignKey('replacement_types.id'))
-    replacement_doc_id = Column(Integer, ForeignKey('replacement_docs.id'), nullable=True) # either a doc or other reason
+    replacement_doc_id = Column(Integer, ForeignKey('replacement_docs.id'),
+                                nullable=True)  # either a doc or other reason
     # cadet_id = Column(Integer, ForeignKey('cadets.id'))
     # replacement_doc_id = Column(Integer, ForeignKey('replacement_docs.id'), nullable=False)
     commentary = Column(String(300))
@@ -98,7 +97,7 @@ class Location(db.Model):
     address = Column(String(50), nullable=False)
     faculties = relationship('Faculty', back_populates='location')
 
-    duty_types = relationship('DutyType')
+    duty_types = relationship('DutyType', back_populates='location')
 
     @property
     def duty_type_ids(self):
@@ -129,7 +128,8 @@ class DutyRole(db.Model):
 
 
 # we assume that the role ids are incremental correspondingly to their order in a duty
-# i.e. if the first added role is КПП4, then it will stay like that
+# i.e. if the first added role is КПП4, then it will show up like that
+# (should add the 'order' col?)
 class DutyType(db.Model):
     __tablename__ = "duty_types"
     id = Column(Integer, primary_key=True)
@@ -138,7 +138,7 @@ class DutyType(db.Model):
     location_id = Column(Integer, ForeignKey('locations.id'), nullable=False)
     description = Column(String(250))
 
-    location = relationship('Location')
+    location = relationship('Location', back_populates='duty_types')
 
     @property
     def duty_roles_ids(self):
@@ -200,7 +200,6 @@ class Duty(db.Model):
             raise SQLAlchemyError(f"Database error: {str(e)}")
         except Exception as e:
             raise Exception(f"Internal server error: {str(e)}")
-
 
     def create_replacement(self, type_id=3, comment="Commentary placeholder", start_date=None, end_date=None):
         ...
@@ -343,7 +342,7 @@ class ReserveCadetDuty(db.Model):  # todo: may replacing it with the one below w
     priority = Column(Integer, nullable=False, default=1)
 
     duty = relationship('Duty', back_populates='reserve_cadet_duties')
-    cadet = relationship('Cadet')
+    cadet = relationship('Cadet', back_populates='reserves')
     duty_role = relationship('DutyRole')
 
     UniqueConstraint('duty_id', 'cadet_id', 'duty_role_id', name='unique_reserve_cadet_duty')
@@ -391,6 +390,8 @@ class Cadet(db.Model):
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
     main_location_id = Column(Integer, ForeignKey('locations.id'))
 
+    user = relationship('User', back_populates='cadet')
+
     rank = relationship('Rank')
     position = relationship('Position')
     group = relationship('Group', back_populates='cadets')
@@ -398,7 +399,25 @@ class Cadet(db.Model):
     faculty = relationship('Faculty', back_populates='cadets')
     main_location = relationship('Location')  # direct relationship
 
-    duties = relationship('Duty', secondary='cadet_duty', back_populates='cadets')
+    duties = relationship('Duty', secondary='cadet_duty', back_populates='cadets', lazy='dynamic')
+    reserves = relationship('ReserveCadetDuty', back_populates='cadet', lazy='dynamic')
+
+    # statistics props
+    def get_future_duties(self):
+        return self.duties.filter(Duty.archived == False).order_by(Duty.date).all()
+
+    # todo: may remove duty.archived check since reserves for archived duties are deleted
+    def get_future_reserves(self):
+        return db.session.query(ReserveCadetDuty).join(Duty).filter(ReserveCadetDuty.cadet_id == self.id)\
+            .filter(Duty.archived == False).order_by(Duty.date).all()
+
+    @property
+    def replaced_count(self):
+        return db.session.query(DutyReplacement).filter_by(replacing_id=self.id).count()
+
+    @property
+    def was_replaced_count(self):
+        return db.session.query(DutyReplacement).filter_by(replaced_id=self.id).count()
 
     def to_dict(self):
         return {

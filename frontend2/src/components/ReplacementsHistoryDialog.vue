@@ -28,35 +28,35 @@
             </v-list>
           </div>
           <div v-else>
-            <v-expansion-panels
-              v-for="(replacement, i) in replacementsData"
-              :key="i"
-            >
-              <v-expansion-panel class="rounded-3 mb-3">
-                <v-expansion-panel-title>
-                  <v-container class="pa-0 d-flex justify-content-between align-center">
-                    <div> {{ formPanelTitle(replacement) }}</div>
-                    <div class="d-inline-flex align-center">
-                      <div>
-                        {{formatDate(replacement['date'])}}
+              <v-expansion-panels
+                v-for="(replacement, i) in replacementsData"
+                :key="i"
+              >
+                <v-expansion-panel class="rounded-3 mb-3">
+                  <v-expansion-panel-title>
+                    <v-container class="pa-0 d-flex justify-content-between align-center">
+                      <div> {{ formPanelTitle(replacement) }}</div>
+                      <div class="d-inline-flex align-center">
+                        <div>
+                          {{formatDate(replacement['date'])}}
+                        </div>
+                        <v-chip
+                          color="secondary"
+                          variant="tonal"
+                          label
+                          class="mx-2"
+                        >
+                          {{replacement['duty_role']['name'] }}
+                        </v-chip>
                       </div>
-                      <v-chip
-                        color="secondary"
-                        variant="tonal"
-                        label
-                        class="mx-2"
-                      >
-                        {{replacement['duty_role']['name'] }}
-                      </v-chip>
-                    </div>
-                  </v-container>
-                </v-expansion-panel-title>
+                    </v-container>
+                  </v-expansion-panel-title>
 
-                <v-expansion-panel-text>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </v-expansion-panel-text>
-              </v-expansion-panel>
-            </v-expansion-panels>
+                  <v-expansion-panel-text>
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
           </div>
         </v-container>
 
@@ -115,7 +115,7 @@
 
 <script>
 import moment from 'moment';
-import DutyService from "@/services/DutyDataService";
+import DutyDataService from "@/services/DutyDataService";
 moment.locale('ru');
 moment.updateLocale('ru', {
   weekdaysShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']
@@ -153,7 +153,7 @@ export default {
     },
     async fetchReplacements(){
       try {
-          this.replacementsData = await DutyService.getReplacements(this.selectedDutyId);
+          this.replacementsData = await DutyDataService.getReplacements(this.selectedDutyId);
         } catch (error) {
           this.error = true;
           console.error(error);

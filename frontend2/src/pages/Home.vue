@@ -33,7 +33,7 @@
 ////import NavLocations from "@/components/NavLocations";
 import ScheduleList from "@/components/ScheduleList";
 //import mockMock from "@/components/mock";
-import DutyService from "@/services/DutyDataService";
+import DutyDataService from "@/services/DutyDataService";
 
 export default {
   name: "HomePage",
@@ -83,7 +83,7 @@ export default {
         if (this.user_locations){
           this.user_locations.forEach(id => params.append('location_ids', id.toString()));
         }
-        const response = await DutyService.getDutiesByLocations(this.user_locations)
+        const response = await DutyDataService.getDutiesByLocations(this.user_locations)
         this.dutiesWithLocations = await response
         this.dutiesWithLocations = this.dutiesWithLocations['locations']
 

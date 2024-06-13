@@ -1,47 +1,29 @@
 import pprint
 
-from sqlalchemy.exc import SQLAlchemyError
-
 from app import db
 from flask import jsonify
-from flask_restful import Resource, Api, reqparse, abort
-from .models import Duty, Location, DutyType, CadetDuty, Cadet, ReplacementDoc, DutyReplacement
-from .helpers import get_object_or_404
+from flask_restful import Resource, reqparse, abort
+from .models import Duty, Location, DutyType, Cadet, ReplacementDoc, DutyReplacement
+from app.helpers import get_object_or_404
 from datetime import datetime, date
 
 from .services import generate_schedule, delete_duties, update_reserves
 from collections import defaultdict
 
 from flask import request
-
-duties_generate_args = reqparse.RequestParser()
-duties_generate_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
-duties_generate_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
-duties_generate_args.add_argument('location_ids', type=list)
-duties_generate_args.add_argument('duty_type_ids', type=list)
-
-duties_delete_args = reqparse.RequestParser()
-duties_delete_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
-duties_delete_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
-duties_delete_args.add_argument('location_ids', type=list)
-duties_delete_args.add_argument('duty_type_ids', type=list)
-
-duties_post_args = reqparse.RequestParser()
-duties_post_args.add_argument('date', type=str, required=True)
-duties_post_args.add_argument('location_id', type=int)
-duties_post_args.add_argument('duty_type_id', type=int, required=True)
-duties_post_args.add_argument('cadet_roles_ids', type=list, required=True)
-
-# the main api: all the logic about the Roles etc. (is) must be implemented here
-# returns a schedule for a specific user grouped by locations and types
-duties_get_args = reqparse.RequestParser()
-duties_get_args.add_argument('location_ids', type=int)
+from flask_jwt_extended import jwt_required
 
 
 # TODO: user roles handling
 # TODO: use this one as a search endpoint so that the home page is one of the applications
-class DutiesHomeApi(Resource):
+
+class DutiesHomeResource(Resource):
     # return the schedule for a specified location
+    # the main api: all the logic about the Roles etc. (is) must be implemented here
+    # returns a schedule for a specific user grouped by locations and types
+    duties_get_args = reqparse.RequestParser()
+    duties_get_args.add_argument('location_ids', type=int)
+
     def get(self):
         # assume the locations are fetched either by main_location in Cadet
         # or whatever for admins
@@ -86,12 +68,23 @@ class DutiesHomeApi(Resource):
         return jsonify(response_data)
 
     def generateDuties(self):
+        duties_generate_args = reqparse.RequestParser()
+        duties_generate_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
+        duties_generate_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
+        duties_generate_args.add_argument('location_ids', type=list)
+        duties_generate_args.add_argument('duty_type_ids', type=list)
         args = {}  # duties_generate_post_args.parse_args()
         result = generate_schedule(args['start_date'], args['end_date'], args['location_ids'], args['duty_type_ids'])
         print(result)
         return result
 
     def post(self):
+        duties_post_args = reqparse.RequestParser()
+        duties_post_args.add_argument('date', type=str, required=True)
+        duties_post_args.add_argument('location_id', type=int)
+        duties_post_args.add_argument('duty_type_id', type=int, required=True)
+        duties_post_args.add_argument('cadet_roles_ids', type=list, required=True)
+
         args = duties_post_args.parse_args()
         duty_date = args['date']
         # Check if duty for the date already exists
@@ -113,9 +106,15 @@ class DutiesHomeApi(Resource):
         return {'message': f'Successfully created a duty at f{duty_date}'}, 201
 
     def delete(self):
+        duties_delete_args = reqparse.RequestParser()
+        duties_delete_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
+        duties_delete_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
+        duties_delete_args.add_argument('location_ids', type=list)
+        duties_delete_args.add_argument('duty_type_ids', type=list)
         args = duties_delete_args.parse_args()
         result = delete_duties(args['start_date'], args['end_date'], args['location_ids'], args['duty_type_ids'])
         print(result)
+
         return result
 
 
@@ -138,7 +137,7 @@ duty_get_args.add_argument('location_id', type=int, required=True)
 
 
 # CRUD for a single duty
-class DutyApi(Resource):
+class DutyResource(Resource):
     def get(self, duty_id):
         duty: Duty = get_object_or_404(Duty, id=duty_id)
         return duty.to_dict()
@@ -185,11 +184,11 @@ class DutyApi(Resource):
                     abort(400, message='End date cannot be before the start date')
                     print('date order error')
                 if end_date < duty.date:
-                    abort(400, message='Whoah! This doc wont work!')
+                    abort(400, message="Whoah! This doc wont work! It's useless.")
                     print('doc error')
             else:
                 if start_date > duty.date:
-                    abort(400, message='Whoah! This doc wont work!')
+                    abort(400, message="Whoah! This doc wont work! It's useless.")
                     print('doc error')
 
 
@@ -223,10 +222,10 @@ class DutyApi(Resource):
 # TODO: implement for real
 # for now assume that only cadets from the same location are available
 # /api/duty/<id>/reserves
-class DutySuitableReservesApi(Resource):
+class SuitableReservesResource(Resource):
     def get(self, duty_id):
         print('GETTING RESERVES FOR DUTY_ID: ', duty_id)
-        duty: Duty = get_object_or_404(Duty, id=duty_id)
+        duty: Duty = Duty.query.get_or_404(id=duty_id)
         role_id = request.args.get('role_id')
         try:
             role_id = int(role_id)
@@ -249,7 +248,7 @@ class DutySuitableReservesApi(Resource):
         return jsonify(suitable_cadets)
 
 
-class DutyReplacementsApi(Resource):
+class ReplacementsHistoryResource(Resource):
     def get(self, duty_id):
         duty: Duty = get_object_or_404(Duty, id=duty_id)
 

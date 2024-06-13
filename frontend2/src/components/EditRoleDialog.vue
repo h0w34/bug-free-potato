@@ -83,11 +83,11 @@
           </div>
           <div v-else>
             <v-container>
-              <v-row>
+              <v-row class="justify-content-center">
                 <v-col
                   v-for="(reserve_cadet_data, i) in selectedCadetData['reserve']"
                   :key="i"
-                  cols="12"
+                  cols="auto"
                   md="4"
                 >
                   <cadet-card :cadet-data="reserve_cadet_data" @select="confirmCadet"/>
@@ -303,7 +303,7 @@
 
 <script>
 import CadetCard from "@/components/CadetCard";
-import DutyService from "@/services/DutyDataService";
+import DutyDataService from "@/services/DutyDataService";
 //import { ref } from 'vue';
 
 export default {
@@ -437,7 +437,7 @@ export default {
         const params = new URLSearchParams();
         params.append('role_id', this.selectedCadetData['role']['id']);
 
-        const response = await DutyService.getSuitableReserves(this.selectedDutyId, this.selectedCadetData['role']['id'])
+        const response = await DutyDataService.getSuitableReserves(this.selectedDutyId, this.selectedCadetData['role']['id'])
         this.suitableCadets = await response
         console.log('SUITABLES: ', await response)
         this.suitableCadets = await response
@@ -468,11 +468,11 @@ export default {
               (this.selectedDocType===2? 'Рапорт на спание. Освобожмдён от трудовой деятелбности.' :
                   'Очемнь при очемнб болен. Лежатб до новаво гомда.')
 
-          await DutyService.updateDuty(this.selectedDutyId, this.selectedCadetData['cadet']['id'],
+          await DutyDataService.updateDuty(this.selectedDutyId, this.selectedCadetData['cadet']['id'],
               this.confirmedCadet['id'], null, replacementDoc)
         } else if (this.selectedDocType === 3) {
           let commentary = this.commentaryContents
-          await DutyService.updateDuty(this.selectedDutyId, this.selectedCadetData['cadet']['id'],
+          await DutyDataService.updateDuty(this.selectedDutyId, this.selectedCadetData['cadet']['id'],
               this.confirmedCadet['id'], commentary, null)
         }
         this.isUpdated = true;

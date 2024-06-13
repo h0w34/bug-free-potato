@@ -127,7 +127,7 @@ import RoleCard from "@/components/RoleCard";
 import EditRoleDialog from "@/components/EditRoleDialog";
 import MoveCadetsDialog from "@/components/MoveCadetsDialog";
 import ReplacementsHistoryDialog from "@/components/ReplacementsHistoryDialog";
-import DutyService from "@/services/DutyDataService";
+import DutyDataService from "@/services/DutyDataService";
 //import EditRoleDialog from "@/components/EditRoleDialog";
 
 
@@ -245,7 +245,7 @@ export default {
     async fetchDutyData() {
       if (this.selectedDutyId) {
         try {
-          this.dutyData = await DutyService.getDutyById(this.selectedDutyId);
+          this.dutyData = await DutyDataService.getDutyById(this.selectedDutyId);
         } catch (error) {
           this.error = true;
           console.error(error);
