@@ -14,11 +14,11 @@
     </v-dialog>
 
     <edit-role-dialog :selected-cadet-data="selectedCadetData" :selectedDutyId="selectedDutyId"
-                      :dialog="roleDialog" @close="closeRoleDialog" @update="updateLayout"/>
+                :dialog="roleDialog" @close="closeRoleDialog" @update="updateLayout" :selectedDutyData="dutyData"/>
 
     <v-card class="rounded-xl my-4"
-      :disabled="loading"
-      :loading="loading"
+      :disabled="saving"
+      :loading="saving"
     >
       <template v-slot:loader="{ isActive }">
         <v-progress-linear
@@ -38,7 +38,7 @@
             variant="tonal"
             class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
             @click="openHistoryDialog"
-            :disabled="loading"
+            :disabled="saving"
           >
               История замен
               <v-icon
@@ -60,7 +60,17 @@
       </v-card-subtitle>
 
       <v-divider class="mx-10"></v-divider>
-
+      <v-alert
+            v-if="beingEdited"
+            closable
+            type="warning"
+            variant="tonal"
+            class="mx-5 text-center"
+          >
+            <v-alert-title>Ошибка</v-alert-title>
+            <h5>Эти сутки сейчас кто-то редактирует.</h5>
+            <h5>Возвращайтесь попозже.</h5>
+      </v-alert>
       <v-card-text>
         <v-container class="py-0" >
           <div v-if="dutyData">
@@ -71,7 +81,7 @@
                 cols="auto"
                 md="4"
               >
-              <role-card :cadet-data="cadet_data" @edit="openRoleDialog"/>
+              <role-card :cadet-data="cadet_data" :disabled="beingEdited" @edit="openRoleDialog"/>
               </v-col>
             </v-row>
           </div>
@@ -110,7 +120,7 @@
           >
             {{error ? 'Отмена' : 'Выйти'}}
           </v-btn>
-          <v-btn v-if="!error" class="text-none"
+          <v-btn v-if="!error && !beingEdited" class="text-none"
             color="medium-emphasis"
             variant="outlined"
             @click="saveAndShowLoader"
@@ -154,11 +164,11 @@ export default {
   },
   data() {
     return {
-      localSelectedDuty: this.selectedDuty,
+      //localSelectedDuty: this.selectedDuty,
       dutyData: null,
-      loading: false,
+      saving: false,
       error: false,
-
+      beingEdited: false,
       roleDialog: false,
       movingDialog: false,
       replacementHistoryDialog: false,
@@ -200,24 +210,26 @@ export default {
     },
     clearDialogData(){
       this.error = false
-      this.loading = false
-      this.dutyData = false
+      this.beingEdited=false
+      this.saving = false
       this.roleDialog = false
-      this.movingDialog=  false
+      this.movingDialog = false
       this.replacementHistoryDialog = false
     },
     async updateLayout(isUpdated){
       if(isUpdated){
-        this.loading = true;
-        this.loadingStartTime = performance.now();
+        this.saving = true;
+        const loadingStartTime = performance.now();
         await this.fetchDutyData();
         // Set a minimum delay of 500ms before setting loading to false
-        await new Promise(resolve => setTimeout(resolve, Math.max(800 - (performance.now() - this.loadingStartTime), 0)));
-        this.loading = false;
+        await new Promise(resolve => setTimeout(resolve, Math.max(800 - (performance.now() - loadingStartTime), 0)));
+        this.saving = false;
       }
     },
     closeDialog() {
-      this.loading = false;
+      this.saving = false;
+      this.clearDialogData()
+      this.unlockDuty();
       this.$emit('close');
     },
     closeRoleDialog(){
@@ -236,19 +248,40 @@ export default {
       this.replacementHistoryDialog = false;
     },
     saveAndShowLoader() {
-      this.loading = true;
+      this.saving = true;
+
+      // TODO: some hard logic to update the schedule table layout
       setTimeout(() => {
         this.$emit('save');
-        this.loading = false;
+        this.saving = false;
+        this.unlockDuty();
       }, 1000);
     },
+
     async fetchDutyData() {
       if (this.selectedDutyId) {
         try {
-          this.dutyData = await DutyDataService.getDutyById(this.selectedDutyId);
+          const response = await DutyDataService.getDutyById(this.selectedDutyId);
+          console.log('response code when fetching a duty: ', response.status)
+          this.dutyData = response
         } catch (error) {
-          this.error = true;
-          console.error(error);
+           if (error.response && error.response.status === 423) {
+            this.beingEdited = true;
+            this.dutyData = error.response.data
+          } else {
+            this.error = true;
+          }
+          console.error(error.response.status);
+
+        }
+      }
+    },
+    async unlockDuty(){
+      if(this.selectedDutyId){
+        try {
+          await DutyDataService.unlockDutyById(this.selectedDutyId)
+        } catch (error) {
+          // TODO
         }
       }
     }
@@ -256,7 +289,7 @@ export default {
   watch: {
     selectedDutyId: {
       handler(){
-        this.dutyData = null
+        this.dutyData = null;
         console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
         this.fetchDutyData();
       } ,

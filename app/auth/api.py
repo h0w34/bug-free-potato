@@ -1,7 +1,3 @@
-import pprint
-
-from sqlalchemy.exc import SQLAlchemyError
-
 from app import db
 from flask import jsonify
 from flask_restful import Resource, Api, reqparse, abort
@@ -25,7 +21,6 @@ class UserRegistration(Resource):
         args = parser.parse_args()
 
         user = User.get_by_username(username=args.get('username'))
-
         if user:
             abort(409, message=f'User {args["username"]} already exists')
 
@@ -57,7 +52,6 @@ class UserLogin(Resource):
         args = parser.parse_args()
 
         user = User.get_by_username(args.get('username'))
-
         if user and user.check_password(args.get('password')):
             access_token = create_access_token(identity=user.username)
             refresh_token = create_refresh_token(identity=user.username)

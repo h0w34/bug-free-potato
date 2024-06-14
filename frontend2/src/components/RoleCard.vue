@@ -4,7 +4,6 @@
     max-width="344"
     hover
   >
-
     <v-card-title class="pb-1">
       <!--v-chip
           color="secondary"
@@ -66,6 +65,7 @@
             min-width="92"
             variant="outlined"
             rounded
+            :disabled="disabled"
          >
            Замена
          </v-btn>
@@ -83,8 +83,13 @@ export default {
   //components:{editRoleDialog}
   props:{
     cadetData:{
-      type: Object
+      type: Object,
+      required: true
     },
+    disabled: {
+      type: Boolean,
+      required: true
+    }
   },
   computed: {
 

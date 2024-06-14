@@ -1,3 +1,5 @@
+import this
+
 from sqlalchemy import Column, Boolean, Enum
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy import Integer
@@ -153,7 +155,7 @@ class DutyType(db.Model):
             'duty_roles': [role.to_dict() for role in self.duty_roles]
         }
 
-    def to_table_dict(self):
+    def to_dict_short(self):
         return {
             'id': self.id,
             'name': self.name,
@@ -169,6 +171,7 @@ class Duty(db.Model):
     date = Column(Date, nullable=False)
     duty_type_id = Column(Integer, ForeignKey('duty_types.id'), nullable=False)
     female_duty = Column(Boolean, default=0)
+
     archived = Column(Boolean, default=False)
 
     duty_type = relationship('DutyType')
@@ -177,6 +180,9 @@ class Duty(db.Model):
 
     reserve_cadet_duties = relationship('ReserveCadetDuty', back_populates='duty', cascade='all, delete-orphan')
     cadet_replacements = relationship('DutyReplacement', back_populates='duty', cascade='all, delete-orphan')
+
+    locked = Column(Boolean, default=False, nullable=True)
+    locked_by = Column(db.String(32), ForeignKey('users.id'), nullable=True)
 
     @property  # todo if something went wrong with locations return the location_id prop and its usages
     def location(self):
@@ -187,7 +193,6 @@ class Duty(db.Model):
         return [duty_role for duty_role in self.duty_type.duty_roles]
 
     # ------ replacements -------
-    # TODO
     def replace_cadets(self, replaced_id, replacing_id):
         try:
             cadet_duty = next((cd for cd in self.cadet_duties if cd.cadet.id == replaced_id), None)
@@ -201,8 +206,15 @@ class Duty(db.Model):
         except Exception as e:
             raise Exception(f"Internal server error: {str(e)}")
 
-    def create_replacement(self, type_id=3, comment="Commentary placeholder", start_date=None, end_date=None):
-        ...
+    '''def create_replacement(self, replaced_id, replacing_id, replacement_doc_data, commentary="Commentary placeholder"):
+        role_id = next((cd.duty_role_id for cd in self.cadet_duties if cd.cadet_id == replaced_id), None)
+        replacement = DutyReplacement(duty_id=self.id,
+                                      replaced_id=replaced_id, replacing_id=replacing_id,
+                                      duty_role_id=role_id, commentary=commentary)
+        if replacement_doc_data:
+            if not (replacement_doc_data['start_date']):  # and replacement_doc_data['doc_type_id']):
+                ...
+        return False'''
 
     # ------- methods --------
     @staticmethod
@@ -228,6 +240,9 @@ class Duty(db.Model):
             db.session.delete(cadet_duty)
             db.session.commit()
 
+    def get_cadet_by_role_id(self, role_id):
+        return next((cd.cadet for cd in self.cadet_duties if cd.duty_role_id == role_id), None)
+
     # ------- reserves --------
     @property
     def reserve_cadets(self):
@@ -240,12 +255,9 @@ class Duty(db.Model):
 
     # using cadet_id instead of role+priority
     def remove_reserve_cadet(self, cadet_id):
-        # with db.session.no_autoflush:
         reserve_cadet_duty = next((rc for rc in self.reserve_cadet_duties if rc.cadet_id == cadet_id), None)
         if reserve_cadet_duty:
             db.session.delete(reserve_cadet_duty)
-        # db.session.commit()
-        print('REMOVED))')
 
     def free_reserves(self):
         for reserve_cadet_duty in self.reserve_cadet_duties:
@@ -253,13 +265,13 @@ class Duty(db.Model):
 
     '''def fill_reserves(self):
         ...'''
-
-    # similar to the 'reserve' prop in get_cadets_with_roles_and_reserves() method, consider removing
+    # reserves (not reservers) sorted by their priority
     def get_reserves_for_role(self, duty_role_id):
         reserves = []
         for reserve_cadet_duty in self.reserve_cadet_duties:
             if reserve_cadet_duty.duty_role_id == duty_role_id:
-                reserves.append(reserve_cadet_duty.cadet)
+                #reserves.append(reserve_cadet_duty.cadet)
+                reserves.append(reserve_cadet_duty)
         return sorted(reserves, key=lambda x: reserve_cadet_duty.priority)
 
     def get_cadets_with_roles(self):
@@ -282,21 +294,26 @@ class Duty(db.Model):
             } for cadet_duty in self.cadet_duties
         ]
 
-    def to_dict(self):  # assume the detailed dict is used for editing a duty
+    def to_dict(self):
+        # assume the detailed dict is used for when editing a duty
+        # EDIT we fetch reserves separately instead
         return {
             'id': self.id,
             'date': self.date.strftime('%Y-%m-%d'),
             'archived': self.archived,
+            'female_duty': self.female_duty,
             'location': self.duty_type.location.to_dict(),
             'duty_type': self.duty_type.to_dict(),
-            'cadets_with_roles': self.get_cadets_with_roles_and_reserves()
+            #'cadets_with_roles': self.get_cadets_with_roles_and_reserves()
+            'cadets_with_roles': self.get_cadets_with_roles()
         }
 
-    def to_table_dict(self):  # a short dict for the table filling requests
+    def to_dict_short(self):  # a short dict for the table filling requests
         return {
             'id': self.id,
             'date': self.date.strftime('%Y-%m-%d'),
             'archived': self.archived,
+            'female_duty': self.female_duty,
             # 'roles_with_cadets': self.get_roles_with_cadets()
             'cadets_with_roles': self.get_cadets_with_roles()
         }
@@ -402,22 +419,39 @@ class Cadet(db.Model):
     duties = relationship('Duty', secondary='cadet_duty', back_populates='cadets', lazy='dynamic')
     reserves = relationship('ReserveCadetDuty', back_populates='cadet', lazy='dynamic')
 
+    replaced_replacements = relationship(
+        'DutyReplacement',
+        foreign_keys='DutyReplacement.replaced_id',
+        back_populates='replaced_cadet', lazy='dynamic'
+    )
+    replacing_replacements = relationship(
+        'DutyReplacement',
+        foreign_keys='DutyReplacement.replacing_id',
+        back_populates='replacing_cadet', lazy='dynamic'
+    )
+
+    replacements = relationship('DutyReplacement', secondary='duty_replacements',
+                                        primaryjoin='DutyReplacement.replaced_id==Cadet.id',
+                                        secondaryjoin='DutyReplacement.replacing_id==Cadet.id',
+                                        lazy='dynamic')
     # statistics props
-    def get_future_duties(self):
+    @property
+    def future_duties(self):
         return self.duties.filter(Duty.archived == False).order_by(Duty.date).all()
 
     # todo: may remove duty.archived check since reserves for archived duties are deleted
-    def get_future_reserves(self):
-        return db.session.query(ReserveCadetDuty).join(Duty).filter(ReserveCadetDuty.cadet_id == self.id)\
-            .filter(Duty.archived == False).order_by(Duty.date).all()
-
     @property
-    def replaced_count(self):
-        return db.session.query(DutyReplacement).filter_by(replacing_id=self.id).count()
+    def future_reserves(self):
+        return db.session.query(ReserveCadetDuty).join(Duty).filter(ReserveCadetDuty.cadet_id == self.id).filter(
+            Duty.archived == False).order_by(Duty.date).all()
 
-    @property
-    def was_replaced_count(self):
-        return db.session.query(DutyReplacement).filter_by(replaced_id=self.id).count()
+    def replaced_by_date_count(self, start_date, end_date):
+        return self.replacing_replacements.filter(
+            DutyReplacement.creation_date >= start_date, DutyReplacement.creation_date <= end_date).count()
+
+    def was_replaced_by_date_count(self, start_date, end_date):
+        return self.replaced_replacements.filter(
+            DutyReplacement.creation_date >= start_date, DutyReplacement.creation_date <= end_date).count()
 
     def to_dict(self):
         return {

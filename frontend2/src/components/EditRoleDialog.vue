@@ -68,12 +68,11 @@
             </template>
 
           <template v-slot:[`item.1`]>
-
           <div class="text-h6 text-medium-emphasis font-weight-regular">
             Из резерва:
           </div>
 
-          <div v-if="selectedCadetData['reserve'].length === 0 || selectedCadetData['reserve'] === undefined" >
+          <div v-if="reserveCadets.length === 0 || !reserveCadets" >
             <v-container class=" text-center">
               <div class="text-h8 font-weight-regular text-medium-emphasis">
                 Ой! Для этого курсанта нет резервов.<br>
@@ -85,7 +84,7 @@
             <v-container>
               <v-row class="justify-content-center">
                 <v-col
-                  v-for="(reserve_cadet_data, i) in selectedCadetData['reserve']"
+                  v-for="(reserve_cadet_data, i) in reserveCadets"
                   :key="i"
                   cols="auto"
                   md="4"
@@ -223,8 +222,7 @@
                   auto-apply
                   class="w-25"
                   style="min-width:155px"
-
-                  :min-date="new Date()"
+                  :min-date="new Date(selectedDutyData['date'])"
                 ></VueDatePicker>
               <div v-if="show_end_date">
                 <VueDatePicker
@@ -235,8 +233,7 @@
                   auto-apply
                   class="w-25"
                   style="min-width:155px"
-
-                  :min-date="new Date(Date.now() + 86400000)"
+                  :min-date="new Date().setDate(new Date(selectedDutyData['date']).getDate() + 1)"
                 ></VueDatePicker>
               </div>
               <v-btn
@@ -248,7 +245,7 @@
               </v-btn>
             </div>
 
-            </div>
+          </div>
 
             <!--v-date-picker
               v-model="date"
@@ -318,7 +315,7 @@ export default {
       type: Number,
       required: true
     },
-    selectedDuty:{
+    selectedDutyData:{
       type: Object,
       required: true
     },
@@ -331,7 +328,8 @@ export default {
     return{
       search: '',
       loading: false,
-      suitableCadets: null,
+      suitableCadets: [],
+      reserveCadets: [],
       //isConfirmed: false,
       step: 1,
       confirmedCadet: null,
@@ -425,9 +423,11 @@ export default {
       this.startDate = new Date()
       this.endDate = null
       this.selectedVariant = 'Болезнь'
+      /*this.suitableCadets=[]
+      this.reserveCadets=[]*/
     },
 
-    async fetchSuitableCadets() {
+    async fetchReservesAndSuitableCadets() {
       try {
         console.log('FETCHING SUITABLES IN EDITrOLEdIaLOG')
         console.log('for duty id:', this.selectedDutyId)
@@ -438,9 +438,10 @@ export default {
         params.append('role_id', this.selectedCadetData['role']['id']);
 
         const response = await DutyDataService.getSuitableReserves(this.selectedDutyId, this.selectedCadetData['role']['id'])
-        this.suitableCadets = await response
+        this.suitableCadets = await response['suitable_cadets']
+        this.reserveCadets = await response['reserves']
         console.log('SUITABLES: ', await response)
-        this.suitableCadets = await response
+        //this.suitableCadets = await response
       } catch (error) {
         console.error(error);
       } finally {
@@ -527,7 +528,7 @@ export default {
         if(this.selectedCadetData['role']){
           console.log('Selected Cadet data in the Dialog:')
           console.log(this.selectedCadetData)
-          await this.fetchSuitableCadets(this.selectedCadetData['role']['id']);
+          await this.fetchReservesAndSuitableCadets(this.selectedCadetData['role']['id']);
         }
         else{
           console.log('UUUUHHHH((((')
@@ -535,8 +536,25 @@ export default {
       },
       immediate: true
     },
-  }
+    // TODO: reserves are updated only when another cadet is chosen
+    // to update them each time the dialog opens consider using the dialog prop handler
+    // instead of the selectedCadetData one and clearing arrays with reserves in clearDialogData
 
+    /*dialog: {
+        async handler() {
+          if (this.dialog === true){
+            if(this.selectedCadetData['role']){
+              console.log('Selected Cadet data in the Dialog:')
+              console.log(this.selectedCadetData)
+              await this.fetchReservesAndSuitableCadets(this.selectedCadetData['role']['id']);
+            }
+            else{
+              console.log('UUUUHHHH((((')
+            }
+          }
+        }
+    }*/
+  }
 }
 </script>
 

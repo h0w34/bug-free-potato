@@ -2,6 +2,17 @@
 import http from '../http-common';
 
 class DutyDataService {
+
+  async unlockDutyById(dutyId) {
+    try {
+      const response = await http.post(`duties/${dutyId}/unlock`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
   // Get duties for a specified location
   async getDutiesByLocations(locationIds) {
     try {

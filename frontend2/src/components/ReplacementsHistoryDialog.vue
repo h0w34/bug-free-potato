@@ -1,6 +1,6 @@
 <template>
   <v-card
-    class="rounded-xl"
+    class="rounded-xl pb-2"
     color="grey-lighten-5"
   >
       <v-card-title class="d-flex justify-space-between align-center">
@@ -19,7 +19,7 @@
               <!--h5>Ой! Возникла ошибка во время <br>
               загрузки замен. Попробуйте позже.</h5-->
               <h5>В этих сутках еще не было замен. <br>
-              Чтобы начать, выберите одного из бедолаг.</h5>
+              Чтобы начать, выберите одного из везунчиков.</h5>
           </div>
           <div v-else-if="loading">
             <v-list v-for="index in 2" :key="index">
@@ -108,7 +108,7 @@
             </v-expansion-panel>
           </v-expansion-panels-->
       </v-card-text>
-      <v-divider class="mx-8 mb-4"/>
+      <v-divider class="mx-8 mt-0 mb-4"/>
   </v-card>
 
 </template>

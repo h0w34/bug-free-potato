@@ -11,7 +11,11 @@ from .services import generate_schedule, delete_duties, update_reserves
 from collections import defaultdict
 
 from flask import request
-from flask_jwt_extended import jwt_required
+#from flask_jwt_extended import jwt_required
+
+from .helpers import lock_duty, unlock_duty, is_locked_by
+
+from app.users.models import User
 
 
 # TODO: user roles handling
@@ -21,8 +25,8 @@ class DutiesHomeResource(Resource):
     # return the schedule for a specified location
     # the main api: all the logic about the Roles etc. (is) must be implemented here
     # returns a schedule for a specific user grouped by locations and types
-    duties_get_args = reqparse.RequestParser()
-    duties_get_args.add_argument('location_ids', type=int)
+    parser = reqparse.RequestParser()
+    parser.add_argument('location_ids', type=int)
 
     def get(self):
         # assume the locations are fetched either by main_location in Cadet
@@ -47,7 +51,7 @@ class DutiesHomeResource(Resource):
                 day = duty.date.day
                 duties_by_location_type[location_id][duty_type_id].setdefault(year, defaultdict(dict))
                 duties_by_location_type[location_id][duty_type_id][year].setdefault(month, defaultdict(dict))
-                duties_by_location_type[location_id][duty_type_id][year][month][day] = duty.to_table_dict()
+                duties_by_location_type[location_id][duty_type_id][year][month][day] = duty.to_dict_short()
 
         response_data = {'locations': []}
         for location_id in location_ids:
@@ -56,7 +60,7 @@ class DutiesHomeResource(Resource):
             location_data['duty_types'] = []
             for duty_type_id, data in duties_by_location_type[location_id].items():
                 # print(duty_type_id, data)
-                duty_type = DutyType.query.get(duty_type_id).to_table_dict()
+                duty_type = DutyType.query.get(duty_type_id).to_dict_short()
                 duties = {}
                 for year, months in data.items():
                     for month, days in months.items():
@@ -68,24 +72,24 @@ class DutiesHomeResource(Resource):
         return jsonify(response_data)
 
     def generateDuties(self):
-        duties_generate_args = reqparse.RequestParser()
-        duties_generate_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
-        duties_generate_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
-        duties_generate_args.add_argument('location_ids', type=list)
-        duties_generate_args.add_argument('duty_type_ids', type=list)
+        parser = reqparse.RequestParser()
+        parser.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
+        parser.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
+        parser.add_argument('location_ids', type=list)
+        parser.add_argument('duty_type_ids', type=list)
         args = {}  # duties_generate_post_args.parse_args()
         result = generate_schedule(args['start_date'], args['end_date'], args['location_ids'], args['duty_type_ids'])
         print(result)
         return result
 
     def post(self):
-        duties_post_args = reqparse.RequestParser()
-        duties_post_args.add_argument('date', type=str, required=True)
-        duties_post_args.add_argument('location_id', type=int)
-        duties_post_args.add_argument('duty_type_id', type=int, required=True)
-        duties_post_args.add_argument('cadet_roles_ids', type=list, required=True)
+        parser = reqparse.RequestParser()
+        parser.add_argument('date', type=str, required=True)
+        parser.add_argument('location_id', type=int)
+        parser.add_argument('duty_type_id', type=int, required=True)
+        parser.add_argument('cadet_roles_ids', type=list, required=True)
 
-        args = duties_post_args.parse_args()
+        args = parser.parse_args()
         duty_date = args['date']
         # Check if duty for the date already exists
         if Duty.query.filter_by(date=duty_date).first():
@@ -106,12 +110,13 @@ class DutiesHomeResource(Resource):
         return {'message': f'Successfully created a duty at f{duty_date}'}, 201
 
     def delete(self):
-        duties_delete_args = reqparse.RequestParser()
-        duties_delete_args.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
-        duties_delete_args.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
-        duties_delete_args.add_argument('location_ids', type=list)
-        duties_delete_args.add_argument('duty_type_ids', type=list)
-        args = duties_delete_args.parse_args()
+        parser = reqparse.RequestParser()
+        parser.add_argument('start_date', type=str, help='Start date of the duty in ISO 8601 format')
+        parser.add_argument('end_date', type=str, help='Start date of the duty in ISO 8601 format')
+        parser.add_argument('location_ids', type=list)
+        parser.add_argument('duty_type_ids', type=list)
+        args = parser.parse_args()
+
         result = delete_duties(args['start_date'], args['end_date'], args['location_ids'], args['duty_type_ids'])
         print(result)
 
@@ -140,14 +145,39 @@ duty_get_args.add_argument('location_id', type=int, required=True)
 class DutyResource(Resource):
     def get(self, duty_id):
         duty: Duty = get_object_or_404(Duty, id=duty_id)
+
+        if duty.locked:
+            # heck if it's the editing user updating his layout
+            mock_user = User.query.first()
+            if is_locked_by(duty_id, mock_user.id):
+                return duty.to_dict()
+            else:
+                '''print('Error 423: trying to modify a locked duty')
+                abort(423, message="The duty is currently being modified!")'''
+                # TODO: consider separating editing and fetching info apis
+                return duty.to_dict(), 423
+
+        mock_user = User.query.first()
+        print(f'> Duty {duty_id} locked by {mock_user.id}')
+        lock_duty(duty_id, mock_user.id)
+
         return duty.to_dict()
 
     # used only to update reserves??
     def put(self, duty_id):
         args = duty_put_args.parse_args()
         duty: Duty = get_object_or_404(Duty, id=duty_id)
+
         if duty.archived:
+            print('Error 404: trying to modify an archived duty')
             abort(400, message="Can't modify an archived duty.")
+
+        elif duty.locked:
+            # TODO get the actual user identity
+            mock_user = User.query.first()
+            if not is_locked_by(duty_id, mock_user.id):
+                print('Error 423: trying to modify a locked duty')
+                abort(423, message="The duty is currently being modified!")
 
         pprint.pprint(args)
         replaced_cadet = get_object_or_404(Cadet, id=args['replaced_id'])
@@ -191,7 +221,6 @@ class DutyResource(Resource):
                     abort(400, message="Whoah! This doc wont work! It's useless.")
                     print('doc error')
 
-
             # TODO: allow not to specify the end date
 
             doc = ReplacementDoc(cadet_id=args['replaced_id'], start_date=start_date,
@@ -219,13 +248,22 @@ class DutyResource(Resource):
             abort(500, message='Failed to delete duty')
 
 
+class UnlockDutyResource(Resource):
+    def post(self, duty_id):
+        # TODO use the current user identity instead
+        mock_user = User.query.first()
+        print(f'> Duty {duty_id} unlocked by {mock_user.id}')
+        unlock_duty(duty_id, mock_user.id)
+        return {'message': f'Duty {duty_id} unlocked successfully'}, 200
+
+
 # TODO: implement for real
 # for now assume that only cadets from the same location are available
-# /api/duty/<id>/reserves
+# /api/duty/<id>/reserves, role_id in query
 class SuitableReservesResource(Resource):
     def get(self, duty_id):
         print('GETTING RESERVES FOR DUTY_ID: ', duty_id)
-        duty: Duty = Duty.query.get_or_404(id=duty_id)
+        duty: Duty = Duty.query.get_or_404(duty_id)
         role_id = request.args.get('role_id')
         try:
             role_id = int(role_id)
@@ -235,17 +273,27 @@ class SuitableReservesResource(Resource):
         if role_id not in [role.id for role in duty.duty_roles]:
             return {'message': 'No role provided to find suitable reserves. Check your request args!'}, 400
 
+        '''cadet = duty.get_cadet_by_role_id(role_id)
+        if not cadet:
+            abort(400, message='No cadet assigned to this role yet')'''
+
         cadets = Cadet.query.all()
         permitted_pm_cells = [cadet_duty.cadet.pm_cell_id for cadet_duty in duty.cadet_duties if
                               cadet_duty.duty_role.id != role_id]
         # print('PERMITTED: ', permitted_pm_cells)
+        # todo some hard logic to find the suitable ones
         suitable_cadets = []
         for cadet in cadets:
             if cadet.pm_cell_id not in permitted_pm_cells and cadet not in duty.reserve_cadets:
                 suitable_cadets.append(cadet.to_dict())
 
-        print(f'Got {len(suitable_cadets)} reserves!')
-        return jsonify(suitable_cadets)
+        reserves = duty.get_reserves_for_role(role_id)
+
+        print(f'Got {len(suitable_cadets)} suitables and {len(reserves)} reserves for role_id {role_id}!')
+        return jsonify({
+            'reserves': [reserve.to_dict() for reserve in reserves],
+            'suitable_cadets': suitable_cadets
+        })
 
 
 class ReplacementsHistoryResource(Resource):

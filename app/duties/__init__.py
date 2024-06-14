@@ -3,7 +3,7 @@ from flask_restful import Api
 from flask import request, jsonify
 
 from .api import DutiesHomeResource, DutyResource, DutyTypesApi, SuitableReservesResource, LocationsApi, \
-    ReplacementsHistoryResource
+    ReplacementsHistoryResource, UnlockDutyResource
 from .views import some_view
 
 duties_bp = Blueprint('duties', __name__)
@@ -18,6 +18,7 @@ def simple():
 
 api.add_resource(DutiesHomeResource, '/duties')
 api.add_resource(DutyResource, '/duties/<duty_id>')
+api.add_resource(UnlockDutyResource, '/duties/<duty_id>/unlock')
 api.add_resource(SuitableReservesResource, '/duties/<duty_id>/reserves')
 api.add_resource(ReplacementsHistoryResource, '/duties/<duty_id>/replacements')
 api.add_resource(DutyTypesApi, '/duty-types/<duty_type_ids>')

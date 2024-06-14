@@ -58,7 +58,8 @@
     //components:{editRoleDialog}
     props:{
       cadetData:{
-        type: Array
+        type: Object,
+        required: true
       }
     },
     data(){
