@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import ScheduleList from "@/components/ScheduleList";
+import ScheduleList from "@/components/schedule/ScheduleList";
 
 export default {
   name: "ArchivePage",

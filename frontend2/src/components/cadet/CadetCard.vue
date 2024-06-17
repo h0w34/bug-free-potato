@@ -1,4 +1,5 @@
-    <template>
+ Used as reserve cadet card as well
+<template>
       <!--v-card
         class="mx-auto rounded-xl"
         max-width="344"
@@ -12,17 +13,40 @@
       >
 
         <v-card-title class="d-flex justify-content-between">
-            <div class="mr-1" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis' }">{{cadetData['name'] + ' ' + cadetData['surname']}}</div>
+            <!--div class="mr-1 mt-1" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis', lineHeight: '1.2em'}">
+              {{cadetData['name'] + ' ' + cadetData['surname']}}
+            </div-->
+            <div class="mr-1 mt-1" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis', lineHeight: '1.2em'}">
+              <div>{{ cadetData['name'] }}</div>
+              <div>{{ cadetData['surname'] }}</div>
+            </div>
+
             <div v-if="cadetData['priority']">
             <v-badge color="grey-darken-1" inline :content="cadetData['priority']+'-й'"></v-badge>
-          </div>
+            </div>
+            <div v-else>
+              <v-chip
+                size="x-small"
+                color="secondary"
+                label
+                variant="outlined"
+              >
+                {{cadetData['faculty']}}
+              </v-chip>
+            </div>
         </v-card-title>
 
         <v-card-subtitle>
-          <div class="text-h8">
+          <router-link v-if="cadetData['username'] !== undefined && cadetData['username']"
+                :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
+                :to="{ name: 'user', params: { username: cadetData['username'] } }" style="color:#00406b; text-decoration: none">
+              {{'@'+cadetData['username']}}
+          </router-link>
+          <div v-else class="text-h8" :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}">
             {{"@sobakayasobaka"}}
           </div>
-          {{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}
+
+          <div>{{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
         </v-card-subtitle>
 
         <v-divider class="mx-2 mb-2"/>

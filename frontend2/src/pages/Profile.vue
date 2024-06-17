@@ -1,231 +1,266 @@
 <template>
+  <EditDutyDialog
+      :dialog="dutyDialog"
+      :selected-duty="selectedDuty"
+      :selected-duty-id="selectedDuty['id']"
+      @close="closeDutyDialog()"
+  />
   <div class="d-flex justify-content-center p-5">
     <!-- v-skeleton-loader type="paragraph@3"/-->
-    <v-row class="justify-content-center gap-3">
+    <v-row class="justify-content-center gap-lg-3">
       <v-col cols="auto" >
-          <v-card class="mb-2 rounded-xl py-5 px-4 pt-2"
-            min-width="500"
-            min-height="400"
-            max-width="470"
+          <v-skeleton-loader
+            :loading="loading"
+            width="470"
+            type="article@4"
           >
-            <div class="text-h5 mt-2">
-              Статистика 📈
-            </div>
-          <v-divider/>
-            <h4 class="m-1 mb-3 text-light-emphasis">За месяц:</h4>
-              <v-row>
-                <v-col cols="6">
-                  <div
-                    style="border: 3px solid #eaebf1"
-                    class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-                  >
-                    <h4>🗓️️</h4>
-                    <h5 style="font-size: 1.2rem" class="align-self-center">Суток за месяц:</h5>
-                    <h3 class="mr-2 align-self-center">3</h3>
-                  </div>
-                </v-col>
-                <v-col cols="6">
-                  <div
-                        style="border: 3px solid #eaebf1;"
-                        class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-                    >
-                      <h4>💤️</h4>
-                      <h5 style="font-size: 1.2rem" class="align-self-center">Суток на сб/вс:</h5>
-                      <h4 class="mr-2 align-self-center">15</h4>
-                  </div>
-                </v-col>
-              </v-row>
-              <v-row class="mb-2">
-                <v-col cols="6">
-                  <div
-                        style="border: 3px solid #eaebf1; "
-                        class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-
-                    >
-                      <h4>💫️</h4>
-                      <h5  style="font-size: 1.2rem" class="align-self-center">Заменил:</h5>
-                      <h4 class="mr-2">15</h4>
-                  </div>
-                </v-col>
-                <v-col cols="6">
-                  <div
-                        style="border: 3px solid #eaebf1; "
-                        class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-                    >
-                      <h4>💀️</h4>
-                      <h5 style="font-size: 1.2rem" class="align-self-center">Заменён:</h5>
-                      <h4 class="mr-2">15</h4>
-                  </div>
-                </v-col>
-              </v-row>
-
-
-            <h4 class="m-1 mb-3 text-light-emphasis">За текущий год:</h4>
-              <v-row>
-                <v-col cols="6">
-                  <div
-                    style="border: 3px solid #eaebf1"
-                    class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-                  >
-                    <h4>🗓️️</h4>
-                    <h5 style="font-size: 1.2rem" class="align-self-center">Суток в 2024:</h5>
-                    <h4 class="mr-2">3</h4>
-                  </div>
-                </v-col>
-                <v-col cols="6">
-                  <div
-                        style="border: 3px solid #eaebf1;"
-                        class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-                    >
-                      <h4>🛏️️</h4>
-                      <h5 style="font-size: 1.2rem" class="align-self-center">Суток на сб/вс:</h5>
-                      <h4 class="mr-2">15</h4>
-                  </div>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="6">
-                  <div
-                        style="border: 3px solid #eaebf1; "
-                        class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-                    >
-                      <h4>🪃</h4>
-                      <h5 style="font-size: 1.2rem" class="align-self-center">Заменил:</h5>
-                      <h4 class="mr-2">15</h4>
-                  </div>
-                </v-col>
-                <v-col cols="6">
-                  <div
-                        style="border: 3px solid #eaebf1;"
-                        class="rounded-xl pa-3 pb-2 text-truncate gap-2 align-center text-wrap d-flex"
-                    >
-                      <h4>⚰</h4>
-                      <h5 style="font-size: 1.2rem" class="align-self-center">Заменён:</h5>
-                      <h4 class="mr-2">15</h4>
-                  </div>
-                </v-col>
-              </v-row>
-            </v-card>
-
+            <v-card class="mb-2 rounded-xl py-5 px-4 pt-2"
+              min-height="400"
+              max-width="480"
+              :elevation="2diai"
+            >
+              <div class="text-h5 mt-2">
+                Статистика 📈
+              </div>
+            <v-divider/>
+              <h4 class="m-1 mb-3 text-light-emphasis">За месяц:</h4>
+                <v-row>
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="🗓️️"
+                      text="Суток за месяц"
+                      :num="userStatistics['stats']['current_month']['duties_count']"
+                    />
+                  </v-col>
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="💤"
+                      text="Суток на сб/вс"
+                      :num="userStatistics['stats']['current_month']['weekend_duties_count']"
+                    />
+                  </v-col>
+                </v-row>
+                <v-row class="mb-2">
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="💫️"
+                      text="Заменил"
+                      :num="userStatistics['stats']['current_month']['replaced_count']"
+                    />
+                  </v-col>
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="💀"
+                      text="Заменён"
+                      :num="userStatistics['stats']['current_month']['was_replaced_count']"
+                    />
+                  </v-col>
+                </v-row>
+              <h4 class="m-1 mb-3 text-light-emphasis">За текущий год:</h4>
+                <v-row>
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="🗓"
+                      text="Суток за год"
+                      :num="userStatistics['stats']['current_year']['duties_count']"
+                    />
+                  </v-col>
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="🛏️️"
+                      text="Суток на сб/вс"
+                      :num="userStatistics['stats']['current_year']['weekend_duties_count']"
+                    />
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="🪃️"
+                      text="Заменил"
+                      :num="userStatistics['stats']['current_year']['replaced_count']"
+                    />
+                  </v-col>
+                  <v-col cols="auto">
+                    <stats-chip
+                      emoji="🪦"
+                      text="Заменён"
+                      :num="userStatistics['stats']['current_year']['was_replaced_count']"
+                    />
+                  </v-col>
+                </v-row>
+              </v-card>
+          </v-skeleton-loader>
         <!--v-skeleton-loader type="paragraph@3"/-->
       </v-col>
       <v-col cols="auto">
-        <v-card class="py-3 rounded-xl" >
-          <div class="text-center px-5">
-            <v-avatar
-              class="ma-3"
-              size="150"
-            >
-              <v-img
-                alt="doggy"
-                src="https://i.ytimg.com/vi/4tlzDBFEg8c/maxresdefault.jpg"
-              ></v-img>
-            </v-avatar>
-            <v-card-title>
-              <div>
-              <h2 class="mb-0">Иван Иванов</h2>
-              <div class="text-medium-emphasis" @click="navigateToUserPage">
-               @somenickname
+        <v-skeleton-loader
+          :loading="loading"
+          height="500"
+          width="300"
+          type="card, paragraph, paragraph"
+        >
+          <v-card class="py-3 rounded-xl"
+            min-width="330"
+            :elevation="2"
+          >
+            <div class="text-center px-5">
+              <v-avatar
+                class="ma-3"
+                size="150"
+              >
+                <v-img
+                  alt="doggy"
+                  :src="require('../../public/default_avatar.gif')"
+                ></v-img>
+              </v-avatar>
+              <v-card-title>
+                <div>
+                <h2 class="mb-0">
+                  {{user['cadet']['name'] + ' ' + user['cadet']['surname']}}
+                </h2>
+                <div class="text-medium-emphasis" @click="navigateToUserPage">
+                 {{'@'+username}}
+                </div>
               </div>
+              </v-card-title>
             </div>
-            </v-card-title>
-          </div>
-          <v-divider class="mx-10 my-2"/>
-          <div class="px-3 mx-0">
-              <div>
-                <v-list class="d-flex justify-content-start">
-                  <v-list-item>
-                    <h6 class="mb-1"
-                    >🎖️ Рядовой полиции</h6>
-                    <h6 class="mb-1">🫂 913 взвод</h6>
-                    <h6 class="mb-3">👨‍💻 ФПСОИБ</h6>
-
-                    <div class="gap-1 d-flex">
-                      <div><v-chip color="danger">старожил</v-chip></div>
-                      <div><v-chip color="secondary">пожилой</v-chip></div>
-                    </div>
-                  </v-list-item>
-                </v-list>
+            <v-divider class="mx-10 my-2"/>
+            <div class="px-3 mx-0">
+                <div>
+                  <v-list class="d-flex justify-content-start">
+                    <v-list-item>
+                      <h6 class="mb-1"
+                      >{{ '🎖️ '+ user['cadet']['rank']+' полиции' }}</h6>
+                      <h6 class="mb-1">{{'🫂 '+ user['cadet']['group'] +' взвод'}}</h6>
+                      <h6 class="mb-1">{{'⚓ '+ user['cadet']['course'] +'-й курс'}}</h6>
+                      <h6 class="mb-3">{{ '👨‍💻 ' + user['cadet']['faculty'] }}</h6>
+                      <div class="gap-1 d-flex">
+                        <div><v-chip color="danger">старожил</v-chip></div>
+                        <div><v-chip color="secondary">пожилой</v-chip></div>
+                      </div>
+                    </v-list-item>
+                  </v-list>
+                </div>
               </div>
-            </div>
-        </v-card>
+          </v-card>
+        </v-skeleton-loader>
       </v-col>
 
       <v-col cols="auto">
-        <v-card
-        class="rounded-xl px-3 py-0"
-        min-width="500"
+        <v-skeleton-loader
+          :loading="loading"
+          width="470"
+          type="paragraph@8"
         >
-        <div class="p-3">
-          <span class="text-h5">Ближайшие сутки</span>
-          <v-divider/>
-          <v-expansion-panels
-                v-for="i in 3"
-                :key="i"
-              >
-                <v-expansion-panel class="rounded-3 mb-3">
-                  <v-expansion-panel-title>
-                    <v-container class="pa-0 d-flex justify-content-between align-center">
+          <v-card
+            class="rounded-xl px-3 py-0"
+            width="490"
+            :elevation="2"
+          >
+            <div class="p-3">
+              <span class="text-h5">Ближайшие сутки</span>
+              <v-divider/>
+              <v-expansion-panels
+                    v-for="(dutyData, i) in userStatistics['future_duties']"
+                    :key="i"
+                    :readonly="true"
+                  >
+                    <v-expansion-panel class="rounded-3 mb-3"
+                      @click="openDutyDialog(dutyData)"
+                    >
+                      <v-expansion-panel-title class="pl-5 pr-4" disable-icon-rotate>
+                        <template v-slot:actions>
+                          <!--v-icon
+                              color="grey"
+                              icon="mdi-information"
+                              class="mx-0 px-0"
+                          >
+                          </v-icon-->
+                        </template>
+                        <v-container class="pa-0 d-flex justify-content-between align-center">
+                          <div class="d-flex text-truncate align-center">
+                            <v-chip
+                              color="secondary"
+                              variant="outlined"
+                                label
+                              density="compact"
+                              class="d-flex mr-2 py-3 justify-content-start"
+                            >
+                              <div class="mr-2 text-h6 font-weight-light">{{formattedDate(dutyData['duty']['date'])['day']}}</div>
+                              <div >{{ formattedDate(dutyData['duty']['date'])['month']}}</div>
+                            </v-chip>
 
-                      <div class="d-flex text-truncate">
-                        <div>05 Мая, </div>
-                        <div>Волгина 12</div>
-                      </div>
-                      <div class="d-flex align-center">
+                            <div class="ml-1 mr-2"> | </div>
+                            <div>{{ dutyData['duty']['location']['name']}}</div>
+                          </div>
+                          <div class="d-flex align-center">
+                            <v-chip
+                              color="secondary"
+                              variant="tonal"
+                              label
+                              class="mx-2 d-flex justify-content-center"
+                              style="min-width: 100px"
+                            >
+                              {{ dutyData['role']['name'] }}
+                            </v-chip>
+                          </div>
+                        </v-container>
+                      </v-expansion-panel-title>
 
-                        <v-chip
-                          color="secondary"
-                          variant="tonal"
-                          label
-                          class="mx-2"
-                        >
-                          Помдеж
-                        </v-chip>
-                      </div>
-                    </v-container>
-                  </v-expansion-panel-title>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+              <v-divider/>
 
-                  <v-expansion-panel-text>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                  </v-expansion-panel-text>
-                </v-expansion-panel>
-              </v-expansion-panels>
-          <v-divider/>
-          <span class="text-h5">Текущие замены</span>
-          <v-divider/>
-          <v-expansion-panels
-                v-for="i in 3"
-                :key="i"
-              >
-                <v-expansion-panel class="rounded-3 mb-3">
-                  <v-expansion-panel-title>
-                    <v-container class="pa-0 d-flex justify-content-between align-center">
+              <span class="text-h5">Текущие резервы</span>
+              <v-divider/>
+              <v-expansion-panels
+                    v-for="(reserveData, i) in userStatistics['future_reserves']"
+                    :key="i"
+                  >
+                    <v-expansion-panel class="rounded-3 mb-3">
+                      <v-expansion-panel-title class="pl-5">
+                        <v-container class="pa-0 d-flex justify-content-between align-center">
+                          <div class="d-flex text-truncate align-center">
+                            <v-chip
+                              color="secondary"
+                              variant="outlined"
+                                label
+                              density="compact"
+                              class="d-flex mr-2 py-3 justify-content-start"
+                            >
+                              <div class="mr-2 text-h6 font-weight-light">{{formattedDate(reserveData['duty']['date'])['day']}}</div>
+                              <div >{{ formattedDate(reserveData['duty']['date'])['month']}}</div>
+                            </v-chip>
 
-                      <div class="d-flex ">
-                        <div>05 Мая, </div>
-                        <div>Волгина 12</div>
-                      </div>
-                      <div class="d-flex align-center">
+                            <div class="ml-1 mr-2"> | </div>
+                            <div>{{ reserveData['duty']['location']['name']}}</div>
+                          </div>
+                          <div class="d-flex align-center">
+                            <v-chip
+                              color="secondary"
+                              variant="tonal"
+                              label
+                              class="mx-2 d-flex justify-content-center"
+                              style="min-width: 100px"
+                            >
+                              {{ reserveData['role']['name'] }}
+                            </v-chip>
+                          </div>
+                        </v-container>
+                      </v-expansion-panel-title>
 
-                        <v-chip
-                          color="secondary"
-                          variant="tonal"
-                          label
-                          class="mx-2"
-                        >
-                          Помдеж
-                        </v-chip>
-                      </div>
-                    </v-container>
-                  </v-expansion-panel-title>
+                      <v-expansion-panel-text>
+                        <CadetCardSmall
+                          :cadet-data="reserveData['backed_up_cadet']"
+                        />
 
-                  <v-expansion-panel-text>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                  </v-expansion-panel-text>
-                </v-expansion-panel>
-              </v-expansion-panels>
-        </div>
-      </v-card>
+                      </v-expansion-panel-text>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+            </div>
+          </v-card>
+        </v-skeleton-loader>
       </v-col>
       <!--v-skeleton-loader type="paragraph@3"/-->
 
@@ -248,19 +283,81 @@
 
 <script>
 import router from "@/routers";
+import UserDataService from "@/services/UserDataService";
+import StatsChip from "@/components/user/StatsChip";
+import dateToString from "@/utils/date_utils";
+import CadetCardSmall from "@/components/cadet/CadetCardSmall";
+import EditDutyDialog from "@/components/schedule/EditDutyDialog";
 
 export default {
   name: "ProfilePage",
+  components: {EditDutyDialog, CadetCardSmall, StatsChip},
+  data(){
+    return {
+      dutyDialog: false,
+      selectedDuty: {},
+      error: false,
+      userData: null,
+      userStatistics: null,
+      loading: true
+    }
+  },
   props: {
-        username: {
-            type: String,
-            required: true
-        }
+      username: {
+          type: String,
+          required: true
+      }
     },
 
     methods: {
-      navigateToUserPage() {
-         router.push({ name: 'not', params: { username: 'johndoe' } });
+      openDutyDialog(dutyData){
+        this.selectedDuty = dutyData['duty'];
+        this.dutyDialog = true;
+      },
+      closeDutyDialog(){
+        this.dutyDialog = false;
+        this.selectedDuty = {};
+      },
+      formattedDate(date) {
+        return dateToString(new Date(date));
+      },
+        navigateToUserPage() {
+           router.push({ name: 'home', params: { username: 'johndoe' } });
+        },
+        async fetchUserData() {
+          if (this.username) {
+            try {
+              this.userData = await UserDataService.getUserByUsername(this.username)
+              //this.loading = false
+            } catch (error) {
+               this.error = true;
+            }
+          }
+        },
+      async fetchUserStatistics() {
+          if (this.username) {
+            try {
+              this.userStatistics = await UserDataService.getUserStatistics(this.username)
+              this.loading = false
+            } catch (error) {
+               this.error = true;
+            }
+          }
+      }
+    },
+    computed:{
+      user(){
+        return this.userData ? this.userData : {}
+      }
+    },
+    watch: {
+      username: {
+        handler(){
+          this.fetchUserData()
+          this.fetchUserStatistics()
+          console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
+        } ,
+        immediate: true
       }
     }
 }

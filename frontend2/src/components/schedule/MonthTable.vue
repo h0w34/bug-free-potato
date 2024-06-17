@@ -8,6 +8,8 @@
           class="justify-content-center"
           :items-per-page="-1"
           hide-default-footer
+          hover
+
         >
           <template v-slot:top>
             <v-toolbar
@@ -23,7 +25,6 @@
                 vertical
               ></v-divider-->
               <edit-duty-dialog
-                :headers="headers"
                 :selected-duty-id="selectedDutyId"
                 :selected-duty="selectedDuty"
                 :dialog="dialogVisible"

@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="localDialog" max-width="800" max-height="auto" persistent>
+  <v-dialog
+    v-model="localDialog"
+    max-width="800"
+    max-height="auto"
+    persistent
+  >
 
     <v-dialog v-model="movingDialog">
         <move-cadets-dialog/>
@@ -29,11 +34,19 @@
         ></v-progress-linear>
       </template>
 
-      <v-card-title class="d-flex justify-space-between align-center">
+      <v-card-title class="d-flex justify-space-between align-center mt-2 pb-0">
         <div class="text-h5 text-medium-emphasis ps-3">
           {{ currentTitle }}
         </div>
         <div>
+          <v-icon
+              class="mx-3"
+              size="small"
+              @click="toggleEditeMode()"
+              :disabled="!dutyData"
+            >
+              mdi-pencil
+            </v-icon>
           <v-btn
             variant="tonal"
             class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
@@ -53,7 +66,7 @@
         </div>
       </v-card-title>
 
-      <v-card-subtitle class="d-flex justify-space-between align-center">
+      <v-card-subtitle class="d-flex justify-space-between align-center pb-0">
         <div class="text-medium-emphasis ps-3">
           <h6>{{currentSubTitle}}</h6>
         </div>
@@ -81,7 +94,7 @@
                 cols="auto"
                 md="4"
               >
-              <role-card :cadet-data="cadet_data" :disabled="beingEdited" @edit="openRoleDialog"/>
+              <role-card :cadet-data="cadet_data" :disabled="beingEdited" @edit="openRoleDialog" :edite-mode="editeMode"/>
               </v-col>
             </v-row>
           </div>
@@ -110,17 +123,18 @@
         </v-container>
       </v-card-text>
       <v-divider class="mx-10 my-2"></v-divider>
-      <v-card-actions class="mx-3">
+      <v-card-actions class="mx-3 pr-5">
         <v-spacer></v-spacer>
         <div class="my-2">
-          <v-btn class="text-none"
+          <v-btn
+            class="text-none px-3"
             color="medium-emphasis"
             variant="outlined"
             @click="closeDialog"
           >
             {{error ? 'Отмена' : 'Выйти'}}
           </v-btn>
-          <v-btn v-if="!error && !beingEdited" class="text-none"
+          <v-btn v-if="!error && !beingEdited && editeMode" class="text-none"
             color="medium-emphasis"
             variant="outlined"
             @click="saveAndShowLoader"
@@ -134,9 +148,9 @@
 
 <script>
 import RoleCard from "@/components/cadet/RoleCard";
-import EditRoleDialog from "@/components/EditRoleDialog";
+import EditRoleDialog from "@/components/schedule/EditRoleDialog";
 import MoveCadetsDialog from "@/components/MoveCadetsDialog";
-import ReplacementsHistoryDialog from "@/components/ReplacementsHistoryDialog";
+import ReplacementsHistoryDialog from "@/components/schedule/ReplacementsHistoryDialog";
 import DutyDataService from "@/services/DutyDataService";
 //import EditRoleDialog from "@/components/EditRoleDialog";
 
@@ -145,10 +159,10 @@ export default {
   name: 'EditDutyDialog',
   components: {ReplacementsHistoryDialog, MoveCadetsDialog, EditRoleDialog, RoleCard},
   props: {
-    headers: {
+    /*headers: {
       type: Array,
       required: true
-    },
+    },*/
     selectedDuty: {
       type: Object,
       required: true,
@@ -160,7 +174,8 @@ export default {
     selectedDutyId: {
       type: Number,
       required: true
-    }
+    },
+
   },
   data() {
     return {
@@ -172,13 +187,13 @@ export default {
       roleDialog: false,
       movingDialog: false,
       replacementHistoryDialog: false,
-
+      editeMode: false,
       selectedCadetData: {},
 
-      monthNames: [
-          'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-          'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-      ]
+        monthNames: [
+            'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+            'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+        ]
 
     }
   },
@@ -192,7 +207,7 @@ export default {
       }
     },
     currentTitle () {
-      return 'Редактировать сутки'
+      return this.editeMode ? 'Редактировать сутки' : 'Информация о сутках'
     },
     currentSubTitle() {
       if (this.dutyData) {
@@ -200,11 +215,28 @@ export default {
         const day = date.getDate();
         const month = date.getMonth();
         const address = this.dutyData['location']['address'];
-        return `Изменение суток на ${day} ${this.monthNames[month]}, ${address}`;
+        const infoString = `${day} ${this.monthNames[month]}, ${address}`
+        return this.editeMode ? `Изменение суток на ${infoString}` : `Информация о сутках на ${infoString}`
       } else return '';
     }
   },
   methods: {
+    toggleEditeMode(){
+      if (this.editeMode){
+        this.saving = true;
+        setTimeout(()=>this.saving = false, 700)
+        this.editeMode = false;
+        this.unlockDuty();
+      }
+      else {
+        this.saving = true;
+        setTimeout(()=>this.saving = false, 700)
+        this.editeMode = true; // now cards will show the 'edite' buttons
+        this.lockDuty();
+      }
+
+
+    },
     showError(){
       this.error = true
     },
@@ -215,6 +247,7 @@ export default {
       this.roleDialog = false
       this.movingDialog = false
       this.replacementHistoryDialog = false
+      this.editeMode = false
     },
     async updateLayout(isUpdated){
       if(isUpdated){
@@ -228,8 +261,11 @@ export default {
     },
     closeDialog() {
       this.saving = false;
+
+      /*if (this.editeMode)*/
+        this.unlockDuty();
+
       this.clearDialogData()
-      this.unlockDuty();
       this.$emit('close');
     },
     closeRoleDialog(){
@@ -279,18 +315,35 @@ export default {
     async unlockDuty(){
       if(this.selectedDutyId){
         try {
-          await DutyDataService.unlockDutyById(this.selectedDutyId)
+          await DutyDataService.actionOnDutyById(this.selectedDutyId, 'unlock')
         } catch (error) {
           // TODO
+          console.log('ERROR UNLOCKING DUTY')
+          this.error=true;
+        }
+      }
+    },
+    async lockDuty(){
+      if(this.selectedDutyId){
+        try {
+          await DutyDataService.actionOnDutyById(this.selectedDutyId, 'lock')
+        } catch (error) {
+          console.log('ERROR LOCKING DUTY')
+          // TODO
+          this.error=true;
         }
       }
     }
+
   },
   watch: {
     selectedDutyId: {
       handler(){
         this.dutyData = null;
         console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
+/*        if (this.editeMode){
+          this.lockDuty()
+        }*/
         this.fetchDutyData();
       } ,
       immediate: true

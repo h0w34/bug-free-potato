@@ -6,12 +6,15 @@ import ProfilePage from '@/pages/Profile.vue'
 import ArchivePage from '@/pages/Archive.vue'
 import UserDataService from "@/services/UserDataService";
 import NotFoundPage from "@/components/NotFoundPage";
+import LoginPage from "@/pages/LoginPage";
+import signUpPage from "@/pages/SignUpPage";
 
 const routes = [
     {
         path: '/',
         name: 'home',
-        component: HomePage
+        component: HomePage,
+        meta: { requiresAuth: true, guest: false, navbar: true }
     },
     {
         path: '/create',
@@ -22,6 +25,7 @@ const routes = [
         path: '/users/:username',
         name: 'user',
         component: ProfilePage,
+        meta: { navbar: true },
         props: true,
          beforeEnter: async (to, from, next) => {
             try {
@@ -40,6 +44,18 @@ const routes = [
                 next({ name: 'not-found' });
             }
         }
+    },
+    {
+        path: '/login',
+        name: 'login',
+        component: LoginPage,
+        meta: { navbar: false }
+    },
+    {
+        path: '/signup',
+        name: 'signup',
+        component: signUpPage,
+        meta: { navbar: false }
     },
     {
         path: '/archive',

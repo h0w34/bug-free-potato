@@ -1,4 +1,3 @@
-// src/services/duty.service.js
 import http from '../http-common';
 
 class UserDataService {
@@ -12,6 +11,35 @@ class UserDataService {
     }
   }
 
+  async getUserStatistics(username) {
+    try {
+      const response = await http.get(`users/${username}/statistics`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  async deleteUser(username) {
+    try {
+      const response = await http.get(`users/${username}/statistics`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  async createUser(username) {
+    try {
+      const response = await http.get(`users/${username}/statistics`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
   // Update a duty
   /*async updateDuty(dutyId, replacedId, replacingId, commentary=null, replacement_doc=null) {
     try {

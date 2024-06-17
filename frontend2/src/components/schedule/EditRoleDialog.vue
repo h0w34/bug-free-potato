@@ -5,7 +5,7 @@
       max-height="auto"
     >
       <v-card max-height="700px" class="rounded-xl my-4" color="grey-lighten-5">
-        <v-card-title class="d-flex justify-space-between align-center">
+        <v-card-title class="d-flex justify-space-between align-center mt-1">
           <div class="d-flex align-center gap-3">
             <div class="text-h5 font-weight-regular text-medium-emphasis ps-3">Заменить курсанта</div>
             <v-chip
@@ -31,9 +31,7 @@
               type=" text, list-item, list-item, article, actions"
           />
           </v-container>
-
         </div>
-
         <div v-else>
           <v-stepper
             v-model="step"
@@ -68,9 +66,10 @@
             </template>
 
           <template v-slot:[`item.1`]>
-          <div class="text-h6 text-medium-emphasis font-weight-regular">
+          <div class="text-h6 text-medium-emphasis font-weight-regular ml-2">
             Из резерва:
           </div>
+          <v-divider class="mb-1 mt-2"/>
 
           <div v-if="reserveCadets.length === 0 || !reserveCadets" >
             <v-container class=" text-center">
@@ -98,7 +97,7 @@
 
           <v-divider></v-divider>
 
-          <div class="text-h6 text-medium-emphasis font-weight-regular">
+          <div class="text-h6 text-medium-emphasis font-weight-regular ml-2">
             Свободные курсанты:
           </div>
 
@@ -168,7 +167,7 @@
 
               <template v-slot:footer="{ page, pageCount, prevPage, nextPage }">
                 <v-divider />
-                <div class="d-flex align-center justify-center " >
+                <div class="d-flex align-center justify-center" style="user-select: none;">
                   <v-btn
                     :disabled="page === 1"
                     density="comfortable"
@@ -328,6 +327,7 @@ export default {
     return{
       search: '',
       loading: false,
+      error: false,
       suitableCadets: [],
       reserveCadets: [],
       //isConfirmed: false,
@@ -416,13 +416,14 @@ export default {
       this.$emit('close');
     },
     clearDialogData(){
-      this.step = 1; // Reset step to 1 when dialog is closed
-      this.isUpdated = false;
+      this.step = 1 // Reset step to 1 when dialog is closed
+      this.isUpdated = false
       this.confirmedCadet=null;
-      this.commentaryContents = '';
+      this.commentaryContents = ''
       this.startDate = new Date()
       this.endDate = null
       this.selectedVariant = 'Болезнь'
+      this.error = false
       /*this.suitableCadets=[]
       this.reserveCadets=[]*/
     },
@@ -443,6 +444,7 @@ export default {
         console.log('SUITABLES: ', await response)
         //this.suitableCadets = await response
       } catch (error) {
+        this.error = true;
         console.error(error);
       } finally {
         console.log('Disabling loading...')

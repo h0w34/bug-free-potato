@@ -243,6 +243,9 @@ class Duty(db.Model):
     def get_cadet_by_role_id(self, role_id):
         return next((cd.cadet for cd in self.cadet_duties if cd.duty_role_id == role_id), None)
 
+    def get_role_by_cadet_id(self, cadet_id):
+        return next((cd.duty_role for cd in self.cadet_duties if cd.cadet_id == cadet_id), None)
+
     # ------- reserves --------
     @property
     def reserve_cadets(self):
@@ -303,11 +306,12 @@ class Duty(db.Model):
             'archived': self.archived,
             'female_duty': self.female_duty,
             'location': self.duty_type.location.to_dict(),
-            'duty_type': self.duty_type.to_dict(),
+            #'duty_type': self.duty_type.to_dict(),
             #'cadets_with_roles': self.get_cadets_with_roles_and_reserves()
             'cadets_with_roles': self.get_cadets_with_roles()
         }
 
+    # todo: make it short for real
     def to_dict_short(self):  # a short dict for the table filling requests
         return {
             'id': self.id,
@@ -315,7 +319,8 @@ class Duty(db.Model):
             'archived': self.archived,
             'female_duty': self.female_duty,
             # 'roles_with_cadets': self.get_roles_with_cadets()
-            'cadets_with_roles': self.get_cadets_with_roles()
+            #'cadets_with_roles': self.get_cadets_with_roles(),
+            'location': self.duty_type.location.to_dict()
         }
 
     def from_dict(self, data):
@@ -364,11 +369,27 @@ class ReserveCadetDuty(db.Model):  # todo: may replacing it with the one below w
 
     UniqueConstraint('duty_id', 'cadet_id', 'duty_role_id', name='unique_reserve_cadet_duty')
 
-    def to_dict(self):  # reserve cadet dict + priority
+    def to_dict_short(self):  # reserve cadet dict + priority
         cadet_dict = {}
         cadet_dict.update(self.cadet.to_dict())
         cadet_dict['priority'] = self.priority
         return cadet_dict
+
+    def to_dict(self):
+        reserve_cadet_dict = {}
+        reserve_cadet_dict.update(self.cadet.to_dict())
+        reserve_cadet_dict['priority'] = self.priority
+
+        backed_up_cadet = self.duty.get_cadet_by_role_id(self.duty_role_id)
+        backed_up_cadet_dict = backed_up_cadet.to_dict() if backed_up_cadet else {}
+
+        return {
+            'id': self.id,
+            'duty': self.duty.to_dict_short(),
+            'reserve_cadet': reserve_cadet_dict,  # todo may be unnecessary
+            'backed_up_cadet': backed_up_cadet_dict,
+            'role': self.duty_role.to_dict()
+            }
 
     def delete(self):
         db.session.delete(self)
@@ -407,7 +428,7 @@ class Cadet(db.Model):
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
     main_location_id = Column(Integer, ForeignKey('locations.id'))
 
-    user = relationship('User', back_populates='cadet')
+    user = relationship('User', back_populates='cadet', uselist=False)
 
     rank = relationship('Rank')
     position = relationship('Position')
@@ -458,7 +479,10 @@ class Cadet(db.Model):
             'id': self.id,
             'name': self.name,
             'surname': self.surname,
+            'username': self.user.username if self.user else '',
             'pm_cell_id': self.pm_cell_id,
+            'position': self.position.position_name,
+            'rank': self.rank.rank_name,
             'faculty': self.faculty.name,
             'course': self.course_id,
             'group': self.group.name,

@@ -3,9 +3,9 @@ import http from '../http-common';
 
 class DutyDataService {
 
-  async unlockDutyById(dutyId) {
+  async actionOnDutyById(dutyId, action) {
     try {
-      const response = await http.post(`duties/${dutyId}/unlock`);
+      const response = await http.patch(`duties/${dutyId}`, {'action': action});
       return response.data;
     } catch (error) {
       console.error(error);

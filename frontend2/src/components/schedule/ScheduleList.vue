@@ -1,7 +1,7 @@
 <template>
     <!--h1>MocK.</h1-->
     <!--{{h2}}-->
-  <hr>
+
     <div v-if="!dutiesDataByYears">
       {{'Uh! Something went wrong when fetching the duties...'}}
     </div>
@@ -23,7 +23,7 @@
 <script>
 // the schedule must render a list of any duties types mixed
 //import MonthTable from "@/components/MonthTable";
-import MonthTable from "@/components/MonthTable";
+import MonthTable from "@/components/schedule/MonthTable";
 //import MockTable from "@/components/MockTable";
 
 export default {

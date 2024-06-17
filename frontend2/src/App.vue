@@ -1,5 +1,5 @@
 <template>
-  <navbar-full/>
+  <navbar-full v-if="$route.meta.navbar"/>
   <!--nav-main/-->
   <router-view/>
 </template>
@@ -22,5 +22,9 @@ export default {
 </script>
 
 <style>
-
+.navbar-full {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
 </style>

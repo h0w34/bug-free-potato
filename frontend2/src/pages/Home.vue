@@ -31,7 +31,7 @@
 
 <script>
 ////import NavLocations from "@/components/NavLocations";
-import ScheduleList from "@/components/ScheduleList";
+import ScheduleList from "@/components/schedule/ScheduleList";
 //import mockMock from "@/components/mock";
 import DutyDataService from "@/services/DutyDataService";
 

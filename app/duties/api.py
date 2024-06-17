@@ -51,7 +51,7 @@ class DutiesHomeResource(Resource):
                 day = duty.date.day
                 duties_by_location_type[location_id][duty_type_id].setdefault(year, defaultdict(dict))
                 duties_by_location_type[location_id][duty_type_id][year].setdefault(month, defaultdict(dict))
-                duties_by_location_type[location_id][duty_type_id][year][month][day] = duty.to_dict_short()
+                duties_by_location_type[location_id][duty_type_id][year][month][day] = duty.to_dict()
 
         response_data = {'locations': []}
         for location_id in location_ids:
@@ -60,7 +60,7 @@ class DutiesHomeResource(Resource):
             location_data['duty_types'] = []
             for duty_type_id, data in duties_by_location_type[location_id].items():
                 # print(duty_type_id, data)
-                duty_type = DutyType.query.get(duty_type_id).to_dict_short()
+                duty_type = DutyType.query.get(duty_type_id).to_dict()
                 duties = {}
                 for year, months in data.items():
                     for month, days in months.items():
@@ -157,9 +157,9 @@ class DutyResource(Resource):
                 # TODO: consider separating editing and fetching info apis
                 return duty.to_dict(), 423
 
-        mock_user = User.query.first()
+        '''mock_user = User.query.first()
         print(f'> Duty {duty_id} locked by {mock_user.id}')
-        lock_duty(duty_id, mock_user.id)
+        lock_duty(duty_id, mock_user.id)'''
 
         return duty.to_dict()
 
@@ -199,7 +199,7 @@ class DutyResource(Resource):
 
         print(f'Created a replacement {replacement}!')
         replacement_doc_data = args['replacement_doc']
-        print(replacement_doc_data)
+        print('replacement doc:', replacement_doc_data)
         if replacement_doc_data:
             if not (replacement_doc_data['start_date']):  # and replacement_doc_data['doc_type_id']):
                 abort(400, message='No required replacement doc properties provided')
@@ -240,6 +240,28 @@ class DutyResource(Resource):
 
         return {'message': 'Cadet replaced'}, 200
 
+    # used to execute actions on a duty
+    def patch(self, duty_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('action', type=str, required=True)
+        args = parser.parse_args()
+        print("WELCOME AT PATCH!!!!!!!!!!")
+        duty = get_object_or_404(Duty, id=duty_id)
+        if args['action'] == 'lock':
+            # TODO use the current user identity instead
+            mock_user = User.query.first()
+            print(f'> Duty {duty_id} locked by {mock_user.id}')
+            lock_duty(duty_id, mock_user.id)
+            return {'message': f'Duty {duty_id} locked successfully'}, 200
+        elif args['action'] == 'unlock':
+            # TODO use the current user identity instead
+            mock_user = User.query.first()
+            print(f'> Duty {duty_id} unlocked by {mock_user.id}')
+            unlock_duty(duty_id, mock_user.id)
+            return {'message': f'Duty {duty_id} unlocked successfully'}, 200
+        else:
+            abort(400, message='Unknown action')
+
     def delete(self, duty_id):
         duty = get_object_or_404(Duty, id=duty_id)
         try:
@@ -248,13 +270,13 @@ class DutyResource(Resource):
             abort(500, message='Failed to delete duty')
 
 
-class UnlockDutyResource(Resource):
+'''class UnlockDutyResource(Resource):
     def post(self, duty_id):
         # TODO use the current user identity instead
         mock_user = User.query.first()
         print(f'> Duty {duty_id} unlocked by {mock_user.id}')
         unlock_duty(duty_id, mock_user.id)
-        return {'message': f'Duty {duty_id} unlocked successfully'}, 200
+        return {'message': f'Duty {duty_id} unlocked successfully'}, 200'''
 
 
 # TODO: implement for real
@@ -291,7 +313,7 @@ class SuitableReservesResource(Resource):
 
         print(f'Got {len(suitable_cadets)} suitables and {len(reserves)} reserves for role_id {role_id}!')
         return jsonify({
-            'reserves': [reserve.to_dict() for reserve in reserves],
+            'reserves': [reserve.to_dict_short() for reserve in reserves],
             'suitable_cadets': suitable_cadets
         })
 

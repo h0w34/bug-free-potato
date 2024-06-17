@@ -24,7 +24,6 @@ class UserStatisticsResource(Resource):
         parser.add_argument('start_date', type=str, required=True)
         parser.add_argument('end_date', type=str, required=True)
         args = parser.parse_args()'''
-
         user: User = User.get_by_username(username)
         cadet: Cadet = user.cadet
         if user is None:
@@ -45,7 +44,8 @@ class UserStatisticsResource(Resource):
                 'current_year': self.calculate_statistics(cadet, curr_year_start_date, curr_year_end_date)
             },
             'future_duties':
-                [duty.to_dict_short() for duty in cadet.future_duties]
+                [{'duty': duty.to_dict(), 'role': duty.get_role_by_cadet_id(cadet.id).to_dict()}
+                 for duty in cadet.future_duties]
             ,
             'future_reserves':
                 [reserve.to_dict() for reserve in cadet.future_reserves]
