@@ -133,7 +133,7 @@
 </template>
 
 <script>
-import RoleCard from "@/components/RoleCard";
+import RoleCard from "@/components/cadet/RoleCard";
 import EditRoleDialog from "@/components/EditRoleDialog";
 import MoveCadetsDialog from "@/components/MoveCadetsDialog";
 import ReplacementsHistoryDialog from "@/components/ReplacementsHistoryDialog";

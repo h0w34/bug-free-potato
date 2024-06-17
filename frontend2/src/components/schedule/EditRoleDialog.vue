@@ -299,7 +299,7 @@
 
 
 <script>
-import CadetCard from "@/components/CadetCard";
+import CadetCard from "@/components/cadet/CadetCard";
 import DutyDataService from "@/services/DutyDataService";
 //import { ref } from 'vue';
 

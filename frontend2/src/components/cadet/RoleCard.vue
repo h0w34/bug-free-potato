@@ -46,7 +46,7 @@
           ></v-img-->
           <v-img
             alt="doggy"
-            :src="`https://steamuserimages-a.akamaihd.net/ugc/1483325328769942736/3A592FE50FDB0010B49C7D86777B0CC1D7510276/`"
+            :src="require('../../public/default_avatar.gif')"
           ></v-img>
         </v-avatar>
       </div>
