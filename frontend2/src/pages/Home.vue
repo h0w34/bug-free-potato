@@ -33,14 +33,14 @@
 ////import NavLocations from "@/components/NavLocations";
 import ScheduleList from "@/components/schedule/ScheduleList";
 //import mockMock from "@/components/mock";
-import DutyDataService from "@/services/DutyDataService";
+import DutyDataService from "@/services/duty-data.service";
 
 export default {
   name: "HomePage",
   components: { ScheduleList},
   data() {
     return {
-      user_locations: [1, 2],  //assume these are obtained  via JWT
+      user_locations: [1, 2],  // TODO: assume these are obtained via JWT from the auth store
       user_duty_types: [1,2],
       selectedLocation: null,
       selectedDutyType: null,

@@ -115,7 +115,7 @@
 
 <script>
 import moment from 'moment';
-import DutyDataService from "@/services/DutyDataService";
+import DutyDataService from "@/services/duty-data.service";
 moment.locale('ru');
 moment.updateLocale('ru', {
   weekdaysShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']

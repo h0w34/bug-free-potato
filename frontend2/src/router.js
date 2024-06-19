@@ -1,10 +1,13 @@
 import {createRouter, createWebHistory} from 'vue-router'
+/*
+import { useAuthStore } from '@/store/auth.store'
+*/
 
 import HomePage from '@/pages/Home.vue'
 import CreatePage from '@/components/Create.vue'
 import ProfilePage from '@/pages/Profile.vue'
 import ArchivePage from '@/pages/Archive.vue'
-import UserDataService from "@/services/UserDataService";
+import UserDataService from "@/services/user-data.service";
 import NotFoundPage from "@/components/NotFoundPage";
 import LoginPage from "@/pages/LoginPage";
 import signUpPage from "@/pages/SignUpPage";
@@ -69,9 +72,45 @@ const routes = [
     }
 ]
 
-const router = createRouter({
+export const router = createRouter({
     history: createWebHistory(),
     routes
 })
 
-export default router;
+/*router.beforeEach(async (to) => {
+    // redirect to login page if not logged in and trying to access a restricted page
+    const publicPages = ['/login'];
+    const authRequired = !publicPages.includes(to.path);
+    const auth = useAuthStore();
+
+    if (authRequired && !auth.user) {
+        auth.returnUrl = to.fullPath;
+        return '/login';
+    }
+});*/
+
+/*
+router.beforeEach((to, from, next) => {
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
+    if (!store.state.token) {
+      next({ name: 'login' });
+    } else {
+      axios.get('http://localhost:5000/auth/verify', {
+        headers: {
+          Authorization: `Bearer ${store.state.token}`,
+        },
+      })
+        .then(() => {
+          next();
+        })
+        .catch((error) => {
+          if (error.response.status === 401) {
+            store.dispatch('logout');
+            next({ name: 'login' });
+          }
+        });
+    }
+  } else {
+    next();
+  }
+});*/

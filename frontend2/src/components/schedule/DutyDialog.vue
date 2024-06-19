@@ -43,7 +43,7 @@
               class="mx-3"
               size="small"
               @click="toggleEditeMode()"
-              :disabled="!dutyData"
+              :disabled="!dutyData || beingEdited"
             >
               mdi-pencil
             </v-icon>
@@ -151,7 +151,7 @@ import RoleCard from "@/components/cadet/RoleCard";
 import EditRoleDialog from "@/components/schedule/EditRoleDialog";
 import MoveCadetsDialog from "@/components/MoveCadetsDialog";
 import ReplacementsHistoryDialog from "@/components/schedule/ReplacementsHistoryDialog";
-import DutyDataService from "@/services/DutyDataService";
+import DutyDataService from "@/services/duty-data.service";
 //import EditRoleDialog from "@/components/EditRoleDialog";
 
 

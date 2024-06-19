@@ -8,8 +8,16 @@
   <div class="d-flex justify-content-center p-5">
     <!-- v-skeleton-loader type="paragraph@3"/-->
     <v-row class="justify-content-center gap-lg-3">
-      <v-col cols="auto" >
+      <v-col cols="auto">
+          <div v-if="error">
+            <v-container class="text-medium-emphasis text-center">
+                <h5>Упс! Не удалось статистику!.</h5>
+                <h5>Скорее всего у этого юзера нету <br>
+                  привязанного курсанта.</h5>
+              </v-container>
+          </div>
           <v-skeleton-loader
+            v-else
             :loading="loading"
             width="470"
             type="article@4"
@@ -17,7 +25,7 @@
             <v-card class="mb-2 rounded-xl py-5 px-4 pt-2"
               min-height="400"
               max-width="480"
-              :elevation="2diai"
+              :elevation="2"
             >
               <div class="text-h5 mt-2">
                 Статистика 📈
@@ -282,12 +290,12 @@
 </template>
 
 <script>
-import router from "@/routers";
-import UserDataService from "@/services/UserDataService";
+import router from "@/router";
+import UserDataService from "@/services/user-data.service";
 import StatsChip from "@/components/user/StatsChip";
 import dateToString from "@/utils/date_utils";
 import CadetCardSmall from "@/components/cadet/CadetCardSmall";
-import EditDutyDialog from "@/components/schedule/EditDutyDialog";
+import EditDutyDialog from "@/components/schedule/DutyDialog";
 
 export default {
   name: "ProfilePage",

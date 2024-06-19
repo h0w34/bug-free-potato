@@ -11,7 +11,7 @@ from .services import generate_schedule, delete_duties, update_reserves
 from collections import defaultdict
 
 from flask import request
-#from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required
 
 from .helpers import lock_duty, unlock_duty, is_locked_by
 
@@ -28,9 +28,11 @@ class DutiesHomeResource(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('location_ids', type=int)
 
+    @jwt_required()
     def get(self):
         # assume the locations are fetched either by main_location in Cadet
         # or whatever for admins
+        print('At /duties/location_ids=...!')
         args = request.args
         location_ids = [int(id) for id in request.args.getlist('location_ids')]
         today = date.today()
@@ -167,7 +169,6 @@ class DutyResource(Resource):
     def put(self, duty_id):
         args = duty_put_args.parse_args()
         duty: Duty = get_object_or_404(Duty, id=duty_id)
-
         if duty.archived:
             print('Error 404: trying to modify an archived duty')
             abort(400, message="Can't modify an archived duty.")
@@ -194,8 +195,8 @@ class DutyResource(Resource):
 
         # creating a replacement entry
         replacement = DutyReplacement(duty_id=duty_id,
-                                        replaced_id=args['replaced_id'], replacing_id=args['replacing_id'],
-                                        duty_role_id=role_id, commentary=args.get('commentary', None))
+                                      replaced_id=args['replaced_id'], replacing_id=args['replacing_id'],
+                                      duty_role_id=role_id, commentary=args.get('commentary', None))
 
         print(f'Created a replacement {replacement}!')
         replacement_doc_data = args['replacement_doc']
@@ -204,7 +205,8 @@ class DutyResource(Resource):
             if not (replacement_doc_data['start_date']):  # and replacement_doc_data['doc_type_id']):
                 abort(400, message='No required replacement doc properties provided')
 
-            start_date = datetime.strptime(replacement_doc_data['start_date'], '%Y-%m-%d').date()  # from str to datetime
+            start_date = datetime.strptime(replacement_doc_data['start_date'],
+                                           '%Y-%m-%d').date()  # from str to datetime
 
             end_date = replacement_doc_data.get('end_date', None)
 
@@ -322,15 +324,15 @@ class ReplacementsHistoryResource(Resource):
     def get(self, duty_id):
         duty: Duty = get_object_or_404(Duty, id=duty_id)
 
-        replacements = db.session.query(DutyReplacement).filter_by(duty_id=duty_id).\
-            order_by(DutyReplacement.creation_date).all()
+        replacements = DutyReplacement.get_replacements_for_duty(duty_id)
+        '''replacements = db.session.query(DutyReplacement).filter_by(duty_id=duty_id).\
+            order_by(DutyReplacement.creation_date).all()'''
         print(f'Replacements for duty {duty_id}: ', replacements)
 
         if not replacements:
             abort(404, message='No replacements for this duty available')
 
         return jsonify([rpl.to_dict() for rpl in replacements])
-
 
 
 # TODO: search API

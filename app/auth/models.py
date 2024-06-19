@@ -21,10 +21,12 @@ class RefreshSession(db.Model):
     created_at = db.Column(DateTime(), nullable=False, default=datetime.now())
 
     @classmethod
-    def create_for_user(cls, user, jti, ip):
-        refresh_session = RefreshSession()
+    def create_for_user(cls, user, jti, ua, fprint, ip):
+        refresh_session = RefreshSession(id=uuid4())
         refresh_session.user = user
         refresh_session.refresh_token_jti = pyUUID(jti)
+        refresh_session.ua = ua
+        refresh_session.fingerprint = fprint
         refresh_session.ip = ip
         refresh_session.expires_in = app.Config.JWT_REFRESH_TOKEN_EXPIRES
         refresh_session.created_at = datetime.now()
@@ -33,7 +35,7 @@ class RefreshSession(db.Model):
 
     def __repr__(self):
         return f'RefreshSession(id={self.id}, user_id={self.user_id}, ' \
-               f'refresh_token={self.refresh_token}, ua={self.ua}, fingerprint={self.fingerprint}, ' \
+               f'refresh_token={self.refresh_token_jti}, ua={self.ua}, fingerprint={self.fingerprint}, ' \
                f'ip={self.ip}, expires_in={self.expires_in}, created_at={self.created_at})'
 
 

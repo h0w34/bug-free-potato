@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import EditDutyDialog from "@/components/schedule/EditDutyDialog";
+import EditDutyDialog from "@/components/schedule/DutyDialog";
 
 export default {
   components: {

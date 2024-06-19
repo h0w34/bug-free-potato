@@ -82,7 +82,7 @@
 
 <script>
 //import editRoleDialog from "@/components/EditRoleDialog";
-import router from "@/routers";
+import router from "@/router";
 
 export default {
   name: "RoleCard",

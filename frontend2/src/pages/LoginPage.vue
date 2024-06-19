@@ -85,7 +85,10 @@
 
 
 <script>
-import AuthService from "@/services/AuthService";
+/*import AuthService from "@/services/auth.service";
+import { mapActions } from 'vuex';
+import store from '../store';*/
+
 
 export default {
   data() {
@@ -120,9 +123,33 @@ export default {
       if (!this.$refs.form.validate()) {
         return;
       }
+      try {
+        this.loading = true;
+        const response = await this.$store.dispatch('authStore/login', {
+          login_input: this.login_input,
+          password: this.password,
+        });
+        if (response) {
+          // Handle the response
+          // For example, you can redirect to a protected route
+          this.$router.push('/');
+        } else {
+          alert('Invalid username or password');
+        }
+      } catch (error) {
+        alert('Invalid username or password');
+      } finally {
+        this.loading = false;
+      }
+    }
+  }
+    /*async validateAndLogin() {
+      if (!this.$refs.form.validate()) {
+        return;
+      }
       await this.login();
-    },
-    async login() {
+    },*/
+    /*async login() {
       this.loading = true;
       try {
         //await new Promise(resolve => setTimeout(resolve, 1000));
@@ -134,12 +161,12 @@ export default {
           this.loading = false;
       } catch (error) {
         alert('Invalid username or password');
-        /*alert('Не удалось войти');*/
+        /!*alert('Не удалось войти');*!/
         this.loading = false;
       }
     },
-  }
-};
+  }*/
+}
 
 </script>
 

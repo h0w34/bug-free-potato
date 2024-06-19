@@ -2,7 +2,7 @@ import this
 
 from sqlalchemy import Column, Boolean, Enum
 from sqlalchemy import ForeignKey, UniqueConstraint
-from sqlalchemy import Integer
+from sqlalchemy import Integer, UUID
 from sqlalchemy import String
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
@@ -69,6 +69,12 @@ class DutyReplacement(db.Model):
 
     replacement_doc = relationship('ReplacementDoc', back_populates='replacement')
     duty = relationship('Duty', back_populates='cadet_replacements')
+
+    @classmethod
+    def get_replacements_for_duty(cls, duty_id):
+        replacements = db.session.query(DutyReplacement).filter_by(duty_id=duty_id). \
+            order_by(DutyReplacement.creation_date.desc()).all()
+        return replacements
 
     def __init__(self, duty_id, replaced_id, replacing_id, duty_role_id, replacement_doc_id=None, commentary=None):
         self.duty_id = duty_id
@@ -182,7 +188,7 @@ class Duty(db.Model):
     cadet_replacements = relationship('DutyReplacement', back_populates='duty', cascade='all, delete-orphan')
 
     locked = Column(Boolean, default=False, nullable=True)
-    locked_by = Column(db.String(32), ForeignKey('users.id'), nullable=True)
+    locked_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
 
     @property  # todo if something went wrong with locations return the location_id prop and its usages
     def location(self):
@@ -268,12 +274,13 @@ class Duty(db.Model):
 
     '''def fill_reserves(self):
         ...'''
+
     # reserves (not reservers) sorted by their priority
     def get_reserves_for_role(self, duty_role_id):
         reserves = []
         for reserve_cadet_duty in self.reserve_cadet_duties:
             if reserve_cadet_duty.duty_role_id == duty_role_id:
-                #reserves.append(reserve_cadet_duty.cadet)
+                # reserves.append(reserve_cadet_duty.cadet)
                 reserves.append(reserve_cadet_duty)
         return sorted(reserves, key=lambda x: reserve_cadet_duty.priority)
 
@@ -306,8 +313,8 @@ class Duty(db.Model):
             'archived': self.archived,
             'female_duty': self.female_duty,
             'location': self.duty_type.location.to_dict(),
-            #'duty_type': self.duty_type.to_dict(),
-            #'cadets_with_roles': self.get_cadets_with_roles_and_reserves()
+            # 'duty_type': self.duty_type.to_dict(),
+            # 'cadets_with_roles': self.get_cadets_with_roles_and_reserves()
             'cadets_with_roles': self.get_cadets_with_roles()
         }
 
@@ -319,7 +326,7 @@ class Duty(db.Model):
             'archived': self.archived,
             'female_duty': self.female_duty,
             # 'roles_with_cadets': self.get_roles_with_cadets()
-            #'cadets_with_roles': self.get_cadets_with_roles(),
+            # 'cadets_with_roles': self.get_cadets_with_roles(),
             'location': self.duty_type.location.to_dict()
         }
 
@@ -389,7 +396,7 @@ class ReserveCadetDuty(db.Model):  # todo: may replacing it with the one below w
             'reserve_cadet': reserve_cadet_dict,  # todo may be unnecessary
             'backed_up_cadet': backed_up_cadet_dict,
             'role': self.duty_role.to_dict()
-            }
+        }
 
     def delete(self):
         db.session.delete(self)
@@ -452,9 +459,10 @@ class Cadet(db.Model):
     )
 
     replacements = relationship('DutyReplacement', secondary='duty_replacements',
-                                        primaryjoin='DutyReplacement.replaced_id==Cadet.id',
-                                        secondaryjoin='DutyReplacement.replacing_id==Cadet.id',
-                                        lazy='dynamic')
+                                primaryjoin='DutyReplacement.replaced_id==Cadet.id',
+                                secondaryjoin='DutyReplacement.replacing_id==Cadet.id',
+                                lazy='dynamic')
+
     # statistics props
     @property
     def future_duties(self):

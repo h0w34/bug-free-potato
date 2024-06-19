@@ -1,13 +1,15 @@
+from pprint import pprint
+
 import app
 from app import db
 from flask import jsonify, request
-from flask_restful import Resource, Api, reqparse, abort
-from flask_jwt_extended import current_user, create_access_token, create_refresh_token, jwt_required, get_jwt_identity,\
-    get_jti
+from flask_restful import Resource, reqparse, abort
+from flask_jwt_extended import current_user, create_access_token, create_refresh_token, jwt_required, get_jti
 from app.users.models import User
 from random_username.generate import generate_username
 from .models import RefreshSession
 from datetime import datetime
+from uuid import UUID
 
 
 class Protected(Resource):
@@ -51,9 +53,15 @@ class UserRegistration(Resource):
 class UserLogin(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('login_input', required=True)
-        parser.add_argument('password', required=True)
+        parser.add_argument('login_input', type=str, required=True)
+        parser.add_argument('password', type=str, required=True)
+        parser.add_argument('fingerprint', type=str, required=False)
+
         args = parser.parse_args()
+
+        print('ARGS!!!!!')
+        pprint(args)
+        print(args)
 
         if '@' in args.get('login_input'):
             user = User.get_by_email(args.get('login_input'))
@@ -64,14 +72,27 @@ class UserLogin(Resource):
             access_token = create_access_token(identity=user)
             refresh_token = create_refresh_token(identity=user)
             refresh_token_jti = get_jti(refresh_token)
+            fingerprint = args.get('fingerprint')
+            # fingerprint_hash = sha256(fingerprint.encode()).hexdigest()
 
-            RefreshSession.create_for_user(user, refresh_token_jti, request.remote_addr)
+            # some security checks
+            print(f'Fingerprint for user {user.username}: ', fingerprint)
+            # delete all the previous sessions (and access tokens as well) if there's more than 5 current logins
+            if RefreshSession.query.filter_by(user_id=user.id).count() >= 5:
+                RefreshSession.query.filter_by(user_id=user.id).delete()
+                db.session.commit()
+                print(f'LOG (Security warning): > 5 refresh sessions for user {user.username}. Clearing them.')
+
+            RefreshSession.create_for_user(user=user, jti=refresh_token_jti, ip=request.remote_addr,
+                                           ua=request.headers.get('User-Agent'), fprint=fingerprint)
+            user = user.to_dict()
+            user['access_token'] = access_token
+            user['refresh_token_jti'] = refresh_token_jti
 
             return {
-                    "message": "Logged in",
-                    "access_token": access_token,
-                    "refresh_token_jti": refresh_token_jti
-                }, 200
+                       "message": "Logged in",
+                       "user": user
+                   }, 200
 
         return {"error": "Invalid password or username"}, 400
 
@@ -86,17 +107,41 @@ class UserLogout(Resource):
 
 
 class RefreshTokens(Resource):
-    @jwt_required(refresh=True)
+    # @jwt_required(refresh=True)
     def post(self):
-        identity = get_jwt_identity()
-        access_token = create_access_token(identity=identity)
-        refresh_token = create_refresh_token(identity=identity)
+        parser = reqparse.RequestParser()
+        parser.add_argument('fingerprint', type=str, required=False)
+        parser.add_argument('refresh_token_jti', type=str, required=True)
+        args = parser.parse_args()
+        print('data:', args.get('refresh_token_jti'))
+
+        jti = UUID(args.get('refresh_token_jti'))
+
+        refresh_session = RefreshSession.query.filter_by(refresh_token_jti=jti).first()
+        # some token validity checks
+        if not refresh_session:
+            return {'message': 'No active refresh sessions for this token.', 'error': 'token_expired'}, 401
+        elif refresh_session.expires_in < (datetime.now() - refresh_session.created_at).total_seconds():
+            return {'message': 'Refresh token has expired', 'error': 'token_expired'}, 401
+
+        user = refresh_session.user
+
+        # remove all the old refresh sessions
+        RefreshSession.query.filter_by(user_id=user.id).delete()
+
+        access_token = create_access_token(identity=user)
+        refresh_token = create_refresh_token(identity=user)
+        refresh_token_jti = get_jti(refresh_token)
+        fingerprint = args.get('fingerprint')
+
+        # create a new refresh session
+        RefreshSession.create_for_user(user=user, jti=refresh_token_jti, ip=request.remote_addr,
+                                       ua=request.headers.get('User-Agent'), fprint=fingerprint)
         return {
-            'refresh_token': refresh_token,
-            'access_token': access_token
-        }, 200
-
-
+                   'message': 'Tokens refreshed successfully',
+                   'access_token': access_token,
+                   'refresh_token_jti': refresh_token_jti
+               }, 200
 
 
 class WhoAmI(Resource):
