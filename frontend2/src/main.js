@@ -19,4 +19,14 @@ app.use(router)
 app.use(vuetify)
 app.use(store)
 
+router.beforeEach((to, from, next) => {
+  // Check the state of the dutyDialog variable in the Vuex store
+  console.log('before the request!))')
+  if (store.state.layoutStore.dutyDialog) {
+    // Close the dialog before navigating to the new route
+    store.commit('layoutStore/closeDutyDialog', false)
+  }
+  next()
+})
+
 app.mount('#app')

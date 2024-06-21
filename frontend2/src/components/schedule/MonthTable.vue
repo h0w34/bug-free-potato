@@ -79,6 +79,7 @@
 
 <script>
 import EditDutyDialog from "@/components/schedule/DutyDialog";
+import {mapActions} from 'vuex';
 
 export default {
   components: {EditDutyDialog},
@@ -114,6 +115,8 @@ export default {
     }
   },
   methods: {
+    ...mapActions('layoutStore', ['openDutyDialog']),
+
     getMonthItems(monthData) {
       return Object.values(monthData).map(day => {
         const duty = {
@@ -138,6 +141,7 @@ export default {
       this.selectedDutyId = item.id; // store the item ID
       //console.log(JSON.stringify(this.selectedItemId))
       //console.log(JSON.stringify(this.selectedItem))
+      this.openDutyDialog()
       this.dialogVisible = true
     },
     deleteItem(item) {

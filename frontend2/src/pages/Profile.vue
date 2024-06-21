@@ -305,10 +305,12 @@ import dateToString from "@/utils/date_utils";
 import CadetCardSmall from "@/components/cadet/CadetCardSmall";
 import EditDutyDialog from "@/components/schedule/DutyDialog";
 import StaticDataService from "@/services/static-data.service";
+import {mapActions} from 'vuex';
 
 export default {
   name: "ProfilePage",
   components: {EditDutyDialog, CadetCardSmall, StatsChip},
+
   data(){
     return {
       dutyDialog: false,
@@ -327,11 +329,14 @@ export default {
     },
 
     methods: {
+      ...mapActions('layoutStore', ['openDutyDialog']),
+
       getUserAvatarUrl(username) {
         return StaticDataService.getUserAvatarUrl(username);
       },
       openDutyDialog(dutyData){
         this.selectedDuty = dutyData['duty'];
+        this.openDutyDialog()
         this.dutyDialog = true;
       },
       closeDutyDialog(){

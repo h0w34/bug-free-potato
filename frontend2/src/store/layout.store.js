@@ -1,6 +1,7 @@
 const initialState = {
   sidebar: false,
-  dutyDialog: false
+  dutyDialog: false,
+  dutyData: null
 }
 
 export const layoutStore = {
@@ -13,6 +14,12 @@ export const layoutStore = {
     },
     closeDutyDialog({ commit }){
       commit('closeDutyDialog');
+    },
+    setDutyDialogData({ commit }, dutyData){
+      commit('setDutyDialogData', dutyData);
+    },
+    clearDutyDialogData({ commit }){
+      commit('clearDutyDialogData');
     },
     /*  Sidebar  */
     closeSidebar({ commit }) {
@@ -30,6 +37,12 @@ export const layoutStore = {
     },
     closeDutyDialog(state) {
       state.dutyDialog = false;
+    },
+    setDutyDialogData(state, dutyData){
+      state.dutyData = dutyData;
+    },
+    clearDutyDialogData(state){
+      state.dutyData = null;
     },
     openSidebar(state) {
       console.log('in openSIdebar mutation...')

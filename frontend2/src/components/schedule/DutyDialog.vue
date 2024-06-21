@@ -1,11 +1,10 @@
 <template>
   <v-dialog
-    v-model="localDialog"
+    v-model="dutyDialog"
     max-width="800"
     max-height="auto"
     persistent
   >
-
     <v-dialog v-model="movingDialog">
         <move-cadets-dialog/>
     </v-dialog>
@@ -152,6 +151,7 @@ import EditRoleDialog from "@/components/schedule/EditRoleDialog";
 import MoveCadetsDialog from "@/components/MoveCadetsDialog";
 import ReplacementsHistoryDialog from "@/components/schedule/ReplacementsHistoryDialog";
 import DutyDataService from "@/services/duty-data.service";
+import {mapState, mapActions} from "vuex";
 //import EditRoleDialog from "@/components/EditRoleDialog";
 
 
@@ -180,7 +180,7 @@ export default {
   data() {
     return {
       //localSelectedDuty: this.selectedDuty,
-      dutyData: null,
+      /*dutyData: null,*/
       saving: false,
       error: false,
       beingEdited: false,
@@ -198,9 +198,12 @@ export default {
     }
   },
   computed: {
+    ...mapState('layoutStore', ['dutyDialog']),
+    ...mapState('layoutStore', ['dutyData']),
+
     localDialog: {
       get() {
-        return this.dialog;
+        return this.dutyDialog;
       },
       set(value) {
         this.$emit('update:dialog', value);
@@ -221,6 +224,11 @@ export default {
     }
   },
   methods: {
+
+    ...mapActions('layoutStore', ['closeDutyDialog']),
+    ...mapActions('layoutStore', ['setDutyDialogData']),
+    ...mapActions('layoutStore', ['clearDutyDialogData']),
+
     toggleEditeMode(){
       if (this.editeMode){
         this.saving = true;
@@ -263,10 +271,10 @@ export default {
       this.saving = false;
 
       /*if (this.editeMode)*/
-        this.unlockDuty();
-
+      this.unlockDuty();
       this.clearDialogData()
-      this.$emit('close');
+      /*this.$emit('close');*/
+      this.closeDutyDialog()
     },
     closeRoleDialog(){
       this.roleDialog = false
@@ -299,7 +307,8 @@ export default {
         try {
           const response = await DutyDataService.getDutyById(this.selectedDutyId);
           console.log('response code when fetching a duty: ', response.status)
-          this.dutyData = response
+          this.setDutyDialogData(response)
+          /*this.dutyData = response*/
         } catch (error) {
            if (error.response && error.response.status === 423) {
             this.beingEdited = true;
@@ -339,7 +348,7 @@ export default {
   watch: {
     selectedDutyId: {
       handler(){
-        this.dutyData = null;
+        this.clearDutyDialogData()
         console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
 /*        if (this.editeMode){
           this.lockDuty()
