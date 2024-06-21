@@ -482,6 +482,7 @@ class Cadet(db.Model):
         return self.replaced_replacements.filter(
             DutyReplacement.creation_date >= start_date, DutyReplacement.creation_date <= end_date).count()
 
+    # TODO: separate user and cadet apis?
     def to_dict(self):
         return {
             'id': self.id,
@@ -494,7 +495,8 @@ class Cadet(db.Model):
             'faculty': self.faculty.name,
             'course': self.course_id,
             'group': self.group.name,
-            'main_location': self.main_location.address
+            'main_location': self.main_location.address,
+            'user': self.user.to_dict() if self.user else ''
         }
 
     def to_dict_full(self):  # for user page

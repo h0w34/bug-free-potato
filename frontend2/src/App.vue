@@ -1,30 +1,43 @@
 <template>
+
   <navbar-full v-if="$route.meta.navbar"/>
+  <Sidebar
+  />
+
+  <v-fade-transition mode="out-in">
+    <router-view/>
+  </v-fade-transition>
+
   <!--nav-main/-->
-  <router-view/>
 </template>
 
 <script>
 
 import NavbarFull from "@/components/Navbar-full";
+import Sidebar from "@/components/user/Sidebar";
+import {mapActions} from "vuex";
 //import NavMain from "@/components/NavMain";
 
 export default {
   name: 'App',
+  data: () => ({
+  }),
   components: {
+    Sidebar,
     NavbarFull,
   //  NavMain
   },
-  data() {
-    return {}
+  computed: {
+
+  },
+  methods:{
+    ...mapActions('layoutStore', ['closeSidebar'])
+
   }
+
 }
 </script>
 
 <style>
-.navbar-full {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
+
 </style>

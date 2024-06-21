@@ -117,9 +117,17 @@
                 class="ma-3"
                 size="150"
               >
-                <v-img
+<!--                <v-img
                   alt="doggy"
                   :src="require('../../public/default_avatar.gif')"
+                ></v-img>-->
+<!--                <v-img
+                  alt="doggy"
+                  :src="require('../../public/default_avatar.gif')"
+                ></v-img>-->
+                <v-img
+                  alt="doggy"
+                  :src="getUserAvatarUrl(userData['user']['username']/*['avatar']['url']*/)"
                 ></v-img>
               </v-avatar>
               <v-card-title>
@@ -290,12 +298,13 @@
 </template>
 
 <script>
-import router from "@/router";
+/*import router from "@/router";*/
 import UserDataService from "@/services/user-data.service";
 import StatsChip from "@/components/user/StatsChip";
 import dateToString from "@/utils/date_utils";
 import CadetCardSmall from "@/components/cadet/CadetCardSmall";
 import EditDutyDialog from "@/components/schedule/DutyDialog";
+import StaticDataService from "@/services/static-data.service";
 
 export default {
   name: "ProfilePage",
@@ -318,6 +327,9 @@ export default {
     },
 
     methods: {
+      getUserAvatarUrl(username) {
+        return StaticDataService.getUserAvatarUrl(username);
+      },
       openDutyDialog(dutyData){
         this.selectedDuty = dutyData['duty'];
         this.dutyDialog = true;
@@ -330,7 +342,7 @@ export default {
         return dateToString(new Date(date));
       },
         navigateToUserPage() {
-           router.push({ name: 'home', params: { username: 'johndoe' } });
+           this.$router.push({ name: 'home', params: { username: 'johndoe' } });
         },
         async fetchUserData() {
           if (this.username) {

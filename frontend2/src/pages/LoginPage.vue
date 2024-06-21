@@ -132,7 +132,9 @@ export default {
         if (response) {
           // Handle the response
           // For example, you can redirect to a protected route
-          this.$router.push('/');
+          this.$nextTick(() => {
+            this.$router.push(this.returnUrl || '/');
+          });
         } else {
           alert('Invalid username or password');
         }

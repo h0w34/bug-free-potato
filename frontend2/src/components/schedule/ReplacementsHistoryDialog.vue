@@ -175,7 +175,7 @@ export default {
         if(this.selectedDutyId){
           this.initDialogData()
           await this.fetchReplacements();
-          console.log('replacements data: ', JSON.stringify(this.replacementsData))
+          //console.log('replacements data: ', JSON.stringify(this.replacementsData))
           this.loading = false
         }
       },

@@ -10,7 +10,16 @@
       </div>
     </form>
 
-    <div class="d-inline-flex gap-2">
+    <template v-if="user">
+      <v-avatar
+          @click.prevent
+          @click="openSidebar"
+          image="https://randomuser.me/api/portraits/men/78.jpg"
+      />
+<!--      <navbarProfile user="user"/>-->
+   </template>
+    <template v-else>
+      <div class="d-inline-flex gap-2">
       <router-link to="/login" class="btn btn-sm btn-outline-secondary">
         Войти
       </router-link>
@@ -18,19 +27,33 @@
         Зарегистрироваться
       </router-link>
     </div>
-  </div>
-</nav>
+    </template>
 
+  </div>
+
+</nav>
 </template>
 
 <script>
+import {mapActions, mapState} from 'vuex';
+/*import NavbarProfile from "@/components/user/navbarProfile";*/
+
 export default {
   name: "Navbar-full",
-  methods:{
-    logout() {
-      localStorage.removeItem('jwt_access');
+  components: {/*NavbarProfile*/},
+  computed: {
+    ...mapState('authStore', ['user']),
 
-    }
+  },
+  data: () => ({
+      fav: true,
+      menu: false,
+      message: false,
+      hints: true,
+    }),
+  methods:{
+
+    ...mapActions('layoutStore', ['openSidebar'])
   }
 }
 </script>

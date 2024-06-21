@@ -87,7 +87,7 @@ class UserLogin(Resource):
                                            ua=request.headers.get('User-Agent'), fprint=fingerprint)
             user = user.to_dict()
             user['access_token'] = access_token
-            user['refresh_token_jti'] = refresh_token_jti
+            user['refresh_token_jti'] = refresh_token_jti # TODO WARNING DO REMOVE CHARKS!
 
             return {
                        "message": "Logged in",
@@ -137,12 +137,17 @@ class RefreshTokens(Resource):
         # create a new refresh session
         RefreshSession.create_for_user(user=user, jti=refresh_token_jti, ip=request.remote_addr,
                                        ua=request.headers.get('User-Agent'), fprint=fingerprint)
-        return {
-                   'message': 'Tokens refreshed successfully',
-                   'access_token': access_token,
-                   'refresh_token_jti': refresh_token_jti
-               }, 200
 
+        user = user.to_dict()
+        user['access_token'] = access_token
+        user['refresh_token_jti'] = refresh_token_jti
+
+        return {
+                'message': 'Tokens refreshed successfully',
+                'user': user
+               }, 200
+        ''''access_token': access_token,
+        'refresh_token_jti': refresh_token_jti'''
 
 class WhoAmI(Resource):
     @jwt_required()

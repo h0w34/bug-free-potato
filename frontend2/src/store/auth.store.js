@@ -11,19 +11,15 @@ export const authStore = {
   state: initialState,
   // async funcs, used to commit mutations
   actions: {
-    login({ commit }, {login_input, password}) {
-      return AuthService.login(login_input, password).then(
-        // here we get the user object from api response
-        // below are two funcs for the fulfilled and rejected cases of the Promise
-        user => {
-          commit('loginSuccess', user);
-          return Promise.resolve(user);
-        },
-        error => {
-          commit('loginFailure');
-          return Promise.reject(error);
-        }
-      );
+    async login({ commit }, { login_input, password }) {
+      try {
+        const user = await AuthService.login(login_input, password);
+        commit('loginSuccess', user);
+        return Promise.resolve(user);
+      } catch (error) {
+        commit('loginFailure');
+        return Promise.reject(error);
+      }
     },
     logout({ commit }) {
       AuthService.logout();
@@ -43,15 +39,17 @@ export const authStore = {
     },
     async refreshTokens({ commit }) {
       try {
+        commit('setRefreshingState', true)
         const user = await AuthService.refreshTokens();
         commit("setAccessToken", user.access_token);
         commit("setRefreshTokenJti", user.refresh_token_jti);
         return Promise.resolve(user);
       } catch (error) {
         //warn: bug: fix: todo: pass the error up to the interceptor -- this will logout the user!
-
         //commit("loginFailure", error);
         return Promise.reject(error);
+      } finally {
+        commit('setRefreshingState', false);
       }
     },
   },
@@ -81,6 +79,9 @@ export const authStore = {
     },
     setRefreshTokenJti(state, refreshTokenJti) {
       state.user.refresh_token_jti = refreshTokenJti;
+    },
+    setRefreshingState(state, value) {
+      state.refreshing = value;
     },
   }
 };

@@ -33,6 +33,7 @@ const routes = [
          beforeEnter: async (to, from, next) => {
             try {
                 // Check if the user exists
+                console.log('username: ', to.params.username)
                 const user = await UserDataService.getUserByUsername(to.params.username);
                 if (!user) {
                     // If the user does not exist, redirect to the 404 error page

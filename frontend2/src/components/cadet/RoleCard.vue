@@ -32,9 +32,10 @@
           <h6 class="ma-0">{{cadetData['cadet']['name'] + ' ' + cadetData['cadet']['surname']}}</h6>
           <div class="text-medium-emphasis">
             <router-link
+                v-if="cadetData['cadet']['user']"
                 :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
-                :to="{ name: 'user', params: { username: 'johndoe' } }" style="color:#00406b; text-decoration: none">
-              {{"@obormotik"}}
+                :to="{ name: 'user', params: { username: cadetData['cadet']['user']['username'].toString() } }" style="color:#00406b; text-decoration: none">
+              {{cadetData['cadet']['user']['username']}}
             </router-link>
           </div>
         </div>
@@ -46,10 +47,12 @@
             alt="doggy"
             :src="`https://thispersondoesnotexist.com/?${Date.now() + Math.random()}`"
           ></v-img-->
-          <v-img
-            alt="doggy"
-            :src="require('../../../public/default_avatar.gif')"
-          ></v-img>
+
+            <v-img
+              alt="doggy"
+              :src="getUserAvatarUrl(cadetData['cadet']['user']['username']/*['avatar']['url']*/)"
+            ></v-img>
+
         </v-avatar>
       </div>
     </v-card-text>
@@ -82,7 +85,10 @@
 
 <script>
 //import editRoleDialog from "@/components/EditRoleDialog";
+/*
 import router from "@/router";
+*/
+import StaticDataService from "@/services/static-data.service";
 
 export default {
   name: "RoleCard",
@@ -104,8 +110,11 @@ export default {
 
   },
   methods: {
+    getUserAvatarUrl(username) {
+      return StaticDataService.getUserAvatarUrl(username);
+    },
     navigateToUserPage() {
-         router.push({ name: 'home', params: { username: 'johndoe' } });
+         this.$router.push({ name: 'home', params: { username: 'johndoe' } });
     }
   }
 }

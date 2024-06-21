@@ -3003,6 +3003,11 @@ dotenv@^10.0.0:
   resolved "https://registry.npmmirror.com/dotenv/-/dotenv-10.0.0.tgz#3d4227b8fb95f81096cdd2b66653fb2c7085ba81"
   integrity sha512-rlBi9d8jpv9Sf1klPjNfFAuWDjKLwTIJJ/VxtoTwIR6hnZxcEOQCZg2oIL3MWBYw5GpUDKOEnND7LXTbIpQ03Q==
 
+dotenv@^16.4.5:
+  version "16.4.5"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.5.tgz#cdd3b3b604cb327e286b4762e13502f717cb099f"
+  integrity sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==
+
 duplexer@^0.1.2:
   version "0.1.2"
   resolved "https://registry.npmmirror.com/duplexer/-/duplexer-0.1.2.tgz#3abe43aef3835f8ae077d136ddce0f276b0400e6"
@@ -4111,6 +4116,11 @@ joi@^17.4.0:
     "@sideway/address" "^4.1.5"
     "@sideway/formula" "^3.0.1"
     "@sideway/pinpoint" "^2.0.0"
+
+jose@^5.4.1:
+  version "5.4.1"
+  resolved "https://registry.yarnpkg.com/jose/-/jose-5.4.1.tgz#b471ee3963920ba5452fd1b1398c8ba72a7b2fcf"
+  integrity sha512-U6QajmpV/nhL9SyfAewo000fkiRQ+Yd2H0lBxJJ9apjpOgkOcBQJWOrMo917lxLptdS/n/o/xPzMkXhF46K8hQ==
 
 jquery@^3.7.1:
   version "3.7.1"

@@ -424,8 +424,8 @@ export default {
       this.endDate = null
       this.selectedVariant = 'Болезнь'
       this.error = false
-      /*this.suitableCadets=[]
-      this.reserveCadets=[]*/
+      this.suitableCadets=[]
+      this.reserveCadets=[]
     },
 
     async fetchReservesAndSuitableCadets() {

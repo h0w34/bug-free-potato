@@ -1,7 +1,7 @@
 import http from '../http-common';
 import Fingerprint2 from 'fingerprintjs2';
 /*import jwt from 'jsonwebtoken';*/
-
+import store from '@/store'
 // the auth header is in http-common.js
 
 class AuthService {
@@ -71,8 +71,9 @@ class AuthService {
 
   async refreshTokens() {
     try {
+      console.log('in auth service refreshTokens')
       const fingerprint = await this.getFingerprint();
-      const user = JSON.parse(localStorage.getItem('user'));
+      const user = store.state.authStore.user/*JSON.parse(localStorage.getItem('user'));*/
       const response = await http.post(`auth/refresh`, {
           'fingerprint': fingerprint,
           'refresh_token_jti': user.refresh_token_jti
@@ -89,6 +90,8 @@ class AuthService {
 
       return user;*/
     } catch (error) {
+        console.log('Oh!... FAILED in auth service refreshTokens!')
+
       console.error(error);
       throw error;
     }

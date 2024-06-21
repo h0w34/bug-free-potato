@@ -247,7 +247,6 @@ class DutyResource(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('action', type=str, required=True)
         args = parser.parse_args()
-        print("WELCOME AT PATCH!!!!!!!!!!")
         duty = get_object_or_404(Duty, id=duty_id)
         if args['action'] == 'lock':
             # TODO use the current user identity instead

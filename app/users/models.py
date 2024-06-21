@@ -13,7 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     __tablename__ = 'users'
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4())
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(), nullable=False)
     cadet_id = db.Column(db.Integer, ForeignKey('cadets.id'), nullable=True)
@@ -50,5 +50,8 @@ class User(db.Model):
         return {
             'id': str(self.id),
             'username': self.username,
-            'last_seen': self.last_seen.strftime('%Y-%m-%d %H:%M:%S') if self.last_seen else None
+            'last_seen': self.last_seen.strftime('%Y-%m-%d %H:%M:%S') if self.last_seen else None,
+            'avatar': {
+                'url': self.avatar
+            }
         }

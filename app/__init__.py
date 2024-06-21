@@ -12,6 +12,7 @@ from flask_cors import CORS
 ##from flask_jwt_extended import JWTManager
 
 from .extensions import db, jwt, migrate
+from flask import send_from_directory
 
 
 # logging errors by email imports
@@ -24,6 +25,7 @@ from logging.handlers import RotatingFileHandler
 # initialize an app obj
 app = Flask(__name__)
 app.config.from_object(Config)
+app.static_folder = 'static'
 ##api = Api(app)
 CORS(app)
 #CORS(app, resources={r"/*": {"origins": ["http://localhost:8080"]}})
@@ -33,6 +35,10 @@ db.init_app(app)
 jwt.init_app(app)
 migrate.init_app(app)
 
+
+@app.route('/static/<path:path>')
+def send_static(path):
+    return send_from_directory(app.static_folder, path)
 
 ##db = SQLAlchemy(app)  # create a db entry point (could use an engine obj but this (actually a db engine is created)
 # will also create an engine and session objects as db.session
@@ -55,6 +61,9 @@ from .auth import auth_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
 from .users import users_bp
 app.register_blueprint(users_bp, url_prefix='/users')
+
+
+#from .assign_cadets import assign_cadets
 
 '''# initialize scheduler routes
 from .duties.routes import initialize_routes

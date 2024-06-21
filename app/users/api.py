@@ -1,9 +1,13 @@
-from flask_restful import Resource, Api, reqparse, abort
+from flask_restful import Resource, reqparse, abort
 from sqlalchemy import func
+from flask import send_from_directory
+from app import app
 
 from app.users.models import User
 from app.duties.models import Cadet, Duty
 from datetime import datetime, timedelta, date
+
+from app.utils.create_users_for_cadets import assign_users_to_cadets
 
 
 class UserResource(Resource):
@@ -89,3 +93,25 @@ class CadetStatisticsService:
         else:
             # Get all statistics
             pass
+
+
+class UserAdminResource(Resource):
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('assign_cadets')
+        args = parser.parse_args()
+
+        if args['assign_cadets']:
+            try:
+                num = assign_users_to_cadets()
+                return {'message': f'Got it, assigned {num} new users.'}, 200
+            except:
+                abort(500, message='error while assigning users to cadets')
+
+
+class AvatarResource(Resource):
+    def get(self, username):
+        user = User.get_by_username(username)
+        if not user:
+            abort(404, message=f'User {username} not found')
+        return send_from_directory(app.static_folder, f'img/avatars/{user.avatar}')

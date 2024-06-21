@@ -25,6 +25,7 @@
                 vertical
               ></v-divider-->
               <edit-duty-dialog
+                v-if="selectedDutyId"
                 :selected-duty-id="selectedDutyId"
                 :selected-duty="selectedDuty"
                 :dialog="dialogVisible"

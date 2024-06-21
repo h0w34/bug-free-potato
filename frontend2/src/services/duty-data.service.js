@@ -43,7 +43,7 @@ class DutyDataService {
   }
 
   // Get a single duty
-  async getDutyById(dutyId) {
+  async   getDutyById(dutyId) {
     try {
       const response = await http.get(`duties/${dutyId}`);
       return response.data;
