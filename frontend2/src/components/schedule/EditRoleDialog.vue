@@ -28,6 +28,7 @@
         <div v-if="loading" class="mx-15 justify-content-around">
           <v-container >
             <v-skeleton-loader
+              min-height="600"
               type=" text, list-item, list-item, article, actions"
           />
           </v-container>
@@ -424,8 +425,8 @@ export default {
       this.endDate = null
       this.selectedVariant = 'Болезнь'
       this.error = false
-      this.suitableCadets=[]
-      this.reserveCadets=[]
+      /*this.suitableCadets=[]
+      this.reserveCadets=[]*/
     },
 
     async fetchReservesAndSuitableCadets() {
@@ -448,7 +449,7 @@ export default {
         console.error(error);
       } finally {
         console.log('Disabling loading...')
-        this.loading = false;
+        /*this.loading = false;*/
         console.log('Complete loading!')
     }
   },
@@ -530,7 +531,9 @@ export default {
         if(this.selectedCadetData['role']){
           console.log('Selected Cadet data in the Dialog:')
           console.log(this.selectedCadetData)
+          this.loading=true;
           await this.fetchReservesAndSuitableCadets(this.selectedCadetData['role']['id']);
+          this.loading=false;
         }
         else{
           console.log('UUUUHHHH((((')

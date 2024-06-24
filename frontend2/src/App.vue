@@ -1,21 +1,28 @@
 <template>
-
-  <navbar-full v-if="$route.meta.navbar"/>
-  <Sidebar
-  />
-
-  <v-fade-transition mode="out-in">
-    <router-view/>
-  </v-fade-transition>
+  <v-app>
+    <Sidebar v-if="status.loggedIn"/>
+    <HeaderFull v-if="$route.meta.navbar"/>
+<!--
+    <Navbar/>
+-->
+    <v-main>
+    <v-fade-transition >
+      <router-view/>
+    </v-fade-transition>
+      </v-main>
+  </v-app>
 
   <!--nav-main/-->
 </template>
 
 <script>
 
-import NavbarFull from "@/components/Navbar-full";
-import Sidebar from "@/components/user/Sidebar";
-import {mapActions} from "vuex";
+import HeaderFull from "@/components/navigation/HeaderFull";
+import Sidebar from "@/components/navigation/Sidebar";
+import {mapState, mapActions} from "vuex";
+/*
+import Navbar from "@/components/navigation/Navbar";
+*/
 //import NavMain from "@/components/NavMain";
 
 export default {
@@ -23,16 +30,25 @@ export default {
   data: () => ({
   }),
   components: {
+/*
+    Navbar,
+*/
     Sidebar,
-    NavbarFull,
+    HeaderFull: HeaderFull,
   //  NavMain
   },
   computed: {
+    ...mapState('authStore', ['status']),
+    ...mapState('layoutStore', ['sidebar']),
 
   },
   methods:{
-    ...mapActions('layoutStore', ['closeSidebar'])
-
+    ...mapActions('layoutStore', ['closeSidebar']),
+    closeLayout(){
+      if(this.sidebar){
+        this.closeSidebar()
+      }
+    }
   }
 
 }

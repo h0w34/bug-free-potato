@@ -1,10 +1,11 @@
 <template>
   <v-dialog
     v-model="dutyDialog"
-    max-width="800"
+    max-width="850"
     max-height="auto"
     persistent
   >
+
     <v-dialog v-model="movingDialog">
         <move-cadets-dialog/>
     </v-dialog>
@@ -33,7 +34,51 @@
         ></v-progress-linear>
       </template>
 
-      <v-card-title class="d-flex justify-space-between align-center mt-2 pb-0">
+      <!--div style="background-color: #f5f5f5;" class="pb-2">
+        <v-card-title
+            class="d-flex justify-space-between align-center mt-2 pb-0"
+        >
+          <div class="text-h5 text-medium-emphasis ps-3">
+            {{ currentTitle }}
+          </div>
+          <div>
+            <v-icon
+                class="mx-3"
+                size="small"
+                @click="toggleEditeMode()"
+                :disabled="!dutyData || beingEdited"
+              >
+                mdi-pencil
+              </v-icon>
+            <v-btn
+              variant="outlined"
+              class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
+              @click="openHistoryDialog"
+              :disabled="saving"
+            >
+                История замен
+                <v-icon
+                    class="text-medium-emphasis ml-2"
+                    size="large"
+                  >
+                  mdi-history
+              </v-icon>
+            </v-btn>
+
+            <v-btn icon="mdi-close" variant="text" @click="closeDialog"/>
+          </div>
+        </v-card-title>
+
+        <v-card-subtitle class="d-flex justify-space-between align-center pb-0">
+          <div class="text-medium-emphasis ps-3">
+            <h6>{{currentSubTitle}}</h6>
+          </div>
+        </v-card-subtitle>
+      </div-->
+
+      <v-card-title
+          class="d-flex justify-space-between align-center mt-2 pb-0"
+      >
         <div class="text-h5 text-medium-emphasis ps-3">
           {{ currentTitle }}
         </div>
@@ -47,7 +92,8 @@
               mdi-pencil
             </v-icon>
           <v-btn
-            variant="tonal"
+            variant="flat"
+            base-color="grey-lighten-4"
             class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
             @click="openHistoryDialog"
             :disabled="saving"
@@ -93,7 +139,13 @@
                 cols="auto"
                 md="4"
               >
-              <role-card :cadet-data="cadet_data" :disabled="beingEdited" @edit="openRoleDialog" :edite-mode="editeMode"/>
+              <role-card
+                  :cadet-data="cadet_data"
+                  :disabled="beingEdited"
+                  @edit="openRoleDialog"
+                  :edite-mode="editeMode"
+                  @closeDutyDialog="closeDialog"
+              />
               </v-col>
             </v-row>
           </div>
@@ -151,9 +203,8 @@ import EditRoleDialog from "@/components/schedule/EditRoleDialog";
 import MoveCadetsDialog from "@/components/MoveCadetsDialog";
 import ReplacementsHistoryDialog from "@/components/schedule/ReplacementsHistoryDialog";
 import DutyDataService from "@/services/duty-data.service";
-import {mapState, mapActions} from "vuex";
 //import EditRoleDialog from "@/components/EditRoleDialog";
-
+import {mapState, mapActions} from "vuex";
 
 export default {
   name: 'EditDutyDialog',
@@ -180,7 +231,7 @@ export default {
   data() {
     return {
       //localSelectedDuty: this.selectedDuty,
-      /*dutyData: null,*/
+      dutyData: null,
       saving: false,
       error: false,
       beingEdited: false,
@@ -199,11 +250,10 @@ export default {
   },
   computed: {
     ...mapState('layoutStore', ['dutyDialog']),
-    ...mapState('layoutStore', ['dutyData']),
 
     localDialog: {
       get() {
-        return this.dutyDialog;
+        return this.dialog;
       },
       set(value) {
         this.$emit('update:dialog', value);
@@ -224,10 +274,8 @@ export default {
     }
   },
   methods: {
-
     ...mapActions('layoutStore', ['closeDutyDialog']),
-    ...mapActions('layoutStore', ['setDutyDialogData']),
-    ...mapActions('layoutStore', ['clearDutyDialogData']),
+    ...mapActions('layoutStore', ['openDutyDialog']),
 
     toggleEditeMode(){
       if (this.editeMode){
@@ -243,7 +291,6 @@ export default {
         this.lockDuty();
       }
 
-
     },
     showError(){
       this.error = true
@@ -256,6 +303,7 @@ export default {
       this.movingDialog = false
       this.replacementHistoryDialog = false
       this.editeMode = false
+      this.dutyData = null
     },
     async updateLayout(isUpdated){
       if(isUpdated){
@@ -269,12 +317,11 @@ export default {
     },
     closeDialog() {
       this.saving = false;
-
-      /*if (this.editeMode)*/
-      this.unlockDuty();
-      this.clearDialogData()
-      /*this.$emit('close');*/
-      this.closeDutyDialog()
+        if (this.editeMode) this.unlockDuty();
+        this.clearDialogData()
+        //layout action
+        this.closeDutyDialog();
+        /*this.$emit('close');*/
     },
     closeRoleDialog(){
       this.roleDialog = false
@@ -307,8 +354,7 @@ export default {
         try {
           const response = await DutyDataService.getDutyById(this.selectedDutyId);
           console.log('response code when fetching a duty: ', response.status)
-          this.setDutyDialogData(response)
-          /*this.dutyData = response*/
+          this.dutyData = response
         } catch (error) {
            if (error.response && error.response.status === 423) {
             this.beingEdited = true;
@@ -317,7 +363,6 @@ export default {
             this.error = true;
           }
           console.error(error.response.status);
-
         }
       }
     },
@@ -346,17 +391,26 @@ export default {
 
   },
   watch: {
-    selectedDutyId: {
+    dutyDialog:{
       handler(){
-        this.clearDutyDialogData()
+        // i.e. on the dialog opening
+        if(this.dutyDialog){
+          this.fetchDutyData();
+        }
+      },
+      immediate: true
+    },
+    /*selectedDutyId: {
+      handler(){
+
         console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
-/*        if (this.editeMode){
+/!*        if (this.editeMode){
           this.lockDuty()
-        }*/
+        }*!/
         this.fetchDutyData();
       } ,
       immediate: true
-    }
+    }*/
   }
 }
 </script>

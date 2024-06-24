@@ -9,7 +9,7 @@ import { API_URL } from '@/config';
 import jwt from 'jsonwebtoken';
 */
 import * as jose from 'jose'
-import {router} from "@/router";
+import {router} from "@/router/router";
 
 //const API_URL = 'http://192.168.43.119:8080/api';
 

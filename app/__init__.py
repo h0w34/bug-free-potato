@@ -61,8 +61,8 @@ from .auth import auth_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
 from .users import users_bp
 app.register_blueprint(users_bp, url_prefix='/users')
-
-
+from.resources import resources_bp
+app.register_blueprint(resources_bp, url_prefix='/resources')
 #from .assign_cadets import assign_cadets
 
 '''# initialize scheduler routes

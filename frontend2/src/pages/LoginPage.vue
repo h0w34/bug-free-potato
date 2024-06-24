@@ -18,9 +18,9 @@
             <div class="mb-3 text-h5 font-weight-medium text-medium-emphasis"  >Вход по почте или нику</div>
             <div class="text-subtitle-1 text-medium-emphasis">
               Email/username
-
             </div>
             <v-text-field
+              :error-messages="loginFailure ? ['Неверный логин или пароль.'] : ''"
               name="login"
               density="compact"
               variant="outlined"
@@ -41,6 +41,7 @@
               </a>
             </div>
             <v-text-field
+              :error-messages="loginFailure ? ' ' : ''"
               :append-inner-icon="passwordVisible ? 'mdi-eye-off' : 'mdi-eye'"
               :type="passwordVisible ? 'text' : 'password'"
               density="compact"
@@ -78,7 +79,6 @@
           </v-card>
         </v-row>
       </v-form>
-
     </v-main>
   </v-app>
 </template>
@@ -98,6 +98,9 @@ export default {
       passwordVisible: false,
       userLoggedIn: false,
       login_input:"",
+      loginFailure: false,
+      /*password_wrong: false,
+      login_wrong: false,*/
       passwordRules: [
         value => {
           if (value?.length >= 8) return true
@@ -114,12 +117,16 @@ export default {
             return /^[a-zA-Z0-9_]+$/.test(v) || 'Недопустимый юзернейм.';
           }
         },
+        () => this.loginFailure ? 'Неверный логин или пароль' : true
       ]
     };
   },
 
   methods: {
     async validateAndLogin() {
+      this.loginFailure = false;
+      const loadingStartTime = performance.now();
+
       if (!this.$refs.form.validate()) {
         return;
       }
@@ -136,14 +143,30 @@ export default {
             this.$router.push(this.returnUrl || '/');
           });
         } else {
+          await new Promise(resolve => setTimeout(resolve, Math.max(800 - (performance.now() - loadingStartTime), 0)));
+          this.loginFailure = true;
           alert('Invalid username or password');
         }
       } catch (error) {
-        alert('Invalid username or password');
+        this.loginFailure = true;
+        await new Promise(resolve => setTimeout(resolve, Math.max(800 - (performance.now() - loadingStartTime), 0)));
+        this.loginFailure = true;
+        /*if (error.response.message === 'login_error'){
+
+        } else if (error.response.message === 'password_error')*/
+        /*alert('Invalid username or password');*/
       } finally {
         this.loading = false;
       }
     }
+  },
+  watch:{
+    login_input() {
+      this.loginFailure = false;
+    },
+    password() {
+      this.loginFailure = false;
+    },
   }
     /*async validateAndLogin() {
       if (!this.$refs.form.validate()) {

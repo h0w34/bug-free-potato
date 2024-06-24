@@ -1,7 +1,8 @@
 <template>
   <v-card
     class="mx-auto rounded-xl pb-3"
-    max-width="344"
+    max-width="240"
+    variant="elevated"
     hover
   >
     <v-card-title class="pb-1">
@@ -29,14 +30,17 @@
       </div-->
       <div class="d-flex align-center justify-content-between py-0">
         <div>
-          <h6 class="ma-0">{{cadetData['cadet']['name'] + ' ' + cadetData['cadet']['surname']}}</h6>
-          <div class="text-medium-emphasis">
-            <router-link
-                v-if="cadetData['cadet']['user']"
-                :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
-                :to="{ name: 'user', params: { username: cadetData['cadet']['user']['username'].toString() } }" style="color:#00406b; text-decoration: none">
-              {{cadetData['cadet']['user']['username']}}
-            </router-link>
+          <h6 class="ma-0 text-light-emphasis">
+            {{cadetData['cadet']['name'] + ' ' + cadetData['cadet']['surname']}}
+          </h6>
+          <div
+              v-if="cadetData['cadet']['user']"
+              class=" font-weight-light underline"
+              :style="{color: '#00406b', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '105px'}"
+              @click="navigateToUserPage"
+          >
+            {{'@'+ cadetData['cadet']['user']['username']}}
+
           </div>
         </div>
         <v-avatar
@@ -89,6 +93,9 @@
 import router from "@/router";
 */
 import StaticDataService from "@/services/static-data.service";
+/*
+import {mapActions} from "vuex";
+*/
 
 export default {
   name: "RoleCard",
@@ -110,16 +117,26 @@ export default {
 
   },
   methods: {
+    /*...mapActions('layoutStore', ['closeDutyDialog']),*/
+    // WARNING: do not close the dialog directly as it needs to send
+    // unlock request when closed. Emit closeDialog event instead!
+
     getUserAvatarUrl(username) {
       return StaticDataService.getUserAvatarUrl(username);
     },
     navigateToUserPage() {
-         this.$router.push({ name: 'home', params: { username: 'johndoe' } });
+      this.$emit('closeDutyDialog')
+      this.$router.push({ name: 'user', params: { username: this.cadetData['cadet']['user']['username'].toString() } });
     }
   }
 }
 </script>
 
 <style scoped>
-
+  .underline {
+    text-decoration: none;
+  }
+  .underline:hover {
+    text-decoration: underline;
+  }
 </style>

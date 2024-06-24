@@ -21,6 +21,7 @@ api.add_resource(DutyResource, '/duties/<duty_id>')
 # api.add_resource(UnlockDutyResource, '/duties/<duty_id>/unlock')
 api.add_resource(SuitableReservesResource, '/duties/<duty_id>/reserves')
 api.add_resource(ReplacementsHistoryResource, '/duties/<duty_id>/replacements')
+
 api.add_resource(DutyTypesApi, '/duty-types/<duty_type_ids>')
 api.add_resource(LocationsApi, '/locations/<locations_ids>')
 

@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.types import Date, DateTime
 from datetime import datetime
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import asc, func, collate, case
 
 from app import db
 
@@ -334,7 +335,8 @@ class Duty(db.Model):
         for key, value in data.items():
             setattr(self, key, value)
 
-    UniqueConstraint('date', 'duty_type_id', name='unique_duty_type')  # can have multiple types for the same date
+    # can have multiple duty types for the same date
+    UniqueConstraint('date', 'duty_type_id', name='unique_duty_type')
 
 
 # общее хранилище пар наряд-курсант с ролями, большая промежуточная таблица
@@ -496,7 +498,14 @@ class Cadet(db.Model):
             'course': self.course_id,
             'group': self.group.name,
             'main_location': self.main_location.address,
-            'user': self.user.to_dict() if self.user else ''
+            'user': self.user.to_dict_short() if self.user else ''
+        }
+
+    def to_dict_short(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'surname': self.surname,
         }
 
     def to_dict_full(self):  # for user page
@@ -505,6 +514,9 @@ class Cadet(db.Model):
             'name': self.name
             # TODO
         }
+
+
+
     # ... some columns to track statistics
 
 
@@ -543,6 +555,12 @@ class Faculty(db.Model):
     cadets = relationship('Cadet', back_populates='faculty')
     location = relationship('Location', back_populates='faculties')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name
+        }
+
 
 class Course(db.Model):
     __tablename__ = 'courses'
@@ -553,6 +571,10 @@ class Course(db.Model):
     groups = relationship('Group', back_populates='course')
     cadets = relationship('Cadet', back_populates='course')
 
+    def to_dict(self):
+        return {
+            'id': self.id
+        }
 
 class Group(db.Model):
     __tablename__ = 'groups'
@@ -564,8 +586,18 @@ class Group(db.Model):
 
     course = relationship('Course', back_populates='groups')
     faculty = relationship('Faculty', back_populates='groups')
-    cadets = relationship('Cadet', back_populates='group')
+    cadets = relationship('Cadet', back_populates='group',
+                          order_by=[
+                              asc(func.lower(Cadet.surname)),
+                              asc(func.lower(Cadet.name))
+                          ])
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'number_of_cadets': self.number_of_cadets
+        }
 
 '''
 import random

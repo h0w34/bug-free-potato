@@ -3,7 +3,10 @@ import pprint
 from app import db
 from flask import jsonify
 from flask_restful import Resource, reqparse, abort
-from .models import Duty, Location, DutyType, Cadet, ReplacementDoc, DutyReplacement
+
+from .models import Duty, Location, DutyType, Cadet, \
+    ReplacementDoc, DutyReplacement, Faculty, Group
+
 from app.helpers import get_object_or_404
 from datetime import datetime, date
 
@@ -11,7 +14,7 @@ from .services import generate_schedule, delete_duties, update_reserves
 from collections import defaultdict
 
 from flask import request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from .helpers import lock_duty, unlock_duty, is_locked_by
 
@@ -145,27 +148,22 @@ duty_get_args.add_argument('location_id', type=int, required=True)
 
 # CRUD for a single duty
 class DutyResource(Resource):
+    @jwt_required()
     def get(self, duty_id):
         duty: Duty = get_object_or_404(Duty, id=duty_id)
 
         if duty.locked:
             # heck if it's the editing user updating his layout
-            mock_user = User.query.first()
-            if is_locked_by(duty_id, mock_user.id):
+            if is_locked_by(duty_id, get_jwt_identity()):
                 return duty.to_dict()
             else:
-                '''print('Error 423: trying to modify a locked duty')
-                abort(423, message="The duty is currently being modified!")'''
                 # TODO: consider separating editing and fetching info apis
                 return duty.to_dict(), 423
-
-        '''mock_user = User.query.first()
-        print(f'> Duty {duty_id} locked by {mock_user.id}')
-        lock_duty(duty_id, mock_user.id)'''
 
         return duty.to_dict()
 
     # used only to update reserves??
+    @jwt_required()
     def put(self, duty_id):
         args = duty_put_args.parse_args()
         duty: Duty = get_object_or_404(Duty, id=duty_id)
@@ -174,11 +172,12 @@ class DutyResource(Resource):
             abort(400, message="Can't modify an archived duty.")
 
         elif duty.locked:
-            # TODO get the actual user identity
-            mock_user = User.query.first()
-            if not is_locked_by(duty_id, mock_user.id):
+            if not is_locked_by(duty_id, get_jwt_identity()):
                 print('Error 423: trying to modify a locked duty')
                 abort(423, message="The duty is currently being modified!")
+            else:
+                # the duty is not locked yet, therefore we lock it for sureness
+                lock_duty(duty_id, get_jwt_identity())
 
         pprint.pprint(args)
         replaced_cadet = get_object_or_404(Cadet, id=args['replaced_id'])
@@ -189,7 +188,7 @@ class DutyResource(Resource):
             duty.replace_cadets(args['replaced_id'], args['replacing_id'])
             if replacing_cadet in duty.reserve_cadets:
                 duty.remove_reserve_cadet(args['replacing_id'])
-                update_reserves(duty_id)
+                update_reserves([duty_id])
         except:
             abort(500, message='Internal server error while replacing cadets')
 
@@ -243,22 +242,26 @@ class DutyResource(Resource):
         return {'message': 'Cadet replaced'}, 200
 
     # used to execute actions on a duty
+    @jwt_required()
     def patch(self, duty_id):
         parser = reqparse.RequestParser()
         parser.add_argument('action', type=str, required=True)
         args = parser.parse_args()
-        duty = get_object_or_404(Duty, id=duty_id)
+        duty: Duty = get_object_or_404(Duty, id=duty_id)
+
+        current_username = get_jwt_identity()
+
+        if duty.locked:
+            if not is_locked_by(duty_id, current_username):
+                abort(401, message='This duty is already being modified')
+
         if args['action'] == 'lock':
-            # TODO use the current user identity instead
-            mock_user = User.query.first()
-            print(f'> Duty {duty_id} locked by {mock_user.id}')
-            lock_duty(duty_id, mock_user.id)
+            print(f'> Duty {duty_id} locked by {current_username}')
+            lock_duty(duty_id, current_username)
             return {'message': f'Duty {duty_id} locked successfully'}, 200
         elif args['action'] == 'unlock':
-            # TODO use the current user identity instead
-            mock_user = User.query.first()
-            print(f'> Duty {duty_id} unlocked by {mock_user.id}')
-            unlock_duty(duty_id, mock_user.id)
+            print(f'> Duty {duty_id} unlocked by {current_username}')
+            unlock_duty(duty_id, current_username)
             return {'message': f'Duty {duty_id} unlocked successfully'}, 200
         else:
             abort(400, message='Unknown action')
@@ -364,12 +367,11 @@ class DutyTypesApi(Resource):
         return {'message': 'mock api'}
 
 
-get_locations_args = reqparse.RequestParser()
-get_locations_args.add_argument('location_ids', type=list)
-
-
 class LocationsApi(Resource):
     def get(self):
+        get_locations_args = reqparse.RequestParser()
+        get_locations_args.add_argument('location_ids', type=list)
+
         args = get_locations_args.parse_args()
         location_ids = args.getlist('location_ids')
         locations = [Location.query.get(location_id).to_dict() for location_id in location_ids]
@@ -380,3 +382,20 @@ class LocationsApi(Resource):
 
     def put(self):
         return {'message': 'mock api'}
+
+
+
+
+
+class LocationListApi(Resource):
+    def get(self, location_id):
+        location: Location = Location.query.get_or_404(location_id)
+        faculties = [faculty.to_dict for faculty in location.faculties]
+
+        json = location.to_dict()
+        json['faculties'] = faculties
+        return json, 200
+
+class FacultyListApi(Resource):
+    def get(self, faculty_id):
+        ...

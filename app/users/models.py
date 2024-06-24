@@ -50,6 +50,19 @@ class User(db.Model):
         return {
             'id': str(self.id),
             'username': self.username,
+            'email': self.email,
+            'last_seen': self.last_seen.strftime('%Y-%m-%d %H:%M:%S') if self.last_seen else None,
+            'avatar': {
+                'url': self.avatar
+            },
+            'cadet': self.cadet.to_dict_short()
+        }
+
+    def to_dict_short(self):
+        return {
+            'id': str(self.id),
+            'username': self.username,
+            'email': self.email,
             'last_seen': self.last_seen.strftime('%Y-%m-%d %H:%M:%S') if self.last_seen else None,
             'avatar': {
                 'url': self.avatar

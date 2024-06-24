@@ -1,7 +1,18 @@
 <template>
-<nav class="navbar navbar-expand-lg bg-body-tertiary p-3">
-  <div class="container d-flex justify-content-center gap-3">
+  <v-app-bar
+      class="navbar navbar-expand-lg bg-body-tertiary p-0"
+      flat
+      border="1"
+      scroll-behavior="fade-image"
+      scroll-threshold="30"
+  >
+  <div class="container d-flex justify-content-center gap-3 align-center">
     <router-link class="navbar-brand mr-0" to="/">Мои Утки🐥</router-link>
+    <div>
+      <v-btn class=" mt-1 mr-1" to="/" @click="goHome">Главная</v-btn>
+      <v-btn class="mt-1 mr-1"  to="/resources" @click="goAbout">Ресурсы</v-btn>
+     <v-btn class="mt-1" @click="goContact">Редактор</v-btn>
+    </div>
 
     <form class="container m-0" role="search" style="max-width: 500px">
       <div class="input-group">
@@ -11,11 +22,20 @@
     </form>
 
     <template v-if="user">
-      <v-avatar
+      <button
+        class="d-flex text-center align-center"
+        @click="openSidebar"
+      >
+        <v-avatar
+          class="mr-2"
           @click.prevent
-          @click="openSidebar"
-          image="https://randomuser.me/api/portraits/men/78.jpg"
-      />
+          :image="getUserAvatarUrl(user['username'])"
+        />
+        <v-icon class="text-medium-emphasis">
+          mdi-chevron-down
+        </v-icon>
+      </button>
+
 <!--      <navbarProfile user="user"/>-->
    </template>
     <template v-else>
@@ -28,18 +48,17 @@
       </router-link>
     </div>
     </template>
-
   </div>
-
-</nav>
+    </v-app-bar>
 </template>
 
 <script>
 import {mapActions, mapState} from 'vuex';
 /*import NavbarProfile from "@/components/user/navbarProfile";*/
+import StaticDataService from "@/services/static-data.service";
 
 export default {
-  name: "Navbar-full",
+  name: "HeaderFull",
   components: {/*NavbarProfile*/},
   computed: {
     ...mapState('authStore', ['user']),
@@ -52,8 +71,10 @@ export default {
       hints: true,
     }),
   methods:{
-
-    ...mapActions('layoutStore', ['openSidebar'])
+    ...mapActions('layoutStore', ['openSidebar']),
+    getUserAvatarUrl(username) {
+        return StaticDataService.getUserAvatarUrl(username);
+    },
   }
 }
 </script>

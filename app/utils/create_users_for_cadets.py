@@ -2,7 +2,7 @@ import random
 import secrets
 
 from app.users.models import User
-from app.duties.models import Cadet
+from app.duties.models import Cadet, Group, Course, Faculty
 
 from random_username.generate import generate_username
 from app import db
@@ -16,8 +16,26 @@ connection_url = r"C:\Users\mew\Desktop\duties\app.db"
 Session = sessionmaker(bind=engine)
 session = Session()'''
 
+def generate_cadets_for_group(group_id, num=30):
+    for _ in range(num):
+        cadet = Cadet()
 
-def assign_users_to_cadets():
+
+
+
+
+def generate_cadets_with_users(cadets_per_group: int=None, group_ids: list=None, course_ids: list=None, faculty_ids: list=None):
+    group_ids = group_ids if group_ids else [group.id for group in Group.query.all()]
+    course_ids = course_ids if course_ids else [course.id for course in Course.query.all()]
+    faculty_ids = faculty_ids if faculty_ids else [faculty.id for faculty in Faculty.query.all()]
+
+    for faculty_id in faculty_ids:
+        for course in course_ids:
+            for group in group_ids:
+                ...
+
+
+def generate_users_for_existing_cadets():
     users_created_count = 0
     userless_cadets = Cadet.query.filter(Cadet.user == None).all()  # this must be as this
     userfull_cadets = Cadet.query.filter(Cadet.user != None).all()

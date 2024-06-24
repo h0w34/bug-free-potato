@@ -3,7 +3,7 @@
       :dialog="dutyDialog"
       :selected-duty="selectedDuty"
       :selected-duty-id="selectedDuty['id']"
-      @close="closeDutyDialog()"
+      @close="closeDutyDialogLocal()"
   />
   <div class="d-flex justify-content-center p-5">
     <!-- v-skeleton-loader type="paragraph@3"/-->
@@ -101,18 +101,19 @@
           </v-skeleton-loader>
         <!--v-skeleton-loader type="paragraph@3"/-->
       </v-col>
+
       <v-col cols="auto">
         <v-skeleton-loader
           :loading="loading"
           height="500"
-          width="300"
+          width="350"
           type="card, paragraph, paragraph"
         >
           <v-card class="py-3 rounded-xl"
             min-width="330"
             :elevation="2"
           >
-            <div class="text-center px-5">
+            <div class="text-center px-4">
               <v-avatar
                 class="ma-3"
                 size="150"
@@ -130,11 +131,11 @@
                   :src="getUserAvatarUrl(userData['user']['username']/*['avatar']['url']*/)"
                 ></v-img>
               </v-avatar>
-              <v-card-title>
+              <v-card-title class="px-0">
                 <div>
-                <h2 class="mb-0">
+                <h3 class="mb-0">
                   {{user['cadet']['name'] + ' ' + user['cadet']['surname']}}
-                </h2>
+                </h3>
                 <div class="text-medium-emphasis" @click="navigateToUserPage">
                  {{'@'+username}}
                 </div>
@@ -183,7 +184,7 @@
                     :readonly="true"
                   >
                     <v-expansion-panel class="rounded-3 mb-3"
-                      @click="openDutyDialog(dutyData)"
+                      @click="openDutyDialogLocal(dutyData)"
                     >
                       <v-expansion-panel-title class="pl-5 pr-4" disable-icon-rotate>
                         <template v-slot:actions>
@@ -305,12 +306,11 @@ import dateToString from "@/utils/date_utils";
 import CadetCardSmall from "@/components/cadet/CadetCardSmall";
 import EditDutyDialog from "@/components/schedule/DutyDialog";
 import StaticDataService from "@/services/static-data.service";
-import {mapActions} from 'vuex';
+import {mapActions} from "vuex";
 
 export default {
   name: "ProfilePage",
   components: {EditDutyDialog, CadetCardSmall, StatsChip},
-
   data(){
     return {
       dutyDialog: false,
@@ -330,40 +330,44 @@ export default {
 
     methods: {
       ...mapActions('layoutStore', ['openDutyDialog']),
+      ...mapActions('layoutStore', ['closeDutyDialog']),
 
       getUserAvatarUrl(username) {
         return StaticDataService.getUserAvatarUrl(username);
       },
-      openDutyDialog(dutyData){
+      openDutyDialogLocal(dutyData){
         this.selectedDuty = dutyData['duty'];
         this.openDutyDialog()
         this.dutyDialog = true;
       },
-      closeDutyDialog(){
+      closeDutyDialogLocal(){
+        console.log('closing dialog in profile..')
         this.dutyDialog = false;
+        this.closeDutyDialog()
         this.selectedDuty = {};
       },
       formattedDate(date) {
         return dateToString(new Date(date));
       },
-        navigateToUserPage() {
-           this.$router.push({ name: 'home', params: { username: 'johndoe' } });
-        },
-        async fetchUserData() {
-          if (this.username) {
-            try {
-              this.userData = await UserDataService.getUserByUsername(this.username)
-              //this.loading = false
-            } catch (error) {
-               this.error = true;
-            }
+      navigateToUserPage() {
+        this.loading
+        this.$router.push({ name: 'home', params: { username: 'johndoe' } });
+        this.closeDutyDialog()
+      },
+      async fetchUserData() {
+        if (this.username) {
+          try {
+            this.userData = await UserDataService.getUserByUsername(this.username)
+            //this.loading = false
+          } catch (error) {
+             this.error = true;
           }
-        },
+        }
+      },
       async fetchUserStatistics() {
           if (this.username) {
             try {
               this.userStatistics = await UserDataService.getUserStatistics(this.username)
-              this.loading = false
             } catch (error) {
                this.error = true;
             }
@@ -377,9 +381,11 @@ export default {
     },
     watch: {
       username: {
-        handler(){
-          this.fetchUserData()
-          this.fetchUserStatistics()
+        async handler(){
+          this.loading = true;
+          await this.fetchUserData()
+          await this.fetchUserStatistics()
+          this.loading = false
           console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
         } ,
         immediate: true

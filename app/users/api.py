@@ -7,7 +7,7 @@ from app.users.models import User
 from app.duties.models import Cadet, Duty
 from datetime import datetime, timedelta, date
 
-from app.utils.create_users_for_cadets import assign_users_to_cadets
+from app.utils.create_users_for_cadets import generate_users_for_existing_cadets
 
 
 class UserResource(Resource):
@@ -103,7 +103,7 @@ class UserAdminResource(Resource):
 
         if args['assign_cadets']:
             try:
-                num = assign_users_to_cadets()
+                num = generate_users_for_existing_cadets()
                 return {'message': f'Got it, assigned {num} new users.'}, 200
             except:
                 abort(500, message='error while assigning users to cadets')
@@ -111,7 +111,17 @@ class UserAdminResource(Resource):
 
 class AvatarResource(Resource):
     def get(self, username):
+        '''parser = reqparse.RequestParser()
+        parser.add_argument('size', required=False)
+        args = parser.parse_args()
+
+        # todo: support different avatar sizes
+        size = args.get('size', None)'''
+
         user = User.get_by_username(username)
         if not user:
             abort(404, message=f'User {username} not found')
-        return send_from_directory(app.static_folder, f'img/avatars/{user.avatar}')
+
+        avatar = user.avatar if user.avatar is not None else 'default_avatar.gif'
+
+        return send_from_directory(app.static_folder, f'img/avatars/{avatar}')

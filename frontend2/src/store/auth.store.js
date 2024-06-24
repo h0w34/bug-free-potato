@@ -1,5 +1,6 @@
 /*import router from '@/router'*/
 import AuthService from "@/services/auth.service";
+import store from '@/store/index'
 
 const user = JSON.parse(localStorage.getItem('user'));
 const initialState = user
@@ -9,7 +10,7 @@ const initialState = user
 export const authStore = {
   namespaced: true,
   state: initialState,
-  // async funcs, used to commit mutations
+  // async funcs, used to co  mmit mutations
   actions: {
     async login({ commit }, { login_input, password }) {
       try {
@@ -66,6 +67,7 @@ export const authStore = {
     },
     logout(state) {
       state.status.loggedIn = false;
+      store.dispatch('layoutStore/resetLayout');
       state.user = null;
     },
     registerSuccess(state) {
