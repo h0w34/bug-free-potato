@@ -1,4 +1,3 @@
- Used as reserve cadet card as well
 <template>
       <!--v-card
         class="mx-auto rounded-xl"
@@ -47,6 +46,21 @@
           </div>
 
           <div>{{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
+          <v-avatar
+            class="ma-3"
+           size="55"
+           >
+            <!--v-img
+              alt="doggy"
+              :src="`https://thispersondoesnotexist.com/?${Date.now() + Math.random()}`"
+            ></v-img-->
+
+              <v-img
+                alt="doggy"
+                :src="getUserAvatarUrl(cadetData['user']['username']/*['avatar']['url']*/)"
+              ></v-img>
+
+          </v-avatar>
         </v-card-subtitle>
 
         <v-divider class="mx-2 mb-2"/>
@@ -77,27 +91,32 @@
 
   <script>
   //import editRoleDialog from "@/components/EditRoleDialog";
+  import StaticDataService from "@/services/static-data.service";
+
   export default {
     name: "CadetCard",
     //components:{editRoleDialog}
-    props:{
-      cadetData:{
-        type: Object,
-        required: true
+      props:{
+        cadetData:{
+          type: Object,
+          required: true
+        }
+      },
+      data(){
+        return {
+          selected: false
+        }
+      },
+      methods:{
+        toggleCard(){
+          this.$emit('select', this.cadetData)
+          /*if(this.selected === false) this.$emit('select', this.cadetData)
+          this.selected = !this.selected*/
+        },
+        getUserAvatarUrl(username) {
+          return StaticDataService.getUserAvatarUrl(username);
+        },
       }
-    },
-    data(){
-      return {
-        selected: false
-      }
-    },
-    methods:{
-      toggleCard(){
-        this.$emit('select', this.cadetData)
-        /*if(this.selected === false) this.$emit('select', this.cadetData)
-        this.selected = !this.selected*/
-      }
-    }
   }
   </script>
 

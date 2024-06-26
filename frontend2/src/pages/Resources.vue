@@ -1,56 +1,225 @@
 <template>
-<div
->
-  <v-toolbar
-      class="px-5 d-flex justify-content-center"
-      color="white"
-      border="1"
-  >
-    <v-breadcrumbs
-        :items="breadcrumbItems"
 
-        class="mb-0 d-flex justify-content-center text-center align-center" >
-      <template v-slot:divider>
-        <v-icon icon="mdi-chevron-right"></v-icon>
-      </template>
-    </v-breadcrumbs>
-  </v-toolbar>
-
-
-
-</div>
-  <v-row class="justify-content-start">
-    <v-col cols="auto" class="m-4 d-flex justify-content-center">
-      <v-treeview
-        v-model="tree"
-        :items="treeItems"
-        :opened="initiallyOpen"
-        item-key="name"
-        activatable
-        open-on-click
-      >
-        <template v-slot:prepend="{ item, open }">
-          <v-icon v-if="!item.file">
-            {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-          </v-icon>
-          <v-icon v-else>
-            {{ files[item.file] }}
-          </v-icon>
+    <v-app-bar
+        v-if="breadcrumbItems.length!==0"
+        class="px-5 d-flex justify-content-center text-center align-center"
+        color="white"
+        border="1"
+        flat
+    >
+      <v-breadcrumbs
+          v-if="breadcrumbItems"
+          :items="breadcrumbItems"
+          class="mb-0 d-flex justify-content-center text-center align-center" >
+        <template v-slot:divider>
+          <v-icon icon="mdi-chevron-right"></v-icon>
         </template>
-      </v-treeview>
-    </v-col>
-    <v-divider
-      vertical
-    />
-  </v-row>
+      </v-breadcrumbs>
+    </v-app-bar>
+
+    <v-navigation-drawer
+        class="p-2 pr-3"
+        location="left"
+        permanent
+        width="300"
+      >
+        <v-treeview
+          class="unselectable custom-treeview"
+          v-if="treeItems"
+          :items="treeItems"
+          item-value="title"
+          :opened="initiallyOpen"
+          @click:open="handleTreeItemClick"
+          @click:select="handleTreeItemClick"
+        >
+
+          <template v-slot:prepend="{ item }">
+            <v-icon v-if="item.kind === 'location'">mdi-map-marker</v-icon>
+            <v-icon v-if="item.kind === 'faculty'">mdi-school</v-icon>
+            <v-icon v-if="item.kind === 'course'">mdi-book-open-variant</v-icon>
+            <v-icon v-if="item.kind === 'group'">mdi-account-group</v-icon>
+            <v-icon v-if="item.kind === 'student'">mdi-account</v-icon>
+            <v-icon v-if="item.kind === 'university'">mdi-domain</v-icon>
+
+          </template>
+        </v-treeview>
+      </v-navigation-drawer>
+
+      <div
+        class=" justify-content-start m-0 p-3"
+      >
+        <v-window
+          v-model="window"
+        >
+          <v-window-item :key="0">
+            <v-card>
+              <v-card-title>
+                <h3>Локации</h3>
+              </v-card-title>
+              <v-divider class="my-1"/>
+              <v-card-text>
+                <v-skeleton-loader>
+                  <v-row v-if="selectedResource">
+                    <v-col
+                      v-for="(locationData, i) in selectedResource['locations']"
+                      :key="i"
+                      md-2
+                    >
+                      <location-card :data="locationData"/>
+                    </v-col>
+                    <v-col
+                      cols="6"
+                    >
+                      <location-card :data="[]"/>
+                    </v-col>
+                  </v-row>
+                </v-skeleton-loader>
+              </v-card-text>
+            </v-card>
+          </v-window-item>
+
+          <v-window-item :key="1">
+            <v-card>
+              <v-card-title>
+                <h3>Факультеты на {{selectedResource['name']}}</h3>
+              </v-card-title>
+              <v-divider class="my-1"/>
+              <v-card-text>
+                <v-skeleton-loader>
+                  <v-row v-if="selectedResource">
+                    <v-col
+                      v-for="(facultyData, i) in selectedResource['faculties']"
+                      :key="i"
+                      md-2
+                    >
+                      <faculty-card :data="facultyData"/>
+                    </v-col>
+                    <v-col
+                      cols="6"
+                    >
+                      <faculty-card :data="[]"/>
+                    </v-col>
+                  </v-row>
+                </v-skeleton-loader>
+              </v-card-text>
+            </v-card>
+          </v-window-item>
+
+
+          <v-window-item :key="2">
+            <v-card>
+              <v-card-title>
+                <h3> Курсы на {{selectedResource['name']}}</h3>
+              </v-card-title>
+              <v-divider class="my-1"/>
+              <v-card-text>
+                <v-card
+                    class="rounded-4 mb-4"
+                    style="border: 2px solid #f5f5f5;"
+                    v-for="(courseData, i) in selectedResource['courses']"
+                    :key="i"
+                    flat
+                >
+                  <v-card-title>
+                    <div class="text-h5 font-weight-light">{{courseData.id}}-й курс</div>
+                  </v-card-title>
+                  <v-divider class="my-0"/>
+                  <v-card-text class="py-3 px-4">
+                    <v-row class="d-flex justify-content-start">
+                      <v-col
+                        v-for="(groupData, i) in courseData['groups']"
+                        :key="i"
+                        cols="auto"
+                      >
+                        <group-card :data="groupData"/>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+
+                </v-card>
+<!--                <v-skeleton-loader>
+                  <v-row v-if="selectedResource">
+                    <v-col
+                      v-for="(courseData, i) in selectedResource['faculties']"
+                      :key="i"
+                      md-2
+                    >
+                      <course-card :data="facultyData"/>
+                    </v-col>
+                    <v-col
+                      cols="6"
+                    >
+                      <faculty-card :data="[]"/>
+                    </v-col>
+                  </v-row>
+                </v-skeleton-loader>-->
+              </v-card-text>
+            </v-card>
+          </v-window-item>
+
+          <v-window-item
+              :key="3"
+          >
+            <v-card fill-space fill-width fill-height height="100%" class="d-flex flex-column m-5"
+             variant="flat"
+            >
+              <v-card-title>
+                Группы!
+              </v-card-title>
+              {{selectedResource}}
+            </v-card>
+          </v-window-item>
+
+          <v-window-item :key="4">
+              <v-card>
+                <v-card-title class="d-flex text-center align-center justify-space-between">
+                  <h3>Личный состав {{selectedResource['name']}}-го взвода</h3>
+                  <v-icon class="mr-4 text-medium-emphasis">
+                    mdi-plus-box-outline
+                  </v-icon>
+                </v-card-title>
+                <v-divider class="my-1"/>
+                <v-card-text v-if="selectedResource" v-bind:transition="'fade-transition'">
+
+                  <v-skeleton-loader>
+                    <div v-if="selectedResource['cadets']">
+                          <v-row>
+                            <v-col
+                              v-for="(cadetData, i) in selectedResource['cadets']"
+                              :key="i"
+                              md-2
+                            >
+                              <cadet-card :cadetData="cadetData"/>
+                            </v-col>
+                            <v-col
+                              cols="6"
+                            >
+                              <faculty-card :data="[]"/>
+                            </v-col>
+                          </v-row>
+                    </div>
+                  </v-skeleton-loader>
+
+                </v-card-text>
+              </v-card>
+          </v-window-item>
+        </v-window>
+      </div>
+
 </template>
 
 <script>
-import { mapState, mapActions, /*mapGetters*/ } from 'vuex';
+import { mapState, mapActions, mapGetters } from 'vuex';
 import { useRoute, useRouter } from 'vue-router';
+
+import LocationCard from "@/components/resources/LocationCard";
+import FacultyCard from "@/components/resources/FacultyCard";
+import GroupCard from "@/components/resources/GroupCard";
+import CadetCard from "@/components/cadet/CadetCard";
 
 export default {
   name: "ResourcesPage",
+  components: {CadetCard, GroupCard, FacultyCard, LocationCard},
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -62,6 +231,7 @@ export default {
   },
 
   data: () => ({
+    window: 0,
       items: [
         {
           title: 'Коптевская ул. 63',
@@ -84,7 +254,7 @@ export default {
           href: '#',
         }
       ],
-      initiallyOpen: ['public'],
+      initiallyOpen: [],
       files: {
         html: 'mdi-language-html5',
         js: 'mdi-nodejs',
@@ -96,8 +266,8 @@ export default {
         xls: 'mdi-file-excel',
       },
       tree: [],
-      breadcrumbItems: [],
-      treeItems: [],
+      /*breadcrumbItems: [],
+      treeItems: [],*/
       items2: [
         {
           title: '.git',
@@ -150,58 +320,19 @@ export default {
           file: 'txt',
         },
       ],
+    opened: []
     }),
   computed: {
-    ...mapState('ResourcesStore', ['resourcesList']),
-    /*...mapGetters('ResourcesStore', ['breadcrumbItems', 'treeItems']),*/
+    activeNodes() {
+    // Implement your logic to determine the active nodes
+    return [];
+  },
+    ...mapState('ResourcesStore', ['resourcesList', 'selectedIds', "selectedResource"]),
+    ...mapGetters('ResourcesStore', ['breadcrumbItems', 'treeItems']),
 
-        selectedLocationId() {
-      if (this.resourcesList) {
-        const locationId = this.route.query.locationId
-          ? parseInt(this.route.query.locationId)
-          : this.resourcesList.locations[0].id;
-        return locationId;
-      }
-      return null;
-    },
-    selectedFacultyId() {
-      if (this.resourcesList && this.selectedLocationId) {
-        const location = this.resourcesList.locations.find((l) => l.id === this.selectedLocationId);
-        const facultyId = this.route.query.facultyId
-          ? parseInt(this.route.query.facultyId)
-          : location.faculties[0].id;
-        return facultyId;
-      }
-      return null;
-    },
-    selectedCourseId() {
-      if (this.resourcesList && this.selectedFacultyId) {
-        const faculty = this.resourcesList.locations
-          .flatMap((l) => l.faculties)
-          .find((f) => f.id === this.selectedFacultyId);
-        const courseId = this.route.query.courseId
-          ? parseInt(this.route.query.courseId)
-          : faculty.courses[0].id;
-        return courseId;
-      }
-      return null;
-    },
-    selectedGroupId() {
-      if (this.resourcesList && this.selectedCourseId) {
-        const course = this.resourcesList.locations
-          .flatMap((l) => l.faculties)
-          .flatMap((f) => f.courses)
-          .find((c) => c.id === this.selectedCourseId);
-
-        if (course && course.groups.length > 0) {
-          const groupId = this.route.query.groupId
-            ? parseInt(this.route.query.groupId)
-            : course.groups[0].id;
-          return groupId;
-        }
-      }
-      return null;
-    },
+    currentTitle(){
+      return 1
+    }
 
     /*breadcrumbItems() {
       return this.$store.getters['ResourcesStore/breadcrumbItems'](
@@ -216,31 +347,68 @@ export default {
     },*/
 
   },
-
+  //TODO: too long page loading each time it's opened. Do smth with this hook
   async created() {
     console.log('Created the resources Page!')
-    await this.fetchResourcesList();
+    if (!this.resourcesList) await this.fetchResourcesList();
+    this.setSelectedResource(this.resourcesList['university'])
+/*
+    await this.fetchResourcesData();
+*/
   },
 
   watch: {
-    resourcesList() {
+    /*resourcesList() {
       this.updateBreadcrumbItems();
       this.updateTreeItems();
-    },
+    },*/
   },
 
-  methods:{
-    ...mapActions('ResourcesStore', ['fetchResourcesList']),
-    updateBreadcrumbItems() {
-      this.breadcrumbItems = this.$store.getters['ResourcesStore/breadcrumbItems'](
-        this.selectedLocationId,
-        this.selectedFacultyId,
-        this.selectedCourseId,
-        this.selectedGroupId
-      );
+methods:{
+    ...mapActions('ResourcesStore', ['fetchResourcesList', /*'fetchResourcesData',*/ 'setSelectedIds', 'setSelectedResource']),
+
+    handleTreeItemClick(nodeItem) {
+      console.log(nodeItem)
+
+      const treeItem = this.findItemByTitle(this.treeItems, nodeItem.id);
+
+      if (treeItem.kind === 'location'){
+        this.window = 1;
+      }
+      else if (treeItem.kind === 'faculty'){
+        this.window = 2;
+      }
+      else if (treeItem.kind === 'course'){
+        console.log('nah! no such window for you!')
+      }
+      else if (treeItem.kind === 'group'){
+        this.window = 4;
+      }
+      else if (treeItem.kind === 'university'){
+        this.window = 0;
+      }
+      else {
+        this.window = 0;
+      }
+      console.log(treeItem)
+      this.setSelectedIds({
+        locationId: treeItem?.locationId,
+        facultyId: treeItem?.facultyId,
+        courseId: treeItem?.courseId,
+        groupId: treeItem?.groupId
+      });
+      // simply pass the whole selected item, item.raw is a proxy to the original item in resourceList
+      if(treeItem.kind !== 'course') this.setSelectedResource(treeItem.raw);
     },
-    updateTreeItems() {
-      this.treeItems = this.$store.getters['ResourcesStore/treeItems'](this.selectedLocationId);
+    findItemByTitle(items, title) {
+      for (const i of items) {
+        if (i.title === title) return i;
+        if (i.children) {
+          const found = this.findItemByTitle(i.children, title);
+          if (found) return found;
+        }
+      }
+      return null;
     },
     updateUrl(locationId, facultyId, courseId, groupId) {
       this.router.replace({
@@ -257,9 +425,21 @@ export default {
 </script>
 
 <style scoped>
-.v-toolbar {
-  border-width: 1px;
-  border-style: solid;
-  border-color: #d7d7d7;
-}
+  .v-appbar {
+    border-width: 1px;
+    border-style: solid;
+    border-color: #d7d7d7;
+  }
+  .unselectable {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+  }
+
+  .v-list-item--active {
+    background-color: transparent !important;
+    color: inherit !important;
+  }
+
+
 </style>

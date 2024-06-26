@@ -44,7 +44,7 @@ export default {
       user_duty_types: [1,2],
       selectedLocation: null,
       selectedDutyType: null,
-      dutiesWithLocations: {},
+      dutiesWithLocations: null,
       loading: true,
       tableHeaders: [
         { text: 'Date', value: 'date' },

@@ -12,6 +12,15 @@ class ResourcesService {
       throw error;
     }
   }
+  async getResourcesData() {
+   try {
+      const response = await http.get(`resources/data`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }
 
 export default new ResourcesService();

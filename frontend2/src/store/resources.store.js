@@ -1,143 +1,136 @@
 /*import store from '@/store/index'*/
 import ResourcesService from "@/services/resources-data.service";
+/*import resources from "@/pages/Resources";*/
+
 
 const initialState = {
-    resourcesList: null,
-    resourcesData: null
-}
+  resourcesList: null,
+  resourcesData: null,
+  cachedBreadcrumbItems: null,
+  cachedTreeItems: null,
+  selectedIds: {
+    selectedLocationId: null,
+    selectedFacultyId: null,
+    selectedCourseId: null,
+    selectedGroupId: null
+  },
+  /*selectedItems: {
+    selectedLocation: null,
+    selectedFaculty: null,
+    selectedCourse: null,
+    selectedGroup: null
+  },*/
+  selectedResource: null
+};
 
 export const ResourcesStore = {
   namespaced: true,
   state: initialState,
   getters: {
-    breadcrumbItems: (state) => (locationId, facultyId, courseId, groupId) => {
-      if (!state.resourcesList) {
-        console.log('the resourceList is empty! returning []')
-        return [];
-      }
+    breadcrumbItems(state) {
+      const items = [];
 
-      const breadcrumbItems = [];
-      let currentLocation = null;
-      let currentFaculty = null;
-      let currentCourse = null;
-      let currentGroup = null;
+        if (state.resourcesList) {
+          const university = state.resourcesList.university;
+          items.push({ title: university.name, disabled: false, href: '#' });
 
-      for (const location of state.resourcesList.locations) {
-        if (location.id === locationId) {
-          currentLocation = location;
-          for (const faculty of location.faculties) {
-            if (faculty.id === facultyId) {
-              currentFaculty = faculty;
-              for (const course of faculty.courses) {
-                if (course.id === courseId) {
-                  currentCourse = course;
-                  for (const group of course.groups) {
-                    if (group.id === groupId) {
-                      currentGroup = group;
-                      break;
+          if (state.selectedIds.selectedLocationId !== null) {
+            const location = state.resourcesList.university.locations.find((l) => l.id === state.selectedIds.locationId);
+            if (location) {
+              items.push({ title: location.name, disabled: false, href: '#' });
+              if (state.selectedFacultyId !== null) {
+                const faculty = location.faculties.find((f) => f.id === state.selectedIds.facultyId);
+                if (faculty) {
+                  items.push({ title: faculty.name, disabled: false, href: '#' });
+                  if (state.selectedCourseId !== null) {
+                    const course = faculty.courses.find((c) => c.id === state.selectedIds.courseId);
+                    if (course) {
+                      items.push({ title: `${course.id} курс`, disabled: false, href: '#' });
+                      if (state.selectedGroupId !== null) {
+                        const group = course.groups.find((g) => g.id === state.selectedIds.groupId);
+                        if (group) {
+                          items.push({ title: `${group.name} взвод`, disabled: false, href: '#' });
+                        }
+                      }
                     }
                   }
-                  if (currentGroup) break;
                 }
               }
-              if (currentGroup) break;
             }
           }
-          if (currentGroup) break;
+          else {
+            items.push({ title: 'локации', disabled: false, href: '#' });
+          }
         }
+        console.log('the bread i got is: ', items)
+        return items;
+      },
+    treeItems(state) {
+      // we save the raw item self additionally with its treeItem
+      console.log('in the store tree!')
+      if (state.cachedTreeItems) {
+        return state.cachedTreeItems;
       }
-
-      if (currentLocation) {
-        breadcrumbItems.push({
-          title: currentLocation.name,
-          disabled: false,
-          href: '#',
-          locationId: currentLocation.id,
-        });
-      }
-      if (currentFaculty) {
-        breadcrumbItems.push({
-          title: currentFaculty.name,
-          disabled: false,
-          href: '#',
-          facultyId: currentFaculty.id,
-        });
-      }
-      if (currentCourse) {
-        breadcrumbItems.push({
-          title: `${currentCourse.id} Курс`,
-          disabled: false,
-          href: '#',
-          courseId: currentCourse.id,
-        });
-      }
-      if (currentGroup) {
-        breadcrumbItems.push({
-          title: `${currentGroup.name} взвод`,
-          disabled: false,
-          href: '#',
-          groupId: currentGroup.id,
-        });
-      }
-      return breadcrumbItems;
-    },
-    treeItems: (state) => (locationId) => {
-      console.log('PASSED LOCATION ID: ', locationId)
-      if (!state.resourcesList) {
-        console.log('the resourceList is empty! returning []')
-        return [];
-      }
-      console.log('resource list in vue treeItems action:', state.resourcesList)
       const treeItems = [];
-      for (const location of state.resourcesList.locations) {
-        console.log('LOCATIONS: ',location)
-
-        if (location.id === locationId) {
+      if (state.resourcesList) {
+        const university =  {
+          raw: state.resourcesList.university,
+          title: state.resourcesList.university.name,
+          children: [],
+          kind: 'university'
+        }
+        treeItems.push(university)
+        state.resourcesList.university.locations.forEach((location) => {
           const locationItem = {
+            raw: location,
             title: location.name,
             locationId: location.id,
             children: [],
+            kind: 'location'
           };
-
-          for (const faculty of location.faculties) {
-            console.log('Faculties: ', faculty)
+          location.faculties.forEach((faculty) => {
             const facultyItem = {
+              raw: faculty,
               title: faculty.name,
               facultyId: faculty.id,
               children: [],
+              locationId: location.id,
+              kind: 'faculty'
             };
-
-            for (const course of faculty.courses) {
-              console.log('COURSES: ', course)
+            faculty.courses.forEach((course) => {
               const courseItem = {
-                title: `${course.id} Курс`,
+                raw: course,
+                title: `${course.id} курс`,
                 courseId: course.id,
                 children: [],
+                locationId: location.id,
+                facultyId: faculty.id,
+                kind: 'course'
               };
-
-              for (const group of course.groups) {
-                console.log('GROUPS: ', group)
+              course.groups.forEach((group) => {
+                /*console.log('cadets: ', group.cadets)*/
                 const groupItem = {
-                  title: group.name,
-                  id: group.id,
-                  children: group.cadets.map((cadet) => ({
-                    title: `${cadet.name} ${cadet.surname}`,
-                  })),
+                  raw: group,
+                  title: `${group.name} взвод`,
+                  groupId: group.id,
+                  locationId: location.id,
+                  courseId: course.id,
+                  facultyId: faculty.id,
+                  kind: 'group'
                 };
                 courseItem.children.push(groupItem);
-              }
+              });
               facultyItem.children.push(courseItem);
-            }
+            });
             locationItem.children.push(facultyItem);
-          }
-          treeItems.push(locationItem);
-          break;
-        }
+          });
+          treeItems[0].children.push(locationItem);
+        });
       }
-      console.log('the tree items before sending the back: ', JSON.stringify(treeItems))
+      console.log('here are новиспеченные treeItems: ', treeItems)
+      if (treeItems.length !== 0) state.cachedTreeItems = treeItems;
       return treeItems;
     },
-
   },
 
   actions: {
@@ -150,11 +143,61 @@ export const ResourcesStore = {
         return Promise.reject(error);
       }
     },
+
+    async fetchResourcesData({commit}){
+      try {
+        const resourcesData = await ResourcesService.getResourcesData();
+        commit('setResourcesData', resourcesData);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+
+    setSelectedIds({ commit }, { locationId, facultyId, courseId, groupId }) {
+      console.log('changing the selevted ids to:',locationId, facultyId, courseId, groupId )
+      commit('setSelectedLocationId', locationId);
+      /*commit('setSelectedLocation', locationId)*/
+      commit('setSelectedFacultyId', facultyId);
+      commit('setSelectedCourseId', courseId);
+      commit('setSelectedGroupId', groupId);
+    },
+    setSelectedResource({ commit }, resource) {
+      console.log('setting resource...', resource)
+      commit('setSelectedResource', resource)
+    },
+
   },
   mutations: {
     setResourcesList(state, resourcesList) {
       state.resourcesList = resourcesList;
-      console.log('Resources list set on.')
+      console.log('Resources list is set.')
+    },
+    setResourcesData(state, resourcesData) {
+      state.resourcesData = resourcesData;
+      console.log('Resources data is set.')
+    },
+    setSelectedResource(state, resource) {
+      state.selectedResource = resource;
+      console.log('Selected resource is set.')
+    },
+
+    setSelectedLocationId(state, locationId) {
+      state.selectedIds.locationId = locationId;
+      /*state.selectedLocation = state.resourcesList.locations.find((l) => l.id === locationId)*/
+    },
+    setSelectedFacultyId(state, facultyId) {
+      state.selectedIds.facultyId = facultyId;
+      /*state.selectedFaculty = state.selectedLocation.faculties.find((f) => f.id === facultyId)*/
+    },
+    setSelectedCourseId(state, courseId) {
+      state.selectedIds.courseId = courseId;
+      /*state.selectedFaculty = state.selectedFaculty.courses.find((c) => c.id === courseId)*/
+    },
+    setSelectedGroupId(state, groupId) {
+      state.selectedIds.groupId = groupId;
+/*
+      state.selectedFaculty = state.selectedGroup.groups.find((g) => g.id === groupId)
+*/
     },
   }
 };

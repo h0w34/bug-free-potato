@@ -9,9 +9,9 @@
   <div class="container d-flex justify-content-center gap-3 align-center">
     <router-link class="navbar-brand mr-0" to="/">Мои Утки🐥</router-link>
     <div>
-      <v-btn class=" mt-1 mr-1" to="/" @click="goHome">Главная</v-btn>
-      <v-btn class="mt-1 mr-1"  to="/resources" @click="goAbout">Ресурсы</v-btn>
-     <v-btn class="mt-1" @click="goContact">Редактор</v-btn>
+      <v-btn class=" mt-1 mr-1" to="/" >Главная</v-btn>
+      <v-btn class="mt-1 mr-1"  to="/resources">Ресурсы</v-btn>
+     <v-btn class="mt-1" >Редактор</v-btn>
     </div>
 
     <form class="container m-0" role="search" style="max-width: 500px">
