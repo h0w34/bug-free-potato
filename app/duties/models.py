@@ -580,7 +580,10 @@ class Group(db.Model):
     __tablename__ = 'groups'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
-    number_of_cadets = Column(Integer, nullable=False)
+    @property
+    def number_of_cadets(self):
+        return len(self.cadets)
+
     course_id = Column(Integer, ForeignKey('courses.id'))
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
 

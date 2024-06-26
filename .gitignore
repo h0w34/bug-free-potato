@@ -3,4 +3,4 @@
 /__pycache__
 /.pytest_cache
 /front_test
-/node_modules
+node_modules

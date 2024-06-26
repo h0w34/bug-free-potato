@@ -1,29 +1,27 @@
 <template>
-        <v-treeview :items="items"></v-treeview>
+<!--        <v-treeview :items="items"></v-treeview>-->
 
-<!--
   <v-app>
 
     <Sidebar v-if="status.loggedIn"/>
     <HeaderFull v-if="$route.meta.navbar"/>
-&lt;!&ndash;
+<!--
     <Navbar/>
-&ndash;&gt;
+-->
     <v-main>
     <v-fade-transition >
       <router-view/>
     </v-fade-transition>
       </v-main>
   </v-app>
--->
 
   <!--nav-main/-->
 </template>
 
 <script>
 
-/*import HeaderFull from "@/components/navigation/HeaderFull";
-import Sidebar from "@/components/navigation/Sidebar";*/
+import HeaderFull from "@/components/navigation/HeaderFull";
+import Sidebar from "@/components/navigation/Sidebar";
 import {mapState, mapActions} from "vuex";
 /*
 import Navbar from "@/components/navigation/Navbar";
@@ -107,7 +105,7 @@ export default {
       ],
     }),
   components: {
-
+    HeaderFull, Sidebar
   },
   computed: {
     ...mapState('authStore', ['status']),

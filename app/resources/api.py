@@ -19,6 +19,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 # or simply not to include it in json
 class ResourcesListResource(Resource):
     def get(self):
+        university_data = {
+            'name': 'Университет'
+        }
+
         locations_data = []
         locations = Location.query.all()
         for location in locations:
@@ -42,4 +46,5 @@ class ResourcesListResource(Resource):
             location_data['faculties'] = faculties_data
             locations_data.append(location_data)
 
-        return {'locations': locations_data}, 200
+        university_data['locations'] = locations_data
+        return {'university': university_data}, 200
