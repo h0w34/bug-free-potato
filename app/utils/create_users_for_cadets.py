@@ -19,7 +19,8 @@ session = Session()'''
 def generate_cadets_for_group(group_id, num=30):
     for _ in range(num):
         cadet = Cadet()
-
+        ...
+        # TODO...
 
 
 
@@ -33,6 +34,7 @@ def generate_cadets_with_users(cadets_per_group: int=None, group_ids: list=None,
         for course in course_ids:
             for group in group_ids:
                 ...
+                # TODO...
 
 
 def generate_users_for_existing_cadets():
@@ -50,7 +52,7 @@ def generate_users_for_existing_cadets():
 
         user = User()
         user.username = username.lower()
-        user.email = 'default@email.who'
+        """user.email = 'default@email.who'"""
         random_password = secrets.token_hex(4)
 
         user.set_password('password')

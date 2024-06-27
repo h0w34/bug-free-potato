@@ -89,7 +89,7 @@
                   cols="auto"
                   md="4"
                 >
-                  <cadet-card :cadet-data="reserve_cadet_data" @select="confirmCadet"/>
+                  <button-cadet-card :cadet-data="reserve_cadet_data" @select="confirmCadet"/>
                 </v-col>
               </v-row>
             </v-container>
@@ -142,7 +142,7 @@
                         cols="auto"
                         md="4"
                       >
-                      <cadet-card
+                      <button-cadet-card
                         :cadet-data="item.raw"
                         @select="confirmCadet"
                       />
@@ -299,13 +299,13 @@
 
 
 <script>
-import CadetCard from "@/components/cadet/CadetCard";
+import ButtonCadetCard from "@/components/cadet/ButtonCadetCard";
 import DutyDataService from "@/services/duty-data.service";
 //import { ref } from 'vue';
 
 export default {
   name: "EditRoleDialog",
-  components: {CadetCard},
+  components: {ButtonCadetCard},
   props:{
     selectedCadetData:{
       type: Object,

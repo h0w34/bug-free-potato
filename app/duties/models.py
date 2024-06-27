@@ -108,6 +108,11 @@ class Location(db.Model):
 
     duty_types = relationship('DutyType', back_populates='location')
 
+    # TODO: may replace with a relationship
+    @property
+    def cadets(self):
+        return [cadet for faculty in self.faculties for cadet in faculty.cadets]
+
     @property
     def duty_type_ids(self):
         return [duty_type.id for duty_type in self.duty_types]
@@ -424,7 +429,7 @@ class Cadet(db.Model):
     name = Column(String(50), nullable=False)
     surname = Column(String(50), nullable=False)
     patronymic = Column(String(50), nullable=True)
-    sex = Column(Enum('M', 'F'), nullable=True)  # TODO: make nonnull
+    sex = Column(Enum('M', 'F'), nullable=False)  # TODO: make nonnull
 
     rank_id = Column(Integer, ForeignKey('ranks.id'), nullable=False)
     position_id = Column(Integer, ForeignKey('positions.id'), nullable=False)
@@ -465,7 +470,25 @@ class Cadet(db.Model):
                                 secondaryjoin='DutyReplacement.replacing_id==Cadet.id',
                                 lazy='dynamic')
 
+    # methods
+    def join_group(self, group):
+        self.group = group
+        group.cadets.append(self)
+
+    def leave_group(self):
+        if self.group:
+            self.group.cadets.remove(self)
+            self.group = None
+
     # statistics props
+
+    '''@property
+    def workload(self):
+        r1 = len(self.future_duties)*0.2
+        r2 = len(self.duties)*0.3
+        sex = 1 if self.sex == 'M' else 0
+        return (r1+r2)*(1 + sex*1.8)'''
+
     @property
     def future_duties(self):
         return self.duties.filter(Duty.archived == False).order_by(Duty.date).all()
@@ -497,7 +520,7 @@ class Cadet(db.Model):
             'faculty': self.faculty.name,
             'course': self.course_id,
             'group': self.group.name,
-            'main_location': self.main_location.address,
+            'main_location': self.main_location.address if self.main_location else '',
             'user': self.user.to_dict_short() if self.user else ''
         }
 
@@ -514,10 +537,6 @@ class Cadet(db.Model):
             'name': self.name
             # TODO
         }
-
-
-
-    # ... some columns to track statistics
 
 
 class PMCells(db.Model):
@@ -565,7 +584,7 @@ class Faculty(db.Model):
 class Course(db.Model):
     __tablename__ = 'courses'
     id = Column(Integer, primary_key=True)  # the id is enough
-    faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
+    faculty_id = Column(Integer, ForeignKey('faculties.id'), primary_key=True)
 
     faculty = relationship('Faculty', back_populates='courses')
     groups = relationship('Group', back_populates='course')
@@ -576,10 +595,12 @@ class Course(db.Model):
             'id': self.id
         }
 
+
 class Group(db.Model):
     __tablename__ = 'groups'
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
+
     @property
     def number_of_cadets(self):
         return len(self.cadets)
@@ -592,8 +613,7 @@ class Group(db.Model):
     cadets = relationship('Cadet', back_populates='group',
                           order_by=[
                               asc(func.lower(Cadet.surname)),
-                              asc(func.lower(Cadet.name))
-                          ])
+                              asc(func.lower(Cadet.name))])
 
     def to_dict(self):
         return {
@@ -602,30 +622,3 @@ class Group(db.Model):
             'number_of_cadets': self.number_of_cadets
         }
 
-'''
-import random
-pm_cell_range = range(1, 31)
-group_ids = [1, 2, 3]
-positions_per_group = {1: [4, 5, 5, 5], 2: [4, 5, 5, 5], 3: [4, 5, 5, 5]}
-
-# Populate with 90 random cadets
-for i in range(90):
-    cadet = Cadet(
-        name=f'RandomName{i}',
-        surname=f'RandomSurname{i}',
-        patronymic=f'RandomPatronymic{i}',
-        rank_id=1,  # Assuming 10 ranks exist
-        position_id=6,
-        pm_cell_id=random.choice(pm_cell_range),
-        course_id=1,
-        faculty_id=1,
-        main_location_id=1
-    )
-
-    group_id = random.choice(group_ids)
-    cadet.group_id = group_id
-    if group_id in positions_per_group:
-        cadet.position_id = positions_per_group[group_id].pop(0)
-    db.session.add(cadet)
-db.session.commit()
-'''

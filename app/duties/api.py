@@ -247,7 +247,8 @@ class DutyResource(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('action', type=str, required=True)
         args = parser.parse_args()
-        duty: Duty = get_object_or_404(Duty, id=duty_id)
+        # duty: Duty = get_object_or_404(Duty, id=duty_id)
+        duty: Duty = Duty.query.get_or_404(duty_id)
 
         current_username = get_jwt_identity()
 

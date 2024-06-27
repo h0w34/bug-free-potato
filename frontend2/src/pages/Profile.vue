@@ -161,7 +161,10 @@
                 </div>
               </div>
           </v-card>
+
+          <CadetCard :cadet-data="user['cadet']"/>
         </v-skeleton-loader>
+
       </v-col>
 
       <v-col cols="auto">
@@ -307,10 +310,11 @@ import CadetCardSmall from "@/components/cadet/CadetCardSmall";
 import EditDutyDialog from "@/components/schedule/DutyDialog";
 import StaticDataService from "@/services/static-data.service";
 import {mapActions} from "vuex";
+import CadetCard from "@/components/cadet/CadetCard";
 
 export default {
   name: "ProfilePage",
-  components: {EditDutyDialog, CadetCardSmall, StatsChip},
+  components: {CadetCard, EditDutyDialog, CadetCardSmall, StatsChip},
   data(){
     return {
       dutyDialog: false,

@@ -1147,6 +1147,11 @@
   resolved "https://registry.npmmirror.com/@mdi/font/-/font-5.9.55.tgz#41acd50b88073ded7095fc3029d8712b6e12f38e"
   integrity sha512-jswRF6q3eq8NWpWiqct6q+6Fg/I7nUhrxYJfiEM8JJpap0wVJLQdbKtyS65GdlK7S7Ytnx3TTi/bmw+tBhkGmg==
 
+"@mdi/light-font@^0.2.63":
+  version "0.2.63"
+  resolved "https://registry.yarnpkg.com/@mdi/light-font/-/light-font-0.2.63.tgz#5c58d95cff38d251207a44919224de5b41f787fb"
+  integrity sha512-6JaP/rHo2ik6G26zeWmuVNa7iEqsC4Rwry25DfO7BjLxiLckAMvYmQIGlzn1I7Y6PblHAwNlcPjL1vFIg366Og==
+
 "@nicolo-ribaudo/eslint-scope-5-internals@5.1.1-v1":
   version "5.1.1-v1"
   resolved "https://registry.npmmirror.com/@nicolo-ribaudo/eslint-scope-5-internals/-/eslint-scope-5-internals-5.1.1-v1.tgz#dbf733a965ca47b1973177dc0bb6c889edcfb129"

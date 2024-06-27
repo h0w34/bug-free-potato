@@ -1,91 +1,213 @@
 <template>
-      <!--v-card
-        class="mx-auto rounded-xl"
-        max-width="344"
-        :hover="!selected"
-        :elevation="selected ? 5 : false"
-      -->
-      <v-card
-        class="mx-auto rounded-xl"
-        max-width="344"
+<!--      <v-card
+        class="mx-auto rounded-xl hover"
+        min-width="200"
+        max-width="250"
         hover
       >
 
-        <v-card-title class="d-flex justify-content-between">
-            <!--div class="mr-1 mt-1" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis', lineHeight: '1.2em'}">
-              {{cadetData['name'] + ' ' + cadetData['surname']}}
-            </div-->
-            <div class="mr-1 mt-1" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis', lineHeight: '1.2em'}">
+        <v-card-title >
+          <div class="mt-1 d-flex justify-space-between align-center">
+&lt;!&ndash;            <div class=" text-caption text-medium-emphasis ">
+                  13-й
+                </div>&ndash;&gt;
+            <v-chip
+              size="x-small"
+              color="grey"
+              label
+              variant="outlined"
+            >
+              <div class="text-caption text-medium-emphasis  font-weight-light">
+                {{ cadetData['position'] }}
+              </div>
+            </v-chip>
+&lt;!&ndash;          <v-badge
+                v-if="cadetData['priority']"
+                color="grey-darken-1"
+                class="align-self-center"
+                :content="cadetData['priority']+'-й'"
+            />
+            <v-chip
+              v-else
+              size="x-small"
+              color="secondary"
+              label
+              variant="outlined"
+            >
+              {{cadetData['faculty']}}
+            </v-chip>&ndash;&gt;
+
+
+          </div>
+          <v-divider class="mt-2 mb-3"/>
+          <div class="d-flex align-center">
+            <v-avatar
+              class="ma-1 mr-3"
+             size="55"
+             >
+                <v-img
+                  alt="doggy"
+                  :src="getUserAvatarUrl(cadetData['user']['username']/*['avatar']['url']*/)"
+                ></v-img>
+
+            </v-avatar>
+            <div class="" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis', lineHeight: '1.2em'}">
               <div>{{ cadetData['name'] }}</div>
               <div>{{ cadetData['surname'] }}</div>
             </div>
-
-            <div v-if="cadetData['priority']">
-            <v-badge color="grey-darken-1" inline :content="cadetData['priority']+'-й'"></v-badge>
-            </div>
-            <div v-else>
-              <v-chip
-                size="x-small"
-                color="secondary"
-                label
-                variant="outlined"
-              >
-                {{cadetData['faculty']}}
-              </v-chip>
-            </div>
+          </div>
         </v-card-title>
 
         <v-card-subtitle>
           <router-link v-if="cadetData['username'] !== undefined && cadetData['username']"
-                :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
-                :to="{ name: 'user', params: { username: cadetData['username'] } }" style="color:#00406b; text-decoration: none">
-              {{'@'+cadetData['username']}}
+            :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
+            :to="{ name: 'user', params: { username: cadetData['username'] } }" style="color:#00406b; text-decoration: none">
+            {{'@'+cadetData['username']}}
           </router-link>
           <div v-else class="text-h8" :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}">
             {{"@sobakayasobaka"}}
           </div>
-
           <div>{{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
-          <v-avatar
-            class="ma-3"
+        </v-card-subtitle>
+        <v-card-text class="mt-0 pt-2">
+
+        </v-card-text>
+
+        <v-divider class=" mx-4 mt-0 mb-3"/>
+
+      </v-card>-->
+      <v-card
+        class="mx-auto rounded-xl"
+        width="250"
+        hover
+      >
+        <v-card-title >
+          <div class="d-flex align-center justify-space-between">
+            <v-chip
+                  class="pl-1 pr-2"
+                  size="x-small"
+                  color="grey"
+                  label
+                  variant="outlined"
+                >
+                  <div class="text-caption text-medium-emphasis  font-weight-light">
+                      {{(cadetData['position']==='Замком взвода'? '🚨' :
+                      (cadetData['position']==='Командир отделения'? '⚡' : '🧃')) + cadetData['position']}}
+                  </div>
+            </v-chip>
+            <v-menu
+              v-model="menu"
+              :close-on-content-click="false"
+              location="end"
+            >
+              <template v-slot:activator="{ props }">
+                <v-btn flat icon="mdi-dots-vertical" size="small" class="pt-1" v-bind="props"></v-btn>
+              </template>
+
+              <v-card min-width="300">
+                <v-list>
+                  <v-list-item
+                    prepend-avatar="https://cdn.vuetifyjs.com/images/john.jpg"
+                    subtitle="Founder of Vuetify"
+                    title="John Leider"
+                  >
+                    <template v-slot:append>
+                      <v-btn
+                        :class="fav ? 'text-red' : ''"
+                        icon="mdi-heart"
+                        variant="text"
+                        @click="fav = !fav"
+                      ></v-btn>
+                    </template>
+                  </v-list-item>
+                </v-list>
+
+                <v-divider></v-divider>
+
+                <v-list>
+                  <v-list-item>
+                    <v-switch
+                      v-model="message"
+                      color="purple"
+                      label="Enable messages"
+                      hide-details
+                    ></v-switch>
+                  </v-list-item>
+
+                  <v-list-item>
+                    <v-switch
+                      v-model="hints"
+                      color="purple"
+                      label="Enable hints"
+                      hide-details
+                    ></v-switch>
+                  </v-list-item>
+                </v-list>
+
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+
+                  <v-btn
+                    variant="text"
+                    @click="menu = false"
+                  >
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="primary"
+                    variant="text"
+                    @click="menu = false"
+                  >
+                    Save
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-menu>
+
+
+
+          </div>
+          <v-divider class="my-1"/>
+          <div class="d-flex align-center">
+              <v-avatar
+            class="ma-1 mr-3"
            size="55"
            >
-            <!--v-img
-              alt="doggy"
-              :src="`https://thispersondoesnotexist.com/?${Date.now() + Math.random()}`"
-            ></v-img-->
-
               <v-img
                 alt="doggy"
                 :src="getUserAvatarUrl(cadetData['user']['username']/*['avatar']['url']*/)"
               ></v-img>
-
           </v-avatar>
-        </v-card-subtitle>
+            <div class="" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis', lineHeight: '1.2em'}">
+              <div>{{ cadetData['name'] }}</div>
+              <div>{{ cadetData['surname'] }}</div>
+            </div>
+          </div>
+        </v-card-title>
 
-        <v-divider class="mx-2 mb-2"/>
-          <template v-slot:actions>
-           <v-spacer />
-            <!--v-btn selected-class="bg-primary"
-                @click="toggleCard"
-                class="text-none"
-                color="medium-emphasis"
-                min-width="92"
-                variant="outlined"
-                rounded
-             -->
-            <v-btn
-                @click="toggleCard"
-                class="text-none mb-1"
-                color="medium-emphasis"
-                min-width="92"
-                variant="outlined"
-                rounded
-             >
-               Выбрать
-             </v-btn>
-           <v-spacer />
-          </template>
+        <v-card-subtitle>
+          <router-link v-if="cadetData['username'] !== undefined && cadetData['username']"
+            :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
+            :to="{ name: 'user', params: { username: cadetData['username'] } }" style="color:#00406b; text-decoration: none">
+            {{'@'+cadetData['username']}}
+          </router-link>
+          <div v-else class="text-h8" :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}">
+            {{"@sobakayasobaka"}}
+          </div>
+<!--          <div>
+            {{cadetData['pm_cell_id']+ '-я ячейка' }}
+          </div>-->
+          <div>{{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
+        </v-card-subtitle>
+        <v-card-text class="mt-0 pt-2">
+          <div>{{ '🎖️ '+ cadetData['rank']+' полиции' }}</div>
+<!--          <div>{{'🫂 '+ cadetData['group'] +' взвод'}}</div>-->
+          <div>{{'⚓ '+ cadetData['course'] +'-й курс'}}</div>
+          <div class="mb-2">{{ '👨‍💻 ' + cadetData['faculty'] }}</div>
+        </v-card-text>
+
+        <v-divider class=" mx-4 mt-0 mb-3"/>
+
       </v-card>
     </template>
 
@@ -104,6 +226,7 @@
       },
       data(){
         return {
+          menu: false,
           selected: false
         }
       },
@@ -124,5 +247,14 @@
     .selected {
       border: 2px solid #4CAF50;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+    }
+    .hover {
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+    }
+
+    .hover:hover {
+      box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+      transform: translateY(1px);
     }
   </style>

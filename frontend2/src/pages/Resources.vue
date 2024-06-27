@@ -18,13 +18,13 @@
     </v-app-bar>
 
     <v-navigation-drawer
-        class="p-2 pr-3"
+        class="p-2 pr-4"
         location="left"
         permanent
-        width="300"
+        width="315"
       >
         <v-treeview
-          class="unselectable custom-treeview"
+          class="unselectable custom-treeview pr-3"
           v-if="treeItems"
           :items="treeItems"
           item-value="title"
@@ -121,7 +121,7 @@
                     flat
                 >
                   <v-card-title>
-                    <div class="text-h5 font-weight-light">{{courseData.id}}-й курс</div>
+                    <div class="text-h5 font-weight-light">> {{courseData.id}}-й курс</div>
                   </v-card-title>
                   <v-divider class="my-0"/>
                   <v-card-text class="py-3 px-4">
@@ -173,17 +173,30 @@
           <v-window-item :key="4">
               <v-card>
                 <v-card-title class="d-flex text-center align-center justify-space-between">
-                  <h3>Личный состав {{selectedResource['name']}}-го взвода</h3>
-                  <v-icon class="mr-4 text-medium-emphasis">
-                    mdi-plus-box-outline
-                  </v-icon>
+                  <div class="justify-content-start">
+                    <h3>Личный состав {{selectedResource['name']}}-го взвода</h3>
+                    <h5 class=" text-medium-emphasis">Всего {{selectedResource['number_of_cadets']}} курсантов}}</h5>
+                  </div>
+                  <div
+                      class="rounded-4 p-2 d-flex justify-content-center text-center align-center gap-3 mr-3"
+                      style="border: 2px solid #f5f5f5"
+                  >
+                      <button class="text-center align-center">
+                        <v-icon size=small class="text-medium-emphasis">
+                          mdi-pencil
+                        </v-icon>
+                      </button>
+                      <button class=" text-center align-center">
+                        <v-icon size=small class="text-medium-emphasis">
+                          mdi-plus-box-outline
+                        </v-icon>
+                      </button>
+                  </div>
+
                 </v-card-title>
                 <v-divider class="my-1"/>
-                <v-card-text v-if="selectedResource" v-bind:transition="'fade-transition'">
-
                   <v-skeleton-loader>
-                    <div v-if="selectedResource['cadets']">
-                          <v-row>
+                          <v-row v-if="selectedResource['cadets']" class="m-3 p-4 rounded-4"  style="background: rgba(0,0,0,0.02)">
                             <v-col
                               v-for="(cadetData, i) in selectedResource['cadets']"
                               :key="i"
@@ -191,16 +204,14 @@
                             >
                               <cadet-card :cadetData="cadetData"/>
                             </v-col>
-                            <v-col
+<!--                            <v-col
                               cols="6"
                             >
                               <faculty-card :data="[]"/>
-                            </v-col>
+                            </v-col>-->
                           </v-row>
-                    </div>
                   </v-skeleton-loader>
 
-                </v-card-text>
               </v-card>
           </v-window-item>
         </v-window>
@@ -323,10 +334,8 @@ export default {
     opened: []
     }),
   computed: {
-    activeNodes() {
     // Implement your logic to determine the active nodes
-    return [];
-  },
+
     ...mapState('ResourcesStore', ['resourcesList', 'selectedIds', "selectedResource"]),
     ...mapGetters('ResourcesStore', ['breadcrumbItems', 'treeItems']),
 
@@ -369,7 +378,6 @@ methods:{
 
     handleTreeItemClick(nodeItem) {
       console.log(nodeItem)
-
       const treeItem = this.findItemByTitle(this.treeItems, nodeItem.id);
 
       if (treeItem.kind === 'location'){
@@ -390,7 +398,7 @@ methods:{
       else {
         this.window = 0;
       }
-      console.log(treeItem)
+      console.log('the tree item i found after clicking the node:', treeItem)
       this.setSelectedIds({
         locationId: treeItem?.locationId,
         facultyId: treeItem?.facultyId,

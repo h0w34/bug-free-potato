@@ -28,6 +28,11 @@ export const ResourcesStore = {
   state: initialState,
   getters: {
     breadcrumbItems(state) {
+      console.log('!!!!!Here we updating our breadcrumbs!')
+      if (!state.resourcesList) {
+        console.log('the resourceList is empty! returning []')
+        return [];
+      }
       const items = [];
 
         if (state.resourcesList) {
@@ -35,12 +40,15 @@ export const ResourcesStore = {
           items.push({ title: university.name, disabled: false, href: '#' });
 
           if (state.selectedIds.selectedLocationId !== null) {
-            const location = state.resourcesList.university.locations.find((l) => l.id === state.selectedIds.locationId);
+            console.log('One down...')
+            const location = university.locations.find((l) => l.id === state.selectedIds.locationId);
             if (location) {
+              console.log('Two down...')
               items.push({ title: location.name, disabled: false, href: '#' });
               if (state.selectedFacultyId !== null) {
                 const faculty = location.faculties.find((f) => f.id === state.selectedIds.facultyId);
                 if (faculty) {
+                  console.log('Three down...')
                   items.push({ title: faculty.name, disabled: false, href: '#' });
                   if (state.selectedCourseId !== null) {
                     const course = faculty.courses.find((c) => c.id === state.selectedIds.courseId);
@@ -182,22 +190,33 @@ export const ResourcesStore = {
     },
 
     setSelectedLocationId(state, locationId) {
-      state.selectedIds.locationId = locationId;
+      state.selectedIds.locationId = {
+        ...state.selectedIds.locationId,
+        [locationId]: locationId
+      }
+
       /*state.selectedLocation = state.resourcesList.locations.find((l) => l.id === locationId)*/
     },
     setSelectedFacultyId(state, facultyId) {
-      state.selectedIds.facultyId = facultyId;
+      state.selectedIds.facultyId = {
+        ...state.selectedIds.facultyId,
+        [facultyId]: facultyId
+      }
       /*state.selectedFaculty = state.selectedLocation.faculties.find((f) => f.id === facultyId)*/
     },
     setSelectedCourseId(state, courseId) {
-      state.selectedIds.courseId = courseId;
+      state.selectedIds.courseId = {
+        ...state.selectedIds.courseId,
+        [courseId]: courseId
+      };
       /*state.selectedFaculty = state.selectedFaculty.courses.find((c) => c.id === courseId)*/
     },
     setSelectedGroupId(state, groupId) {
-      state.selectedIds.groupId = groupId;
-/*
-      state.selectedFaculty = state.selectedGroup.groups.find((g) => g.id === groupId)
-*/
-    },
+      state.selectedIds.groupId = {
+        ...state.selectedIds.groupId,
+        [groupId]: groupId
+      };
+      /*state.selectedGroup = state.selectedCourse.groups.find((g) => g.id === groupId)*/
+    }
   }
 };
