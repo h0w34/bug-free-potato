@@ -3,9 +3,18 @@ import http from '../http-common';
 
 
 class ResourcesService {
-  async getResourcesList() {
+  async getResourcesTree() {
    try {
-      const response = await http.get(`resources/list`);
+      const response = await http.get(`resources/tree`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+  async getPositions() {
+   try {
+      const response = await http.get(`resources/positions`);
       return response.data;
     } catch (error) {
       console.error(error);

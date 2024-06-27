@@ -125,5 +125,13 @@ export default {
 </script>
 
 <style>
+  .unselectable {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+  }
 
+  .v-tooltip__content {
+     color: #FFFFFF !important; /* Set the tooltip text color to white */
+  }
 </style>

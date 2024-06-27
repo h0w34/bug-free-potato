@@ -104,17 +104,17 @@ export default {
       passwordRules: [
         value => {
           if (value?.length >= 8) return true
-            return 'Пароль не может содержать менее 8 символов.'
+            return 'Пароль не может содержать менее 8 символов'
         },
       ],
       usernameEmailRules: [
         v => !!v || 'Введите почту/юзернейм',
         v => {
           if (v.includes('@')) {
-            return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v) || 'Недопустимый email.';
+            return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v) || 'Недопустимый email';
           } else {
-            if (v.length < 5) return 'Не менее 5 символов на юзернейм.'
-            return /^[a-zA-Z0-9_]+$/.test(v) || 'Недопустимый юзернейм.';
+            if (v.length < 5) return 'Не менее 5 символов на юзернейм'
+            return /^[a-zA-Z0-9_]+$/.test(v) || 'Недопустимый юзернейм';
           }
         },
         () => this.loginFailure ? 'Неверный логин или пароль' : true

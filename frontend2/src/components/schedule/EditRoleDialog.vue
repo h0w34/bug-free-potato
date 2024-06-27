@@ -89,7 +89,7 @@
                   cols="auto"
                   md="4"
                 >
-                  <button-cadet-card :cadet-data="reserve_cadet_data" @select="confirmCadet"/>
+                  <ButtonCadetCard :cadet-data="reserve_cadet_data" @select="confirmCadet"/>
                 </v-col>
               </v-row>
             </v-container>

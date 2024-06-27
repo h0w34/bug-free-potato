@@ -25,8 +25,8 @@
       >
         <v-treeview
           class="unselectable custom-treeview pr-3"
-          v-if="treeItems"
-          :items="treeItems"
+          v-if="treeviewItems"
+          :items="treeviewItems"
           item-value="title"
           :opened="initiallyOpen"
           @click:open="handleTreeItemClick"
@@ -51,6 +51,8 @@
         <v-window
           v-model="window"
         >
+          <AddCadetDialog/>
+
           <v-window-item :key="0">
             <v-card>
               <v-card-title>
@@ -81,7 +83,7 @@
           <v-window-item :key="1">
             <v-card>
               <v-card-title>
-                <h3>Факультеты на {{selectedResource['name']}}</h3>
+                <h3 class="text-light-emphasis">Факультеты на {{selectedResource['name']}}</h3>
               </v-card-title>
               <v-divider class="my-1"/>
               <v-card-text>
@@ -121,7 +123,7 @@
                     flat
                 >
                   <v-card-title>
-                    <div class="text-h5 font-weight-light">> {{courseData.id}}-й курс</div>
+                    <div class="text-h5 font-weight-light">> {{courseData.name}}-й курс</div>
                   </v-card-title>
                   <v-divider class="my-0"/>
                   <v-card-text class="py-3 px-4">
@@ -160,36 +162,51 @@
           <v-window-item
               :key="3"
           >
-            <v-card fill-space fill-width fill-height height="100%" class="d-flex flex-column m-5"
-             variant="flat"
-            >
+            <v-card fill-space fill-width fill-height height="100%" class="d-flex flex-column m-5" variant="flat">
               <v-card-title>
                 Группы!
               </v-card-title>
-              {{selectedResource}}
             </v-card>
           </v-window-item>
 
           <v-window-item :key="4">
               <v-card>
-                <v-card-title class="d-flex text-center align-center justify-space-between">
+                <v-card-title class="d-flex align-center justify-space-between">
                   <div class="justify-content-start">
-                    <h3>Личный состав {{selectedResource['name']}}-го взвода</h3>
-                    <h5 class=" text-medium-emphasis">Всего {{selectedResource['number_of_cadets']}} курсантов}}</h5>
+                    <div class="d-flex align-center text-center justify-content-start">
+                      <h3>Личный состав {{selectedResource['name']}}-го взвода</h3>
+                      <h5 class="ml-2 text-medium-emphasis">({{selectedResource['number_of_cadets']}} курсантов)</h5>
+                    </div>
+                    <h5 class=" text-medium-emphasis">Направление: ИБАС</h5>
                   </div>
                   <div
-                      class="rounded-4 p-2 d-flex justify-content-center text-center align-center gap-3 mr-3"
-                      style="border: 2px solid #f5f5f5"
+                    class="rounded-4 p-2 d-flex justify-content-center text-center align-center gap-3 mr-3"
+                    style="border: 2px solid #f5f5f5"
                   >
-                      <button class="text-center align-center">
-                        <v-icon size=small class="text-medium-emphasis">
+                      <button
+                        class="text-center align-center"
+                      >
+                        <v-icon size=small class="text-medium-emphasis"
+                            @click="editGroupMode=true">
                           mdi-pencil
                         </v-icon>
+                        <v-tooltip activator="parent" location="left">
+                          Редактировать группу
+                        </v-tooltip>
                       </button>
-                      <button class=" text-center align-center">
-                        <v-icon size=small class="text-medium-emphasis">
+                      <button
+                        class="text-center align-center"
+                      >
+                        <v-icon
+                          size=small
+                          class="text-medium-emphasis"
+                          @click="openAddCadetDialog"
+                        >
                           mdi-plus-box-outline
                         </v-icon>
+                        <v-tooltip activator="parent" location="bottom">
+                          Добавить курсанта
+                        </v-tooltip>
                       </button>
                   </div>
 
@@ -228,9 +245,11 @@ import FacultyCard from "@/components/resources/FacultyCard";
 import GroupCard from "@/components/resources/GroupCard";
 import CadetCard from "@/components/cadet/CadetCard";
 
+import AddCadetDialog from "@/components/cadet/AddCadetDialog";
+
 export default {
   name: "ResourcesPage",
-  components: {CadetCard, GroupCard, FacultyCard, LocationCard},
+  components: {CadetCard, GroupCard, FacultyCard, LocationCard, AddCadetDialog},
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -242,6 +261,7 @@ export default {
   },
 
   data: () => ({
+    /*addCadetDialog: false,*/
     window: 0,
       items: [
         {
@@ -278,7 +298,7 @@ export default {
       },
       tree: [],
       /*breadcrumbItems: [],
-      treeItems: [],*/
+      treeviewItems: [],*/
       items2: [
         {
           title: '.git',
@@ -336,8 +356,9 @@ export default {
   computed: {
     // Implement your logic to determine the active nodes
 
-    ...mapState('ResourcesStore', ['resourcesList', 'selectedIds', "selectedResource"]),
-    ...mapGetters('ResourcesStore', ['breadcrumbItems', 'treeItems']),
+    ...mapState('ResourcesStore', ['resourcesTree', 'selectedIds', 'selectedResource']),
+    ...mapState('layoutStore', ['addCadetDialog']),
+    ...mapGetters('ResourcesStore', ['breadcrumbItems', 'treeviewItems']),
 
     currentTitle(){
       return 1
@@ -351,34 +372,35 @@ export default {
         this.selectedGroupId
       );
     },
-    treeItems() {
-      return this.$store.getters['ResourcesStore/treeItems'](this.selectedLocationId);
+    treeviewItems() {
+      return this.$store.getters['ResourcesStore/treeviewItems'](this.selectedLocationId);
     },*/
 
   },
   //TODO: too long page loading each time it's opened. Do smth with this hook
   async created() {
     console.log('Created the resources Page!')
-    if (!this.resourcesList) await this.fetchResourcesList();
-    this.setSelectedResource(this.resourcesList['university'])
+    if (!this.resourcesTree) await this.fetchResourcesTree();
+    this.setSelectedResource(this.resourcesTree['university'])
 /*
     await this.fetchResourcesData();
 */
   },
 
   watch: {
-    /*resourcesList() {
+    /*resourcesTree() {
       this.updateBreadcrumbItems();
       this.updateTreeItems();
     },*/
   },
 
 methods:{
-    ...mapActions('ResourcesStore', ['fetchResourcesList', /*'fetchResourcesData',*/ 'setSelectedIds', 'setSelectedResource']),
+    ...mapActions('ResourcesStore', ['fetchResourcesTree', /*'fetchResourcesData',*/ 'setSelectedIds', 'setSelectedResource']),
+    ...mapActions('layoutStore', ['openAddCadetDialog']),
 
     handleTreeItemClick(nodeItem) {
       console.log(nodeItem)
-      const treeItem = this.findItemByTitle(this.treeItems, nodeItem.id);
+      const treeItem = this.findItemByTitle(this.treeviewItems, nodeItem.id);
 
       if (treeItem.kind === 'location'){
         this.window = 1;

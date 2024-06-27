@@ -1,6 +1,7 @@
   const initialState = {
     sidebar: false,
-    dutyDialog: false
+    dutyDialog: false,
+    addCadetDialog: true,
   }
 
   export const layoutStore = {
@@ -25,14 +26,20 @@
       openSidebar({ commit }) {
         console.log('in openSIdebar action...')
         commit('openSidebar');
+      },
+      openAddCadetDialog({ commit }){
+        commit('openAddCadetDialog')
+      },
+      closeAddCadetDialog({ commit }){
+        commit('closeAddCadetDialog')
       }
     },
 
-    mutations: {
-      resetLayout(state) {
-        state.dutyDialog = false;
-        state.sidebar = false;
-      },
+  mutations: {
+    resetLayout(state) {
+      state.dutyDialog = false;
+      state.sidebar = false;
+    },
     openDutyDialog(state) {
       state.dutyDialog = true;
     },
@@ -45,6 +52,12 @@
     },
     closeSidebar(state) {
       state.sidebar = false;
+    },
+    openAddCadetDialog(state) {
+      state.addCadetDialog = true;
+    },
+    closeAddCadetDialog(state) {
+      state.addCadetDialog = false;
     }
   }
 };

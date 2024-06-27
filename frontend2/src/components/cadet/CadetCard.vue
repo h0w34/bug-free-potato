@@ -76,7 +76,9 @@
         <v-divider class=" mx-4 mt-0 mb-3"/>
 
       </v-card>-->
+
       <v-card
+        v-if="cadetData"
         class="mx-auto rounded-xl"
         width="250"
         hover
@@ -209,6 +211,13 @@
         <v-divider class=" mx-4 mt-0 mb-3"/>
 
       </v-card>
+      <v-skeleton-loader
+        v-else
+        type="card, paragraph"
+        class="rounded-4"
+        width="230"
+        :loading="!cadetData"
+      />
     </template>
 
   <script>

@@ -1,7 +1,7 @@
 import this
 
 from sqlalchemy import Column, Boolean, Enum
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint, CheckConstraint
 from sqlalchemy import Integer, UUID
 from sqlalchemy import String
 from sqlalchemy.exc import SQLAlchemyError
@@ -518,7 +518,7 @@ class Cadet(db.Model):
             'position': self.position.position_name,
             'rank': self.rank.rank_name,
             'faculty': self.faculty.name,
-            'course': self.course_id,
+            'course': self.course.name,
             'group': self.group.name,
             'main_location': self.main_location.address if self.main_location else '',
             'user': self.user.to_dict_short() if self.user else ''
@@ -556,12 +556,22 @@ class Rank(db.Model):
     id = Column(Integer, primary_key=True)
     rank_name = Column(String(50), nullable=False)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.rank_name
+        }
 
 class Position(db.Model):
     __tablename__ = 'positions'
     id = Column(Integer, primary_key=True)
     position_name = Column(String(50), nullable=False)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.position_name
+        }
 
 class Faculty(db.Model):
     __tablename__ = 'faculties'
@@ -569,7 +579,7 @@ class Faculty(db.Model):
     name = Column(String(50), nullable=False)
     location_id = Column(Integer, ForeignKey('locations.id'), nullable=False)
 
-    courses = relationship('Course', back_populates='faculty')
+    courses = relationship('Course', back_populates='faculty', order_by="Course.name")
     groups = relationship('Group', back_populates='faculty')
     cadets = relationship('Cadet', back_populates='faculty')
     location = relationship('Location', back_populates='faculties')
@@ -577,14 +587,16 @@ class Faculty(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'location_id': self.location_id
         }
 
 
 class Course(db.Model):
     __tablename__ = 'courses'
-    id = Column(Integer, primary_key=True)  # the id is enough
-    faculty_id = Column(Integer, ForeignKey('faculties.id'), primary_key=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(Integer, CheckConstraint("name.between(1, 5)"))
+    faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
 
     faculty = relationship('Faculty', back_populates='courses')
     groups = relationship('Group', back_populates='course')
@@ -592,7 +604,9 @@ class Course(db.Model):
 
     def to_dict(self):
         return {
-            'id': self.id
+            'id': self.id,
+            'name': self.name,
+            'faculty_id': self.faculty_id
         }
 
 
@@ -614,7 +628,6 @@ class Group(db.Model):
                           order_by=[
                               asc(func.lower(Cadet.surname)),
                               asc(func.lower(Cadet.name))])
-
     def to_dict(self):
         return {
             'id': self.id,

@@ -18,7 +18,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 # TODO: May add a special marking col depending on curr jwt showing if the resource is available or not
 # or simply not to include it in json
-class ResourcesListResource(Resource):
+class ResourcesTreeResource(Resource):
     def get(self):
         university_data = {'name': 'Университет'}
         locations_data = []
@@ -45,16 +45,30 @@ class ResourcesListResource(Resource):
             locations_data.append(location_data)
 
         university_data['locations'] = locations_data
+        university_data['positions'] = [p.to_dict() for p in Position.query.order_by(Position.id.desc()).all()]
+        university_data['ranks'] = [r.to_dict() for r in Rank.query.all()]
         return {'university': university_data}, 200
 
 
+# TODO: consider removing
+class PositionsResource(Resource):
+    def get(self):
+        return [p.to_dict() for p in Position.query.all()], 200
 
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('name', type=str, required=True)
+        args = parser.parse_args()
+        position = Position(name=args.get('name'))
 
-'''
-Replace all the if '' in args with if args.get()
-'''
+        db.session.add(position)
+        db.session.commit()
+        return {
+           'message': f'Position {args.get("name")} successfully created',
+           'location': position.to_dict()
+        }, 201
 
-
+# TODO: may add ranks resource (yet no real need since ranks dont change for years)
 
 
 class CadetsResource(Resource):
@@ -370,17 +384,17 @@ class FacultyResource(Resource):
 class CoursesResource(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('id', type=int, required=True)
+        parser.add_argument('num', type=int, required=True)
         parser.add_argument('faculty_id', type=int, required=True)
         args = parser.parse_args()
 
         faculty = Faculty.query.get_or_404(args.get('faculty_id'))
         try:
-            course = Course(id=args.get('id'), faculty=faculty)
+            course = Course(num=args.get('num'), faculty=faculty)
             db.session.add(course)
             db.session.commit()
             return {
-                   'message': f'Course {args.get("id")} at {faculty.name} faculty successfully created',
+                   'message': f'Course {args.get("num")} at {faculty.name} faculty successfully created',
                    'course': course.to_dict()
                 }, 201
         except:

@@ -1,267 +1,318 @@
 <template>
   <v-dialog
     v-model="addCadetDialog"
-    max-width="850"
+    max-width="650"
+    min-wdth="500"
     max-height="auto"
     persistent
   >
-
-    <v-dialog v-model="movingDialog">
-        <move-cadets-dialog/>
-    </v-dialog>
-
-    <v-dialog max-width="700" max-height="auto" v-model="replacementHistoryDialog">
-      <replacements-history-dialog
-          @close="closeHistoryDialog"
-          :selectedDutyId="selectedDutyId"
-          :selectedDuty="selectedDuty"
-      />
-    </v-dialog>
-
-    <edit-role-dialog :selected-cadet-data="selectedCadetData" :selectedDutyId="selectedDutyId"
-                :dialog="roleDialog" @close="closeRoleDialog" @update="updateLayout" :selectedDutyData="dutyData"/>
-
-    <v-card class="rounded-xl my-4"
-      :disabled="saving"
-      :loading="saving"
-    >
-      <template v-slot:loader="{ isActive }">
-        <v-progress-linear
-          :active="isActive "
-          color="deep-purple"
-          height="4"
-          indeterminate
-        ></v-progress-linear>
-      </template>
-
-      <!--div style="background-color: #f5f5f5;" class="pb-2">
-        <v-card-title
-            class="d-flex justify-space-between align-center mt-2 pb-0"
-        >
-          <div class="text-h5 text-medium-emphasis ps-3">
-            {{ currentTitle }}
-          </div>
-          <div>
-            <v-icon
-                class="mx-3"
-                size="small"
-                @click="toggleEditeMode()"
-                :disabled="!dutyData || beingEdited"
-              >
-                mdi-pencil
-              </v-icon>
-            <v-btn
-              variant="outlined"
-              class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
-              @click="openHistoryDialog"
-              :disabled="saving"
-            >
-                История замен
-                <v-icon
-                    class="text-medium-emphasis ml-2"
-                    size="large"
-                  >
-                  mdi-history
-              </v-icon>
-            </v-btn>
-
-            <v-btn icon="mdi-close" variant="text" @click="closeDialog"/>
-          </div>
+    <v-card max-height="700px" class="rounded-xl my-4" color="grey-lighten-5">
+        <v-card-title class="d-flex justify-space-between align-center mt-1">
+            <div class="text-h5 font-weight-regular text-medium-emphasis p-0 ml-2">
+              Добавить курсанта
+            </div>
+<!--            <div class="unselectable ml-2 text-h5 font-weight-medium text-medium-emphasis"  >
+              Добавить курсанта
+            </div>-->
+          <v-btn icon="mdi-close" variant="text" @click="closeAddCadetDialog"></v-btn>
         </v-card-title>
 
-        <v-card-subtitle class="d-flex justify-space-between align-center pb-0">
-          <div class="text-medium-emphasis ps-3">
-            <h6>{{currentSubTitle}}</h6>
-          </div>
-        </v-card-subtitle>
-      </div-->
-
-      <v-card-title
-          class="d-flex justify-space-between align-center mt-2 pb-0"
-      >
-        <div class="text-h5 text-medium-emphasis ps-3">
-          {{ currentTitle }}
+        <div v-if="loading" class="mx-15 justify-content-around">
+          <v-container >
+            <v-skeleton-loader
+              min-height="600"
+              type=" text, list-item, list-item, article, actions"
+          />
+          </v-container>
         </div>
-        <div>
-          <v-icon
-              class="mx-3"
-              size="small"
-              @click="toggleEditeMode()"
-              :disabled="!dutyData || beingEdited"
-            >
-              mdi-pencil
-            </v-icon>
-          <v-btn
-            variant="flat"
-            base-color="grey-lighten-4"
-            class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
-            @click="openHistoryDialog"
-            :disabled="saving"
+        <div v-else>
+          <v-stepper
+            v-model="step"
+            :items="stepperItems"
+            show-actions
           >
-              История замен
-              <v-icon
-                  class="text-medium-emphasis ml-2"
-                  size="large"
-                >
-                mdi-history
-            </v-icon>
-          </v-btn>
+            <template v-slot:[`item.1`]>
+                  <v-row class="justify-content-center">
+                    <v-col class="px-4" style="min-width: 500px;">
+<!--                      <div class="mb-3 text-h5 font-weight-medium text-medium-emphasis"  >
+                        Новый курсант/слушатель
+                      </div>-->
 
-          <v-btn icon="mdi-close" variant="text" @click="closeDialog"/>
-        </div>
-      </v-card-title>
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                        Имя
+                      </div>
 
-      <v-card-subtitle class="d-flex justify-space-between align-center pb-0">
-        <div class="text-medium-emphasis ps-3">
-          <h6>{{currentSubTitle}}</h6>
-        </div>
-      </v-card-subtitle>
+                      <v-text-field
+                        aria-errormessage="false"
+                        placeholder="Ваше имя"
+                        density="compact"
+                        variant="outlined"
+                        class="rounded-xl"
+                        v-model="firstname"
+                      ></v-text-field>
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                        Фамилия
+                      </div>
+                      <v-text-field
+                        placeholder="Ваша фамилия"
+                        density="compact"
+                        variant="outlined"
+                        class="rounded-xl"
+                        v-model="surname"
+                        :rules="nameRules"
+                      ></v-text-field>
 
-      <v-divider class="mx-10"></v-divider>
-      <v-alert
-            v-if="beingEdited"
-            closable
-            type="warning"
-            variant="tonal"
-            class="mx-5 text-center"
-          >
-            <v-alert-title>Ошибка</v-alert-title>
-            <h5>Эти сутки сейчас кто-то редактирует.</h5>
-            <h5>Возвращайтесь попозже.</h5>
-      </v-alert>
-      <v-card-text>
-        <v-container class="py-0" >
-          <div v-if="dutyData">
-            <v-row class="justify-content-center">
-              <v-col
-                v-for="(cadet_data, i) in dutyData['cadets_with_roles']"
-                :key="i"
-                cols="auto"
-                md="4"
-              >
-              <role-card
-                  :cadet-data="cadet_data"
-                  :disabled="beingEdited"
-                  @edit="openRoleDialog"
-                  :edite-mode="editeMode"
-                  @closeDutyDialog="closeDialog"
-              />
-              </v-col>
-            </v-row>
-          </div>
-          <div v-else-if="error">
-            <v-container class="text-medium-emphasis text-center">
-                <h5>Упс! Не удалось загрузить сутки.</h5>
-                <h5>Перезагрузите страницу.</h5>
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                        Отчество
+                      </div>
+                      <v-text-field
+                        placeholder="Ваше отчество"
+                        density="compact"
+                        variant="outlined"
+                        class="rounded-xl"
+                        v-model="patronymic"
+                        :rules="nameRules"
+                      ></v-text-field>
+
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                        Пол
+                      </div>
+                      <v-radio-group
+                          style="margin-left: -7px"
+                          class=" text-light-emphasis"
+                          v-model="radios"
+                          inline
+                      >
+                        <v-radio value="male" class="mr-1">
+                          <template v-slot:label>
+                            <div>Мужской</div>
+                          </template>
+                        </v-radio>
+                        <v-radio value="female">
+                          <template v-slot:label>
+                            <div>Женский</div>
+                          </template>
+                        </v-radio>
+                      </v-radio-group>
+                    </v-col>
+                  </v-row>
+            </template>
+
+            <template v-slot:[`item.2`]>
+              <v-row class="justify-content-center">
+                    <v-col class="px-4">
+<!--                      <div class="mb-3 text-h5 font-weight-medium text-medium-emphasis"  >
+                        Новый курсант/слушатель
+                      </div>-->
+
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                        Звание
+                      </div>
+                      <v-select
+                        clearable
+                        placeholder="Рядовой полиции"
+                        density="compact"
+                        :items="resourcesTree['university']?.['ranks'] ?? []"
+                        variant="outlined"
+                        v-model="selectedRank"
+                        item-title="name"
+                      ></v-select>
+
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                        Должность
+                      </div>
+                      <v-select
+                        clearable
+                        placeholder="Курсант"
+                        density="compact"
+                        :items="resourcesTree['university']?.['positions'] ?? []"
+                        variant="outlined"
+                        v-model="selectedPosition"
+                        item-title="name"
+                      ></v-select>
+
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                          Положение
+                        </div>
+                      <div class="d-flex align-center justify-content-start gap-2">
+
+                        <v-select
+                          density="compact"
+                          label="Факультет"
+                          :items="facultySelectItems"
+                          variant="outlined"
+                          v-model="selectedFaculty"
+                          item-title="name"
+                          return-object
+                          :disabled="!resourcesTree || resourcesTree['university']['locations'].length === 0"
+                          @change="clearCourseAndGroup"
+                        ></v-select>
+
+                        <v-select
+                          density="compact"
+                          label="Курс"
+                          :items="courseSelectItems"
+                          variant="outlined"
+                          item-title="name"
+                          v-model="selectedCourse"
+                          return-object
+                          :disabled="!selectedFaculty"
+                          @change="clearGroup"
+                        ></v-select>
+
+                        <v-select
+                          density="compact"
+                          label="Группа"
+                          :items="groupSelectItems"
+                          variant="outlined"
+                          v-model="selectedGroup"
+                          item-title="name"
+                          return-object
+                          :disabled="!selectedCourse"
+                        ></v-select>
+                      </div>
+
+                      <div class="text-subtitle-1 text-medium-emphasis">
+                          Ячейки
+                        </div>
+                      <div class="d-flex align-center justify-content-start gap-2">
+                        <v-select
+                          density="compact"
+                          label="Макаров"
+                          :items="['California', 'Colorado', 'Florida', 'Georgia', 'Texas', 'Wyoming']"
+                          variant="outlined"
+                        ></v-select>
+                        <v-select
+                          density="compact"
+                          label="Калашников"
+                          :items="['California', 'Colorado', 'Florida', 'Georgia', 'Texas', 'Wyoming']"
+                          variant="outlined"
+                        ></v-select>
+                      </div>
+                    </v-col>
+                  </v-row>
+            </template>
+
+            <template v-slot:[`item.3`]>
+              <v-container class="text-center">
+                <div class="text-h8 font-weight-regular text-medium-emphasis">
+                  Все сделано!<br>
+                  Не забудьте сохранить логин и пароль.
+                </div>
+                <v-divider/>
+                <div  class=" d-flex justify-content-center ">
+                  <CadetCard :cadet-data="null"/>
+                </div>
               </v-container>
-          </div>
-          <div v-else>
-              <v-row align="center" justify="center" dense>
-                <v-col
-                  v-for="i in 3"
-                  :key="i"
-                  cols="12"
-                  md="4"
-                >
-                  <v-skeleton-loader type="card@2"/>
-                </v-col>
-              </v-row>
-            <!--v-progress-circular
-              indeterminate
-              color="primary"
-            ></v-progress-circular-->
-          </div>
-        </v-container>
-      </v-card-text>
-      <v-divider class="mx-10 my-2"></v-divider>
-      <v-card-actions class="mx-3 pr-5">
-        <v-spacer></v-spacer>
-        <div class="my-2">
-          <v-btn
-            class="text-none px-3"
-            color="medium-emphasis"
-            variant="outlined"
-            @click="closeDialog"
-          >
-            {{error ? 'Отмена' : 'Выйти'}}
-          </v-btn>
-          <v-btn v-if="!error && !beingEdited && editeMode" class="text-none"
-            color="medium-emphasis"
-            variant="outlined"
-            @click="saveAndShowLoader"
-          >Сохранить
-          </v-btn>
-        </div>
-      </v-card-actions>
+            </template>
+
+            <template v-slot:actions>
+              <v-divider class="mt-0 pt-0"/>
+              <v-stepper-actions
+                :disabled="disabled"
+                @click:next="step++"
+                @click:prev="step--"
+             ></v-stepper-actions>
+            </template>
+
+
+        </v-stepper>
+      </div>
+
     </v-card>
   </v-dialog>
 </template>
 
 <script>
-import RoleCard from "@/components/cadet/RoleCard";
-import EditRoleDialog from "@/components/schedule/EditRoleDialog";
-import MoveCadetsDialog from "@/components/MoveCadetsDialog";
-import ReplacementsHistoryDialog from "@/components/schedule/ReplacementsHistoryDialog";
-import DutyDataService from "@/services/duty-data.service";
-//import EditRoleDialog from "@/components/EditRoleDialog";
+
+
 import {mapState, mapActions} from "vuex";
+import CadetCard from "@/components/cadet/CadetCard";
 
 export default {
   name: 'EditDutyDialog',
-  components: {ReplacementsHistoryDialog, MoveCadetsDialog, EditRoleDialog, RoleCard},
+  components: {CadetCard},
   props: {
-    /*headers: {
-      type: Array,
-      required: true
-    },*/
-    selectedDuty: {
-      type: Object,
-      required: true,
-    },
-    dialog: {
+/*    dialog: {
       type: Boolean,
-      required: true,
-    },
-    selectedDutyId: {
-      type: Number,
       required: true
-    },
-
+    }*/
   },
   data() {
     return {
-      //localSelectedDuty: this.selectedDuty,
-      dutyData: null,
+      name: null,
+      surname: null,
+      patronymic: null,
+      radios: null,
+
+      selectedFaculty: null,
+      selectedCourse: null,
+      selectedGroup: null,
+      selectedPosition: null,
+      selectedRank: null,
+
+      RankItems: [],
+      PositionItems: [],
+
       saving: false,
       error: false,
-      beingEdited: false,
-      roleDialog: false,
-      movingDialog: false,
-      replacementHistoryDialog: false,
-      editeMode: false,
-      selectedCadetData: {},
-
-        monthNames: [
-            'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-            'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-        ]
-
+      loading: false,
+      stepperItems: [
+        'Заполнить анкету',
+        'Добавить данные',
+        //'Привязать пользователя',
+        'Готово!',
+      ],
+      step: 1
     }
   },
-  computed: {
-    ...mapState('layoutStore', ['dutyDialog']),
-
-    localDialog: {
-      get() {
-        return this.dialog;
-      },
-      set(value) {
-        this.$emit('update:dialog', value);
+  async beforeMount() {
+      if(!this.resourcesTree){
+        await this.fetchResourcesTree()
       }
+
+  },
+
+  computed: {
+    facultySelectItems() {
+      const faculties = [];
+      for (const location of this.resourcesTree['university']['locations']) {
+        faculties.push(...location.faculties)}
+      return faculties;
     },
-    currentTitle () {
-      return this.editeMode ? 'Редактировать сутки' : 'Информация о сутках'
+
+    courseSelectItems(){
+      /*const location = this.resourcesTree['university']['locations'].find(
+          loc => loc.id === this.selectedIds.locationId)*/
+      /*const faculty = location['faculties'].find(fac => fac.id === this.selectedIds.facultyId)*/
+      if (this.facultySelectItems){
+        if (this.selectedFaculty){
+          console.log('selected faculty is...', this.selectedFaculty)
+          const faculty = this.facultySelectItems.find(fac => fac.id === this.selectedFaculty.id)
+          if (faculty) return faculty.courses; else return []
+        }
+      }
+      return [];
     },
+    groupSelectItems(){
+      /*const location = this.resourcesTree['university']['locations'].find(
+          loc => loc.id === this.selectedIds.locationId)*/
+      if (this.courseSelectItems){
+        if (this.selectedCourse){
+          const course = this.courseSelectItems.find(course => course.id === this.selectedCourse.id)
+          if (course) return course.groups; else return []
+        }
+      }
+      return [];
+    },
+
+    disabled(){
+      return false
+    },
+
+    ...mapState('layoutStore', ['addCadetDialog']),
+    ...mapState('ResourcesStore', ['resourcesTree', 'selectedIds']),
+
     currentSubTitle() {
       if (this.dutyData) {
         const date = new Date(this.dutyData['date']);
@@ -274,7 +325,17 @@ export default {
     }
   },
   methods: {
-    ...mapActions('layoutStore', ['closeDutyDialog']),
+    ...mapActions('layoutStore', ['closeAddCadetDialog']),
+    ...mapActions('ResourcesStore', ['fetchResourcesTree']),
+
+    clearCourseAndGroup() {
+      this.selectedCourse = null;
+      this.selectedGroup = null;
+    },
+    clearGroup() {
+      this.selectedGroup = null;
+    },
+    /*...mapActions('layoutStore', ['closeDutyDialog']),
     ...mapActions('layoutStore', ['openDutyDialog']),
 
     toggleEditeMode(){
@@ -314,14 +375,14 @@ export default {
         await new Promise(resolve => setTimeout(resolve, Math.max(800 - (performance.now() - loadingStartTime), 0)));
         this.saving = false;
       }
-    },
-    closeDialog() {
+    },*/
+    /*closeDialog() {
       this.saving = false;
         if (this.editeMode) this.unlockDuty();
         this.clearDialogData()
         //layout action
         this.closeDutyDialog();
-        /*this.$emit('close');*/
+        /!*this.$emit('close');*!/
     },
     closeRoleDialog(){
       this.roleDialog = false
@@ -387,11 +448,11 @@ export default {
           this.error=true;
         }
       }
-    }
+    }*/
 
   },
   watch: {
-    dutyDialog:{
+    /*dutyDialog:{
       handler(){
         // i.e. on the dialog opening
         if(this.dutyDialog){
@@ -399,18 +460,7 @@ export default {
         }
       },
       immediate: true
-    },
-    /*selectedDutyId: {
-      handler(){
-
-        console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
-/!*        if (this.editeMode){
-          this.lockDuty()
-        }*!/
-        this.fetchDutyData();
-      } ,
-      immediate: true
-    }*/
+    },*/
   }
 }
 </script>
