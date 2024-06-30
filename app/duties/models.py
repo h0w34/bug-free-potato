@@ -107,6 +107,8 @@ class Location(db.Model):
     faculties = relationship('Faculty', back_populates='location')
 
     duty_types = relationship('DutyType', back_populates='location')
+    pm_cells = relationship('PMCell', back_populates='location', order_by='PMCell.id')
+    ak_cells = relationship('AKCell', back_populates='location', order_by='AKCell.id')
 
     # TODO: may replace with a relationship
     @property
@@ -539,16 +541,32 @@ class Cadet(db.Model):
         }
 
 
-class PMCells(db.Model):
+class PMCell(db.Model):
     __tablename__ = 'pm_cells'
     id = Column(Integer, primary_key=True)
     location_id = Column(Integer, ForeignKey('locations.id'))
 
+    location = relationship('Location', back_populates='pm_cells')
 
-class AKCells(db.Model):
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'location_id': self.location_id
+        }
+
+
+class AKCell(db.Model):
     __tablename__ = 'ak_cells'
     id = Column(Integer, primary_key=True)
     location_id = Column(Integer, ForeignKey('locations.id'))
+
+    location = relationship('Location', back_populates='ak_cells')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'location_id': self.location_id
+        }
 
 
 class Rank(db.Model):
@@ -562,6 +580,7 @@ class Rank(db.Model):
             'name': self.rank_name
         }
 
+
 class Position(db.Model):
     __tablename__ = 'positions'
     id = Column(Integer, primary_key=True)
@@ -573,6 +592,7 @@ class Position(db.Model):
             'name': self.position_name
         }
 
+
 class Faculty(db.Model):
     __tablename__ = 'faculties'
     id = Column(Integer, primary_key=True)
@@ -583,6 +603,7 @@ class Faculty(db.Model):
     groups = relationship('Group', back_populates='faculty')
     cadets = relationship('Cadet', back_populates='faculty')
     location = relationship('Location', back_populates='faculties')
+    specializations = relationship('Specialization', back_populates='faculty')
 
     def to_dict(self):
         return {
@@ -621,9 +642,11 @@ class Group(db.Model):
 
     course_id = Column(Integer, ForeignKey('courses.id'))
     faculty_id = Column(Integer, ForeignKey('faculties.id'))
+    specialization_id = Column(Integer, ForeignKey('specializations.id'), nullable=True)
 
     course = relationship('Course', back_populates='groups')
     faculty = relationship('Faculty', back_populates='groups')
+    specialization = relationship('Specialization', back_populates='groups')
     cadets = relationship('Cadet', back_populates='group',
                           order_by=[
                               asc(func.lower(Cadet.surname)),
@@ -632,6 +655,24 @@ class Group(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'number_of_cadets': self.number_of_cadets
+            'number_of_cadets': self.number_of_cadets,
+            'specialization': self.specialization.to_dict() if self.specialization else ''
         }
 
+
+class Specialization(db.Model):
+    __tablename__ = 'specializations'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), nullable=False)
+    faculty_id = Column(Integer, ForeignKey('faculties.id'), nullable=False)
+
+    faculty = relationship('Faculty', back_populates='specializations')
+    groups = relationship('Group', back_populates='specialization')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'faculty_id': self.faculty_id
+        }

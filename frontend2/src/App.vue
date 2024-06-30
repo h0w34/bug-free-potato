@@ -131,7 +131,7 @@ export default {
     user-select: none; /* Standard syntax */
   }
 
-  .v-tooltip__content {
-     color: #FFFFFF !important; /* Set the tooltip text color to white */
-  }
+  /*.v-tooltip__content {
+     color: #FFFFFF !important; !* Set the tooltip text color to white *!
+  }*/
 </style>

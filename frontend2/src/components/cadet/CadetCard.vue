@@ -83,10 +83,12 @@
         width="250"
         hover
       >
-        <v-card-title >
-          <div class="d-flex align-center justify-space-between">
+        <v-card-title
+
+        >
+          <div class="d-flex align-center justify-space-between " style="min-height: 35px">
             <v-chip
-                  class="pl-1 pr-2"
+                  class="pl-1 pr-2 mt-1"
                   size="x-small"
                   color="grey"
                   label
@@ -98,78 +100,112 @@
                   </div>
             </v-chip>
             <v-menu
+              v-if="!menuDisabled"
               v-model="menu"
               :close-on-content-click="false"
               location="end"
             >
               <template v-slot:activator="{ props }">
-                <v-btn flat icon="mdi-dots-vertical" size="small" class="pt-1" v-bind="props"></v-btn>
+                <v-btn flat icon="mdi-dots-vertical" size="small" class="py-1" v-bind="props"></v-btn>
               </template>
 
-              <v-card min-width="300">
-                <v-list>
-                  <v-list-item
-                    prepend-avatar="https://cdn.vuetifyjs.com/images/john.jpg"
-                    subtitle="Founder of Vuetify"
-                    title="John Leider"
+                <v-card
+                  class="mx-auto rounded-4"
+                  elevation="1"
+                  width="145"
+                >
+                  <v-list
+                    density="compact"
+                    class="mb-0 pb-1"
+                    nav
                   >
-                    <template v-slot:append>
-                      <v-btn
-                        :class="fav ? 'text-red' : ''"
-                        icon="mdi-heart"
-                        variant="text"
-                        @click="fav = !fav"
-                      ></v-btn>
-                    </template>
-                  </v-list-item>
-                </v-list>
+                    <v-list-item
+                        @click="deleteUser"
+                        class=" rounded-4 my-0 py-0"
+                        :value="1"
 
-                <v-divider></v-divider>
+                    >
+                      <div class="d-inline-flex text-medium-emphasis">
+                        <v-icon color="red" class="mr-3" size="small" :style="{ opacity: 0.7 }">mdi-trash-can</v-icon>
+                        <div class="mr-2 text-body-2">Удалить</div>
+                      </div>
+                    </v-list-item>
 
-                <v-list>
-                  <v-list-item>
-                    <v-switch
-                      v-model="message"
-                      color="purple"
-                      label="Enable messages"
-                      hide-details
-                    ></v-switch>
-                  </v-list-item>
+                    <v-list-item
+                        @click="editUser"
+                        :value="2"
+                        class=" rounded-4 my-0 py-0"
+                    >
+                      <div class="d-inline-flex text-medium-emphasis">
+                        <v-icon class="mr-3" size="small" :style="{ opacity: 0.7 }">mdi-pencil</v-icon>
+                        <div class="mr-2 text-body-2">Изменить</div>
+                      </div>
+                    </v-list-item>
+                  </v-list>
 
-                  <v-list-item>
-                    <v-switch
-                      v-model="hints"
-                      color="purple"
-                      label="Enable hints"
-                      hide-details
-                    ></v-switch>
-                  </v-list-item>
-                </v-list>
+  <!--                <v-list>
+                    <v-list-item
+                      prepend-avatar="https://cdn.vuetifyjs.com/images/john.jpg"
+                      subtitle="Founder of Vuetify"
+                      title="John Leider"
+                    >
+                      <template v-slot:append>
+                        <v-btn
+                          :class="fav ? 'text-red' : ''"
+                          icon="mdi-heart"
+                          variant="text"
+                          @click="fav = !fav"
+                        ></v-btn>
+                      </template>
+                    </v-list-item>
+                  </v-list>
 
-                <v-card-actions>
-                  <v-spacer></v-spacer>
+                  <v-divider></v-divider>
 
-                  <v-btn
-                    variant="text"
-                    @click="menu = false"
-                  >
-                    Cancel
-                  </v-btn>
-                  <v-btn
-                    color="primary"
-                    variant="text"
-                    @click="menu = false"
-                  >
-                    Save
-                  </v-btn>
-                </v-card-actions>
+                  <v-list>
+                    <v-list-item>
+                      <v-switch
+                        v-model="message"
+                        color="purple"
+                        label="Enable messages"
+                        hide-details
+                      ></v-switch>
+                    </v-list-item>
+
+                    <v-list-item>
+                      <v-switch
+                        v-model="hints"
+                        color="purple"
+                        label="Enable hints"
+                        hide-details
+                      ></v-switch>
+                    </v-list-item>
+                  </v-list>
+
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+
+                    <v-btn
+                      variant="text"
+                      @click="menu = false"
+                    >
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      color="primary"
+                      variant="text"
+                      @click="menu = false"
+                    >
+                      Save
+                    </v-btn>
+                  </v-card-actions>-->
               </v-card>
             </v-menu>
 
 
 
           </div>
-          <v-divider class="my-1"/>
+          <v-divider class="my-1 "/>
           <div class="d-flex align-center">
               <v-avatar
             class="ma-1 mr-3"
@@ -202,7 +238,11 @@
           <div>{{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
         </v-card-subtitle>
         <v-card-text class="mt-0 pt-2">
-          <div>{{ '🎖️ '+ cadetData['rank']+' полиции' }}</div>
+          <div
+              :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '75%'}"
+          >
+            {{ '🎖️ '+ cadetData['rank']+' полиции' }}
+          </div>
 <!--          <div>{{'🫂 '+ cadetData['group'] +' взвод'}}</div>-->
           <div>{{'⚓ '+ cadetData['course'] +'-й курс'}}</div>
           <div class="mb-2">{{ '👨‍💻 ' + cadetData['faculty'] }}</div>
@@ -231,6 +271,11 @@
         cadetData:{
           type: Object,
           required: true
+        },
+        menuDisabled: {
+          type: Boolean,
+          required: false,
+          default: false
         }
       },
       data(){

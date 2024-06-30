@@ -177,7 +177,9 @@
                       <h3>Личный состав {{selectedResource['name']}}-го взвода</h3>
                       <h5 class="ml-2 text-medium-emphasis">({{selectedResource['number_of_cadets']}} курсантов)</h5>
                     </div>
-                    <h5 class=" text-medium-emphasis">Направление: ИБАС</h5>
+                    <h5 class=" text-medium-emphasis">
+                      Направление обучения: {{selectedResource?.['specialization']['name'] || 'не указано'}}
+                    </h5>
                   </div>
                   <div
                     class="rounded-4 p-2 d-flex justify-content-center text-center align-center gap-3 mr-3"
@@ -422,10 +424,10 @@ methods:{
       }
       console.log('the tree item i found after clicking the node:', treeItem)
       this.setSelectedIds({
-        locationId: treeItem?.locationId,
-        facultyId: treeItem?.facultyId,
-        courseId: treeItem?.courseId,
-        groupId: treeItem?.groupId
+        locationId: treeItem?.locationId ?? null,
+        facultyId: treeItem?.facultyId ?? null,
+        courseId: treeItem?.courseId ?? null,
+        groupId: treeItem?.groupId ?? null
       });
       // simply pass the whole selected item, item.raw is a proxy to the original item in resourceList
       if(treeItem.kind !== 'course') this.setSelectedResource(treeItem.raw);

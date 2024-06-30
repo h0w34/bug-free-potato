@@ -14,91 +14,123 @@
 <!--            <div class="unselectable ml-2 text-h5 font-weight-medium text-medium-emphasis"  >
               Добавить курсанта
             </div>-->
-          <v-btn icon="mdi-close" variant="text" @click="closeAddCadetDialog"></v-btn>
+          <v-btn icon="mdi-close" variant="text" @click="closeDialog"></v-btn>
         </v-card-title>
 
-        <div v-if="loading" class="mx-15 justify-content-around">
+<!--        <div v-if="loading || !resourcesTree" class="mx-15 justify-content-around">
           <v-container >
             <v-skeleton-loader
-              min-height="600"
-              type=" text, list-item, list-item, article, actions"
+              min-height="400"
+              type="heading, divider, heading, heading, heading, divider, actions"
           />
           </v-container>
-        </div>
-        <div v-else>
+        </div>-->
+        <div>
           <v-stepper
             v-model="step"
-            :items="stepperItems"
             show-actions
           >
-            <template v-slot:[`item.1`]>
-                  <v-row class="justify-content-center">
-                    <v-col class="px-4" style="min-width: 500px;">
-<!--                      <div class="mb-3 text-h5 font-weight-medium text-medium-emphasis"  >
-                        Новый курсант/слушатель
-                      </div>-->
+            <v-stepper-header>
+              <v-stepper-item
+                title="Заполнить анкету"
+                value="1"
+                :complete="step>0"
+              ></v-stepper-item>
 
-                      <div class="text-subtitle-1 text-medium-emphasis">
-                        Имя
-                      </div>
+              <v-divider></v-divider>
 
-                      <v-text-field
-                        aria-errormessage="false"
-                        placeholder="Ваше имя"
-                        density="compact"
-                        variant="outlined"
-                        class="rounded-xl"
-                        v-model="firstname"
-                      ></v-text-field>
-                      <div class="text-subtitle-1 text-medium-emphasis">
-                        Фамилия
-                      </div>
-                      <v-text-field
-                        placeholder="Ваша фамилия"
-                        density="compact"
-                        variant="outlined"
-                        class="rounded-xl"
-                        v-model="surname"
-                        :rules="nameRules"
-                      ></v-text-field>
+              <v-stepper-item
+                title="Добавить данные"
+                value="2"
+                :complete="step>1"
+              ></v-stepper-item>
 
-                      <div class="text-subtitle-1 text-medium-emphasis">
-                        Отчество
-                      </div>
-                      <v-text-field
-                        placeholder="Ваше отчество"
-                        density="compact"
-                        variant="outlined"
-                        class="rounded-xl"
-                        v-model="patronymic"
-                        :rules="nameRules"
-                      ></v-text-field>
+              <v-divider></v-divider>
 
-                      <div class="text-subtitle-1 text-medium-emphasis">
-                        Пол
-                      </div>
-                      <v-radio-group
-                          style="margin-left: -7px"
-                          class=" text-light-emphasis"
-                          v-model="radios"
-                          inline
-                      >
-                        <v-radio value="male" class="mr-1">
-                          <template v-slot:label>
-                            <div>Мужской</div>
-                          </template>
-                        </v-radio>
-                        <v-radio value="female">
-                          <template v-slot:label>
-                            <div>Женский</div>
-                          </template>
-                        </v-radio>
-                      </v-radio-group>
+              <v-stepper-item
+                :rules="[() => !this.error]"
+                :subtitle= "this.error? 'Извините...' : ''"
+                :title="this.error? 'Ошибка!' : 'Готово!'"
+                value="3"
+                :complete="step>2"
+              ></v-stepper-item>
+
+            </v-stepper-header>
+
+            <v-stepper-window class="mb-0">
+              <v-stepper-window-item value="1">
+                <v-form ref="form">
+
+                  <v-row class="justify-content-center mb-0 pb-0">
+                    <v-col class="px-4 pb-0 mb-0" style="min-width: 500px;">
+  <!--                      <div class="mb-3 text-h5 font-weight-medium text-medium-emphasis"  >
+                          Новый курсант/слушатель
+                        </div>-->
+
+                        <div class="text-subtitle-1 text-medium-emphasis">
+                          Имя
+                        </div>
+
+                        <v-text-field
+                          aria-errormessage="false"
+                          placeholder="Ваше имя"
+                          density="compact"
+                          variant="outlined"
+                          class="rounded-xl"
+                          v-model="name"
+                          :rules="nameRules"
+                        ></v-text-field>
+                        <div class="text-subtitle-1 text-medium-emphasis">
+                          Фамилия
+                        </div>
+                        <v-text-field
+                          placeholder="Ваша фамилия"
+                          density="compact"
+                          variant="outlined"
+                          class="rounded-xl"
+                          v-model="surname"
+                          :rules="surnameRules"
+                        ></v-text-field>
+
+                        <div class="text-subtitle-1 text-medium-emphasis">
+                          Отчество
+                        </div>
+                        <v-text-field
+                          placeholder="Ваше отчество"
+                          density="compact"
+                          variant="outlined"
+                          class="rounded-xl"
+                          v-model="patronymic"
+                          :rules="patronymicRules"
+                        ></v-text-field>
+
+                        <div class="text-subtitle-1 text-medium-emphasis">
+                          Пол
+                        </div>
+                        <v-radio-group
+                            style="margin-left: -7px"
+                            class=" text-light-emphasis"
+                            v-model="radios"
+                            inline
+                        >
+                          <v-radio value="M" class="mr-1">
+                            <template v-slot:label>
+                              <div>Мужской</div>
+                            </template>
+                          </v-radio>
+                          <v-radio value="F">
+                            <template v-slot:label>
+                              <div>Женский</div>
+                            </template>
+                          </v-radio>
+                        </v-radio-group>
                     </v-col>
                   </v-row>
-            </template>
+                </v-form>
 
-            <template v-slot:[`item.2`]>
+            </v-stepper-window-item>
+
+            <v-stepper-window-item v-if="!loading || !resourcesTree"  value="2">
               <v-row class="justify-content-center">
                     <v-col class="px-4">
 <!--                      <div class="mb-3 text-h5 font-weight-medium text-medium-emphasis"  >
@@ -109,6 +141,7 @@
                         Звание
                       </div>
                       <v-select
+                        return-object
                         clearable
                         placeholder="Рядовой полиции"
                         density="compact"
@@ -122,6 +155,7 @@
                         Должность
                       </div>
                       <v-select
+                        return-object
                         clearable
                         placeholder="Курсант"
                         density="compact"
@@ -156,7 +190,7 @@
                           item-title="name"
                           v-model="selectedCourse"
                           return-object
-                          :disabled="!selectedFaculty"
+                          :disabled="!selectedFaculty || facultySelectItems.length===0"
                           @change="clearGroup"
                         ></v-select>
 
@@ -168,7 +202,7 @@
                           v-model="selectedGroup"
                           item-title="name"
                           return-object
-                          :disabled="!selectedCourse"
+                          :disabled="!selectedCourse || courseSelectItems.length===0 || groupSelectItems.length===0"
                         ></v-select>
                       </div>
 
@@ -177,43 +211,80 @@
                         </div>
                       <div class="d-flex align-center justify-content-start gap-2">
                         <v-select
+                          return-object
                           density="compact"
+                          v-model="selectedPMCell"
                           label="Макаров"
-                          :items="['California', 'Colorado', 'Florida', 'Georgia', 'Texas', 'Wyoming']"
+                          :items="pmCellSelectItems"
+                          item-title="id"
+                          :disabled="!selectedFaculty || pmCellSelectItems.length===0"
                           variant="outlined"
                         ></v-select>
                         <v-select
+                          return-object
                           density="compact"
+                          v-model="selectedAKCell"
                           label="Калашников"
-                          :items="['California', 'Colorado', 'Florida', 'Georgia', 'Texas', 'Wyoming']"
+                          :items="akCellSelectItems"
+                          item-title="id"
+                          :disabled="!selectedFaculty || akCellSelectItems.length===0"
                           variant="outlined"
                         ></v-select>
                       </div>
                     </v-col>
                   </v-row>
-            </template>
+            </v-stepper-window-item>
 
-            <template v-slot:[`item.3`]>
-              <v-container class="text-center">
-                <div class="text-h8 font-weight-regular text-medium-emphasis">
-                  Все сделано!<br>
-                  Не забудьте сохранить логин и пароль.
+            <v-stepper-window-item v-if="!loading || !resourcesTree" value="3">
+              <v-container>
+                <div v-if="error">
+                  <div class="text-h8 font-weight-regular text-medium-emphasis text-center mb-2">
+                    Ой! ＞︿＜<br>
+                    Возникла ошибка при добавлении д/л.<br>
+                    Перепроверьте данные или попробуйте позже.
+                  </div>
                 </div>
-                <v-divider/>
-                <div  class=" d-flex justify-content-center ">
-                  <CadetCard :cadet-data="null"/>
+                <div v-else>
+                  <div class="text-h8 font-weight-regular text-medium-emphasis text-center">
+                    Все сделано!<br>
+                    Не забудьте сохранить логин и пароль. <br>
+                    Логин: {{ createdCadet['user']['username'] }}<br>
+                    Пароль: {{ createdCadetPassword }}
+                  </div>
+                  <v-divider/>
+                  <div  class=" d-flex justify-content-center ">
+                    <CadetCard :cadet-data="createdCadet? createdCadet : null" :menu-disabled="true"/>
+                  </div>
                 </div>
               </v-container>
+            </v-stepper-window-item>
+          </v-stepper-window>
+
+          <v-divider class="mt-0 mb-3"></v-divider>
+
+          <v-stepper-actions>
+            <template v-slot:prev>
+              <v-btn
+                color="primary"
+                variant="text"
+                @click="handlePrevClick"
+                :disabled="step === 0"
+              >
+                Назад
+              </v-btn>
             </template>
 
-            <template v-slot:actions>
-              <v-divider class="mt-0 pt-0"/>
-              <v-stepper-actions
-                :disabled="disabled"
-                @click:next="step++"
-                @click:prev="step--"
-             ></v-stepper-actions>
+            <template v-slot:next>
+              <v-btn
+                color="primary"
+                variant="text"
+                @click="handleNextClick"
+                :disabled="nextStepDisabled"
+              >
+                {{ step === 0 ? 'Далее' : (step === 1 ? 'Сохранить' : 'Понятно') }}
+              </v-btn>
             </template>
+          </v-stepper-actions>
 
 
         </v-stepper>
@@ -228,6 +299,7 @@
 
 import {mapState, mapActions} from "vuex";
 import CadetCard from "@/components/cadet/CadetCard";
+import ResourcesService from "@/services/resources-data.service";
 
 export default {
   name: 'EditDutyDialog',
@@ -240,6 +312,9 @@ export default {
   },
   data() {
     return {
+      createdCadet: null,
+      createdCadetPassword: null,
+
       name: null,
       surname: null,
       patronymic: null,
@@ -250,6 +325,8 @@ export default {
       selectedGroup: null,
       selectedPosition: null,
       selectedRank: null,
+      selectedPMCell: null,
+      selectedAKCell: null,
 
       RankItems: [],
       PositionItems: [],
@@ -257,23 +334,67 @@ export default {
       saving: false,
       error: false,
       loading: false,
-      stepperItems: [
-        'Заполнить анкету',
-        'Добавить данные',
-        //'Привязать пользователя',
-        'Готово!',
+      step: 0,
+
+      nameRules: [
+        value => {
+          if (typeof value !== 'string') return 'Имя должно быть строкой'
+          if (!/^[А-ЯЁ][а-яё]+$/.test(value)) return 'Имя должно начинаться с заглавной буквы и содержать только кириллицу'
+          return true
+        }
       ],
-      step: 1
+      surnameRules: [
+        value => {
+          if (typeof value !== 'string') return 'Фамилия должна быть строкой'
+          if (!/^[А-ЯЁ][а-яё]+$/.test(value)) return 'Фамилия должна начинаться с заглавной буквы и содержать только кириллицу'
+          return true
+        }
+      ],
+      patronymicRules: [
+        value => {
+          if (typeof value !== 'string') return 'Отчество должно быть строкой'
+          if (!/^[А-ЯЁ][а-яё]+$/.test(value)) return 'Отчество должно начинаться с заглавной буквы и содержать только кириллицу'
+          return true
+        }
+      ]
     }
   },
+
   async beforeMount() {
-      if(!this.resourcesTree){
+      if(!this.resourcesTree) {
         await this.fetchResourcesTree()
       }
-
+      this.loading = false;
   },
 
   computed: {
+    stepperItems(){
+      return [
+        'Заполнить анкету',
+        'Добавить данные',
+        //'Привязать пользователя',
+        this.error ? 'Ошибка!' : 'Готово!'
+      ]
+    },
+
+    nextStepDisabled(){
+      if (this.step===0 && (!this.radios || !this.name || !this.surname)){
+        return true
+      }
+      else if (this.step===1 && (!this.selectedRank || !this.selectedPosition ||
+          !this.selectedFaculty || !this.selectedCourse || !this.selectedGroup ||
+          (this.selectedPMCell && this.pmCellSelectItems.length===0) ||
+            (this.selectedAKCell && this.akCellSelectItems.length===0))){
+        return true
+      }
+      else return false;
+    },
+
+
+    selectedLocation(){
+      return this.getLocationForFaculty(this.selectedFaculty, this.resourcesTree)
+    },
+
     facultySelectItems() {
       const faculties = [];
       for (const location of this.resourcesTree['university']['locations']) {
@@ -305,15 +426,27 @@ export default {
       }
       return [];
     },
-
-    disabled(){
-      return false
+    pmCellSelectItems(){
+      if (this.selectedFaculty) {
+        if (this.selectedLocation) {
+          return this.selectedLocation.pm_cells
+        }
+      }
+      return [];
+    },
+    akCellSelectItems(){
+      if (this.selectedFaculty) {
+        if (this.selectedLocation) {
+          return this.selectedLocation.ak_cells
+        }
+      }
+      return [];
     },
 
     ...mapState('layoutStore', ['addCadetDialog']),
     ...mapState('ResourcesStore', ['resourcesTree', 'selectedIds']),
 
-    currentSubTitle() {
+    /*currentSubTitle() {
       if (this.dutyData) {
         const date = new Date(this.dutyData['date']);
         const day = date.getDate();
@@ -322,11 +455,57 @@ export default {
         const infoString = `${day} ${this.monthNames[month]}, ${address}`
         return this.editeMode ? `Изменение суток на ${infoString}` : `Информация о сутках на ${infoString}`
       } else return '';
+    },*/
+
+    nextButtonText(){
+      return false
     }
   },
   methods: {
     ...mapActions('layoutStore', ['closeAddCadetDialog']),
     ...mapActions('ResourcesStore', ['fetchResourcesTree']),
+
+    async handleNextClick(){
+      switch (this.step){
+        case 1: {
+          console.log('here we are at the NEXTH CLICK!!!!!!')
+          //start timer
+          try {
+            console.log('trying to AWAIT!!!!')
+            console.log('seleted ranka and position' ,this.selectedPosition.id, this.selectedRank.id, this.selectedGroup.id)
+            const response_data = await ResourcesService.createCadet(
+                {
+                  name: this.name,
+                  surname: this.surname,
+                  patronymic: this.patronymic,
+                  sex: this.radios,
+                  rank_id: this.selectedRank.id,
+                  position_id: this.selectedPosition.id,
+                  group_id: this.selectedGroup.id,
+                  pm_cell_id: this.selectedPMCell.id,
+                  ak_cell_id: this.selectedAKCell
+                });
+            this.createdCadet = await response_data.cadet
+            this.createdCadetPassword = await response_data.password
+            this.step++;
+            break;
+          } catch (error) {
+            console.log(error)
+            this.error = true;
+            this.step++;
+            break;
+          }
+        }
+        case 2: {
+          this.closeDialog();
+          break;
+        }
+        default: this.step++;
+      }
+    },
+    handlePrevClick(){
+      this.step--;
+    },
 
     clearCourseAndGroup() {
       this.selectedCourse = null;
@@ -335,6 +514,41 @@ export default {
     clearGroup() {
       this.selectedGroup = null;
     },
+
+    getLocationForFaculty(faculty, resourcesTree) {
+      return resourcesTree?.university?.locations?.find(loc => loc.id === faculty.location_id) || null;
+    },
+
+
+    closeDialog(){
+      this.closeAddCadetDialog();
+      this.resetDialogSate();
+    },
+
+    resetDialogSate(){
+      this.createdCadet = null;
+      this.createdCadetPassword = null;
+
+      this.name = null;
+      this.surname = null;
+      this.patronymic = null;
+      this.radios = null;
+
+      this.selectedFaculty = null;
+      this.selectedCourse = null;
+      this.selectedGroup = null;
+      this.selectedPosition = null;
+      this.selectedRank = null;
+      this.selectedPMCell = null;
+      this.selectedAKCell = null;
+
+      this.RankItems = [];
+      this.PositionItems = [];
+
+      this.error = false;
+      this.loading = true;
+      this.step = 0;
+    }
     /*...mapActions('layoutStore', ['closeDutyDialog']),
     ...mapActions('layoutStore', ['openDutyDialog']),
 
@@ -452,6 +666,7 @@ export default {
 
   },
   watch: {
+
     /*dutyDialog:{
       handler(){
         // i.e. on the dialog opening

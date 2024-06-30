@@ -18,6 +18,63 @@
       <div class="my-0">{{cadetData['role']['name']}}</div>
     </v-card-title>
     <v-divider class="my-0 mx-2"/>
+
+
+<!--    <v-card-subtitle class="my-2 mb-0">
+        <div>{{cadetData['cadet']['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['cadet']['pm_cell_id']}}</div>
+    </v-card-subtitle>
+
+    <v-card-text class="pt-0 pb-0">
+      &lt;!&ndash;h6 class="ma-0">{{cadetData['cadet']['name'] + ' ' + cadetData['cadet']['surname']}}</h6>
+      <div class="text-medium-emphasis">
+            {{"@obormotik"}}
+      </div&ndash;&gt;
+      <div class="d-flex align-center justify-content-start py-0">
+        <v-avatar
+          class="ml-1 my-3 mr-4"
+          size="55"
+        >
+          &lt;!&ndash;v-img
+            alt="doggy"
+            :src="`https://thispersondoesnotexist.com/?${Date.now() + Math.random()}`"
+          ></v-img&ndash;&gt;
+
+            <v-img
+              style="opacity: 0.85"
+              alt="doggy"
+              :src="getUserAvatarUrl(cadetData['cadet']['user']['username']/*['avatar']['url']*/)"
+            ></v-img>
+
+        </v-avatar>
+        <div>
+          <h5 class="ma-0">
+            <div class="" :style="{ whiteSpace: 'pre-wrap', textOverflow: 'ellipsis', lineHeight: '1.2em'}">
+              <div>{{ cadetData['cadet']['name'] }}</div>
+              <div>{{ cadetData['cadet']['surname'] }}</div>
+            </div>
+          </h5>
+        </div>
+      </div>
+    </v-card-text>
+    <v-card-subtitle class="mb-1">
+      <router-link :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
+            :to="{ name: 'user', params: { username: cadetData['cadet']['username'] } }" style="color:#00406b; text-decoration: none"
+            @click="navigateToUserPage"
+      >
+        <div v-if="cadetData['cadet']['user']['username']">
+          {{'@'+ cadetData['cadet']['user']['username']}}
+        </div>
+        <div v-else>
+          @yasobakayasobaka
+        </div>
+      </router-link>
+      <div class="d-flex justify-content-start">
+        <div>{{ cadetData['cadet']['course'] + '-й курс ' + cadetData['cadet']['faculty']}}</div>
+
+      </div>
+
+    </v-card-subtitle>-->
+
     <v-card-subtitle class="my-2 mb-1">
       <div>{{cadetData['cadet']['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['cadet']['pm_cell_id']}}</div>
       <div>{{ cadetData['cadet']['course'] + '-й курс'}}</div>
@@ -28,23 +85,9 @@
       <div class="text-medium-emphasis">
             {{"@obormotik"}}
       </div-->
-      <div class="d-flex align-center justify-content-between py-0">
-        <div>
-          <h6 class="ma-0 text-light-emphasis">
-            {{cadetData['cadet']['name'] + ' ' + cadetData['cadet']['surname']}}
-          </h6>
-          <div
-              v-if="cadetData['cadet']['user']"
-              class=" font-weight-light underline"
-              :style="{color: '#00406b', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '105px'}"
-              @click="navigateToUserPage"
-          >
-            {{'@'+ cadetData['cadet']['user']['username']}}
-
-          </div>
-        </div>
+      <div class="d-flex align-center justify-content-start py-0">
         <v-avatar
-          class="ma-3"
+          class="ml-1 my-3 mr-4"
           size="55"
         >
           <!--v-img
@@ -53,11 +96,29 @@
           ></v-img-->
 
             <v-img
+                style="opacity: 0.85"
               alt="doggy"
               :src="getUserAvatarUrl(cadetData['cadet']['user']['username']/*['avatar']['url']*/)"
             ></v-img>
 
         </v-avatar>
+        <div>
+          <h5 class="ma-0 text-light-emphasis">
+            {{cadetData['cadet']['name'] + ' ' + cadetData['cadet']['surname']}}
+          </h5>
+          <router-link :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%'}"
+            :to="{ name: 'user', params: { username: cadetData['cadet']['username'] } }" style="color:#00406b; text-decoration: none; opacity:0.8"
+            @click="navigateToUserPage"
+                       class="font-weight-light"
+          >
+            <div v-if="cadetData['cadet']['user']['username']">
+              {{'@'+ cadetData['cadet']['user']['username']}}
+            </div>
+            <div v-else>
+              @yasobakayasobaka
+            </div>
+          </router-link>
+        </div>
       </div>
     </v-card-text>
 

@@ -5,7 +5,7 @@ from flask import jsonify
 from flask_restful import Resource, reqparse, abort
 
 from ..duties.models import Duty, Location, DutyType, Cadet, \
-    ReplacementDoc, DutyReplacement, Faculty, Group, Course, Rank, Position, PMCells, AKCells
+    ReplacementDoc, DutyReplacement, Faculty, Group, Course, Rank, Position, PMCell, AKCell
 from ..users.models import User
 from ..users.helpers import generate_user
 from datetime import datetime, date
@@ -25,6 +25,9 @@ class ResourcesTreeResource(Resource):
         locations = Location.query.all()
         for location in locations:
             location_data = location.to_dict()
+            location_data['pm_cells'] = [pm_cell.to_dict() for pm_cell in location.pm_cells]
+            location_data['ak_cells'] = [ak_cell.to_dict() for ak_cell in location.ak_cells]
+
             faculties_data = []
             for faculty in location.faculties:
                 faculty_data = faculty.to_dict()
@@ -73,13 +76,15 @@ class PositionsResource(Resource):
 
 class CadetsResource(Resource):
     def post(self):
+        print('Handling the request!!!')
         # cannot create a cadet with no user for user page support
         # the user for the cadet either generated or registered manually
-
+        data = request.get_json()
+        print('Got the data:', data)
         parser = reqparse.RequestParser()
         parser.add_argument('name', type=str, required=True)
         parser.add_argument('surname', type=str, required=True)
-        parser.add_argument('patronymic', type=str)
+        parser.add_argument('patronymic', type=str, required=False)
         parser.add_argument('sex', type=str, choices=['M', 'F'], required=True)
         parser.add_argument('rank_id', type=int, required=True)
         parser.add_argument('position_id', type=int, required=True)
@@ -90,9 +95,16 @@ class CadetsResource(Resource):
 
         parser.add_argument('username', type=str)
         args = parser.parse_args()
+        print('Got the args!!!!')
+        print('Got the args!!!!')
+        print('Got the args!!!!')
         pprint(args)
-
+        pprint(args)
+        pprint(args)
+        pprint(args)
+        print(args)
         group = Group.query.get_or_404(args.get('group_id'), description='Group for the cadet not found')
+        location = group.faculty.location
 
         user = None
         user_password = None
@@ -114,11 +126,11 @@ class CadetsResource(Resource):
         if args.get('position_id') not in [position.id for position in Position.query.all()]:
             abort(400, message='Not valid position_id')
 
-        if args.get('ak_cell_id') and args.get('ak_cell_id') not in [cell.id for cell in AKCells.query.all()]:
-            abort(400, message='Not valid ak_cell_id')
+        if args.get('pm_cell_id') not in [cell.id for cell in location.pm_cells]:
+            abort(400, message=f'Not valid pm_cell_id for location {location.name}')
 
-        if args.get('pm_cell_id') not in [cell.id for cell in PMCells.query.all()]:
-            abort(400, message='Not valid pm_cell_id')
+        if args.get('ak_cell_id') and args.get('ak_cell_id') not in [cell.id for cell in location.ak_cells]:
+            abort(400, message=f'Not valid ak_cell_id for location {location.name}')
 
         try:
             cadet = Cadet(

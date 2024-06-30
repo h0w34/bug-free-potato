@@ -32,9 +32,11 @@ export const ResourcesStore = {
         if (state.resourcesTree) {
           const university = state.resourcesTree.university;
           items.push({ title: university.name, disabled: false, href: '#' });
-
+          console.log('For now selectedIds are... ', JSON.stringify(state.selectedIds))
           if (state.selectedIds.locationId !== null) {
             console.log('One down...')
+            console.log('university is... ', university)
+            console.log('selectedIds are...', state.selectedIds)
             const location = university.locations.find((l) => l.id === state.selectedIds.locationId);
             if (location) {
               console.log('Two down...')
@@ -61,7 +63,7 @@ export const ResourcesStore = {
             }
           }
           else {
-            items.push({ title: 'локации', disabled: false, href: '#' });
+            items.push({ title: 'Локации', disabled: false, href: '#' });
           }
         }
         console.log('the bread i got is: ', items)
@@ -193,7 +195,7 @@ export const ResourcesStore = {
     },*/
 
     setSelectedIds({ commit }, { locationId, facultyId, courseId, groupId }) {
-      console.log('changing the selevted ids to:',locationId, facultyId, courseId, groupId )
+      console.log('changing the selevted ids to:', locationId, facultyId, courseId, groupId )
       commit('setSelectedLocationId', locationId);
       /*commit('setSelectedLocation', locationId)*/
       commit('setSelectedFacultyId', facultyId);
@@ -220,32 +222,43 @@ export const ResourcesStore = {
       console.log('Selected resource is set.')
     },
     setSelectedLocationId(state, locationId) {
-      state.selectedIds.locationId = {
+      state.selectedIds.locationId = locationId;
+      /*state.selectedIds.locationId = {
         ...state.selectedIds.locationId,
         [locationId]: locationId
-      }
+      }*/
+/*      console.log('the resource tree in FIRST mutation is... ', JSON.stringify(state.resourcesTree.university.locations))
+      console.log('and the locationId is...', locationId)
+      state.selectedLocation = state.resourcesTree.university.locations.find((l) => l.id === locationId)*/
 
-      /*state.selectedLocation = state.resourcesTree.locations.find((l) => l.id === locationId)*/
     },
     setSelectedFacultyId(state, facultyId) {
-      state.selectedIds.facultyId = {
+      state.selectedIds.facultyId = facultyId;
+/*      state.selectedIds.facultyId = {
         ...state.selectedIds.facultyId,
         [facultyId]: facultyId
-      }
-      /*state.selectedFaculty = state.selectedLocation.faculties.find((f) => f.id === facultyId)*/
+      }*/
+/*
+      state.selectedFaculty = state.selectedLocation.faculties.find((f) => f.id === facultyId)
+*/
     },
     setSelectedCourseId(state, courseId) {
-      state.selectedIds.courseId = {
+      state.selectedIds.courseId = courseId;
+/*      state.selectedIds.courseId = {
         ...state.selectedIds.courseId,
         [courseId]: courseId
-      };
-      /*state.selectedFaculty = state.selectedFaculty.courses.find((c) => c.id === courseId)*/
+      };*/
+/*
+      state.selectedFaculty = state.selectedFaculty.courses.find((c) => c.id === courseId)
+*/
     },
     setSelectedGroupId(state, groupId) {
-      state.selectedIds.groupId = {
+      console.log('just before...', JSON.stringify(state.selectedIds))
+      state.selectedIds.groupId = groupId;
+/*      state.selectedIds.groupId = {
         ...state.selectedIds.groupId,
         [groupId]: groupId
-      };
+      };*/
       /*state.selectedGroup = state.selectedCourse.groups.find((g) => g.id === groupId)*/
     }
   }

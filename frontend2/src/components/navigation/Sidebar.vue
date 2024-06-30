@@ -15,11 +15,11 @@
           >
             <div class="text-align align-center">
               <h5 class="mb-0">{{ user['cadet']['name'] + ' ' + user['cadet']['surname'] }}</h5>
-              <div  style="margin-left: 2px;"  class="text-medium-emphasis mb-2 font-weight-light" >
-                <div v-if="user['email']">
+              <div class="text-medium-emphasis mb-2 font-weight-light" >
+                <div style="margin-left: 2px;"   v-if="user['email']">
                   {{user['email']}}
                 </div>
-                <div class="text-medium-emphasis text-body-2" v-else>
+                <div class="text-medium-emphasis text-body-2 font-weight-light" v-else>
                   Без привязанной почты
                 </div>
               </div>
