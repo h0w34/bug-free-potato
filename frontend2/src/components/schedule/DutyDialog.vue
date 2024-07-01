@@ -34,47 +34,73 @@
         ></v-progress-linear>
       </template>
 
-      <!--div style="background-color: #f5f5f5;" class="pb-2">
-        <v-card-title
-            class="d-flex justify-space-between align-center mt-2 pb-0"
-        >
-          <div class="text-h5 text-medium-emphasis ps-3">
-            {{ currentTitle }}
-          </div>
-          <div>
-            <v-icon
-                class="mx-3"
-                size="small"
-                @click="toggleEditeMode()"
-                :disabled="!dutyData || beingEdited"
-              >
-                mdi-pencil
-              </v-icon>
-            <v-btn
+<!--
+      <v-card-title
+          class="d-flex justify-space-between align-center mt-2 pb-0"
+      >
+        <div class="text-h5 text-medium-emphasis ps-3">
+          {{ currentTitle }}
+        </div>
+        <div>
+
+          <v-btn
+            variant="flat"
+            base-color="grey-lighten-4"
+            class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
+            @click="openHistoryDialog"
+
+          >
+              История замен
+              <v-icon
+                  class="text-medium-emphasis ml-2"
+                  size="large"
+                >
+                mdi-history
+            </v-icon>
+          </v-btn>
+
+          <v-btn icon="mdi-close" variant="text" @click="closeDialog"/>
+        </div>
+      </v-card-title>
+
+      <div class=" pb-0 mt-1 pr-15 d-flex justify-space-between">
+        <div class="pl-8" style="opacity: 0.5">
+          <v-chip
               variant="outlined"
-              class="text-none text-center font-weight-light text-medium-emphasis rounded mr-1"
-              @click="openHistoryDialog"
-              :disabled="saving"
-            >
-                История замен
-                <v-icon
-                    class="text-medium-emphasis ml-2"
-                    size="large"
-                  >
-                  mdi-history
-              </v-icon>
-            </v-btn>
+              label
+              color="secondary"
+              class="text-center align-center mr-0">
+            <h6 class="m-0 p-0 font-weight-regular">{{ currentDayMonth }}</h6>
+          </v-chip>
+          <v-chip
+              label
+              variant="text"
+              class="text-center align-center">
+            <h6 class="m-0 p-0 font-weight-regular">{{dutyData?.location.address}}</h6>
+          </v-chip>
 
-            <v-btn icon="mdi-close" variant="text" @click="closeDialog"/>
-          </div>
-        </v-card-title>
 
-        <v-card-subtitle class="d-flex justify-space-between align-center pb-0">
-          <div class="text-medium-emphasis ps-3">
-            <h6>{{currentSubTitle}}</h6>
-          </div>
-        </v-card-subtitle>
-      </div-->
+&lt;!&ndash;          <h5 class="font-weight-light mt-0 pt-0">{{currentSubTitle}}</h5>&ndash;&gt;
+        </div>
+
+        <v-btn
+            width="170"
+            variant="flat"
+            base-color="grey-lighten-4"
+            class="text-none text-center font-weight-light text-medium-emphasis rounded mr-2"
+            @click="toggleEditeMode"
+            :disabled="!dutyData || beingEdited"
+          >
+              Редактировать
+              <v-icon
+                  class="text-medium-emphasis ml-2"
+                  size="large"
+              >
+              mdi-pencil
+            </v-icon>
+          </v-btn>
+      </div>
+-->
 
       <v-card-title
           class="d-flex justify-space-between align-center mt-2 pb-0"
@@ -83,14 +109,22 @@
           {{ currentTitle }}
         </div>
         <div>
-          <v-icon
-              class="mx-3"
-              size="small"
-              @click="toggleEditeMode()"
-              :disabled="!dutyData || beingEdited"
-            >
+          <v-btn
+            width="170"
+            variant="flat"
+            base-color="grey-lighten-4"
+            class="text-none text-center font-weight-light text-medium-emphasis rounded mr-2"
+            @click="toggleEditeMode"
+            :disabled="!dutyData || beingEdited"
+          >
+              Редактировать
+              <v-icon
+                  class="text-medium-emphasis ml-2"
+                  size="large"
+              >
               mdi-pencil
             </v-icon>
+          </v-btn>
           <v-btn
             variant="flat"
             base-color="grey-lighten-4"
@@ -111,13 +145,28 @@
         </div>
       </v-card-title>
 
-      <v-card-subtitle class="d-flex justify-space-between align-center pb-0">
+      <v-card-subtitle class=" pb-0 mt-1">
         <div class="text-medium-emphasis ps-3">
-          <h6>{{currentSubTitle}}</h6>
+          <v-chip
+              variant="outlined"
+              label
+              color="secondary"
+              class="text-center align-center mr-0">
+            <h6 class="m-0 p-0 font-weight-regular">{{ currentDayMonth }}</h6>
+          </v-chip>
+          <v-chip
+              label
+              variant="text"
+              class="text-center align-center">
+            <h6 class="m-0 p-0 font-weight-regular">{{dutyData?.location.address}}</h6>
+          </v-chip>
+
+
+<!--          <h5 class="font-weight-light mt-0 pt-0">{{currentSubTitle}}</h5>-->
         </div>
       </v-card-subtitle>
 
-      <v-divider class="mx-10"></v-divider>
+      <v-divider class="mx-3"></v-divider>
       <v-alert
             v-if="beingEdited"
             closable
@@ -132,12 +181,11 @@
       <v-card-text>
         <v-container class="py-0" >
           <div v-if="dutyData">
-            <v-row class="justify-content-center">
+            <v-row justify="space-evenly">
               <v-col
                 v-for="(cadet_data, i) in dutyData['cadets_with_roles']"
                 :key="i"
-                cols="auto"
-                md="4"
+                cols="4"
               >
               <role-card
                   :cadet-data="cadet_data"
@@ -173,7 +221,7 @@
           </div>
         </v-container>
       </v-card-text>
-      <v-divider class="mx-10 my-2"></v-divider>
+      <v-divider class="mx-3 my-2"></v-divider>
       <v-card-actions class="mx-3 pr-5">
         <v-spacer></v-spacer>
         <div class="my-2">
@@ -269,8 +317,16 @@ export default {
         const month = date.getMonth();
         const address = this.dutyData['location']['address'];
         const infoString = `${day} ${this.monthNames[month]}, ${address}`
-        return this.editeMode ? `Изменение суток на ${infoString}` : `Информация о сутках на ${infoString}`
+        return this.editeMode ? /*`Изменение суток на */`${infoString}` : `${infoString}`
       } else return '';
+    },
+    currentDayMonth(){
+      if(this.dutyData){
+        const date = new Date(this.dutyData['date']);
+        const day = date.getDate();
+        const month = date.getMonth();
+        return `${day} ${this.monthNames[month]}`
+      } else return ''
     }
   },
   methods: {
@@ -316,12 +372,11 @@ export default {
       }
     },
     closeDialog() {
-      this.saving = false;
-        if (this.editeMode) this.unlockDuty();
-        this.clearDialogData()
-        //layout action
-        this.closeDutyDialog();
-        /*this.$emit('close');*/
+      if (this.editeMode) this.unlockDuty();
+      this.clearDialogData()
+      //layout action
+      this.closeDutyDialog();
+      /*this.$emit('close');*/
     },
     closeRoleDialog(){
       this.roleDialog = false
@@ -338,15 +393,17 @@ export default {
     closeHistoryDialog(){
       this.replacementHistoryDialog = false;
     },
-    saveAndShowLoader() {
+    async saveAndShowLoader() {
       this.saving = true;
+      const loadingStartTime = performance.now();
 
       // TODO: some hard logic to update the schedule table layout
-      setTimeout(() => {
-        this.$emit('save');
-        this.saving = false;
-        this.unlockDuty();
-      }, 1000);
+
+      this.$emit('save');
+      await this.unlockDuty();
+      await new Promise(resolve => setTimeout(resolve, Math.max(1000 - (performance.now() - loadingStartTime), 0)));
+      this.saving = false;
+      this.closeDialog()
     },
 
     async fetchDutyData() {

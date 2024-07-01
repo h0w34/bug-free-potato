@@ -22,7 +22,7 @@
 
       <v-card-title class="d-flex justify-space-between align-center mt-1">
           <div class="text-h7 font-weight-regular text-medium-emphasis p-0 ml-2 d-flex align-center">
-            <v-icon class="mr-3" size="small" :style="{ opacity: 0.8 }">mdi-trash-can</v-icon>
+            <v-icon class="mr-2" size="small" :style="{ opacity: 0.8}">mdi-trash-can</v-icon>
             <div>Удалить курсанта</div>
           </div>
 <!--            <div class="unselectable ml-2 text-h5 font-weight-medium text-medium-emphasis"  >
@@ -66,9 +66,9 @@
 
       </div>
 
-      <v-divider class="my-0"/>
+      <v-divider class="my-0 mt-2"/>
 
-      <v-card-actions v-if="!cadetStatistics?.future_duties.length > 0" class="m-1">
+      <v-card-actions v-if="cadetStatistics && cadetStatistics.future_duties.length === 0" class="m-1">
 
         <div class="d-flex justify-content-end mr-2">
           <v-btn

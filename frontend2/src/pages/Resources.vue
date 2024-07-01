@@ -230,8 +230,22 @@
 
                 </v-card-title>
                 <v-divider class="my-1"/>
-                  <v-skeleton-loader>
-                          <v-row v-if="selectedResource['cadets']" class="m-3 p-4 rounded-4"  style="background: rgba(0,0,0,0.02)">
+                  <v-skeleton-loader class="p-2">
+                        <v-row
+                            justify="space-evenly"
+                            class="m-2 p-4 rounded-4" style="background: rgba(0,0,0,0.02)"
+                            v-for="(positionCadets, position_id) in groupGroupedByPositions"
+                            :key="position_id"
+                        >
+                          <v-col
+                              cols="auto"
+                              v-for="(cadetData, i) in positionCadets['cadets']"
+                              :key="i"
+                            >
+                              <cadet-card :cadetData="cadetData" @openDeleteCadetDialog="localOpenDeleteCadetDialog"/>
+                          </v-col>
+                        </v-row>
+<!--                          <v-row v-if="selectedResource['cadets']" class="m-3 p-4 rounded-4"  style="background: rgba(0,0,0,0.02)">
                             <v-col
                               v-for="(cadetData, i) in selectedResource['cadets']"
                               :key="i"
@@ -239,12 +253,12 @@
                             >
                               <cadet-card :cadetData="cadetData" @openDeleteCadetDialog="localOpenDeleteCadetDialog"/>
                             </v-col>
-<!--                            <v-col
+&lt;!&ndash;                            <v-col
                               cols="6"
                             >
                               <faculty-card :data="[]"/>
-                            </v-col>-->
-                          </v-row>
+                            </v-col>&ndash;&gt;
+                          </v-row>-->
                   </v-skeleton-loader>
 
               </v-card>
@@ -293,6 +307,24 @@ export default {
     ...mapState('ResourcesStore', ['resourcesTree', 'selectedIds', 'selectedResource']),
     ...mapState('layoutStore', ['addCadetDialog']),
     ...mapGetters('ResourcesStore', ['breadcrumbItems', 'treeviewItems']),
+
+    groupGroupedByPositions() {
+      if (this.selectedResource?.cadets) {
+        return this.selectedResource.cadets.reduce((groups, cadet) => {
+          if (!groups[cadet.position.id]) {
+            groups[cadet.position.id] = {
+              position_id: cadet.position.id,
+              cadets: []
+            };
+          }
+          groups[cadet.position.id].cadets.push(cadet);
+          return groups;
+        }, {});
+      } else {
+        return [];
+      }
+    },
+
 
     currentTitle(){
       return 1
@@ -412,6 +444,9 @@ methods:{
                     const group = course.groups.find((g) => g.id === groupId);
                     if (group) {
                       selectedResource = group;
+                    } else {
+                      this.router.replace({});
+
                     }
                   }
                   else {
@@ -420,10 +455,19 @@ methods:{
                     // instead it must roll down to the anchor corresponding to this course at the faculty window
                     selectedResource = faculty;
                   }
+                } else {
+                                        this.router.replace({});
+
                 }
               }
+            } else {
+                                    this.router.replace({});
+
             }
           }
+        } else {
+                                this.router.replace({});
+
         }
       }
       // Set the selectedResource in the store

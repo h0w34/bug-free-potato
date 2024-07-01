@@ -181,7 +181,8 @@
             <div class="p-3">
               <span class="text-h5">Ближайшие сутки</span>
               <v-divider/>
-              <v-expansion-panels
+              <div v-if="cadetStatistics['future_duties'].length > 0">
+                <v-expansion-panels
                     v-for="(dutyData, i) in cadetStatistics['future_duties']"
                     :key="i"
                     :readonly="true"
@@ -230,11 +231,18 @@
 
                     </v-expansion-panel>
                   </v-expansion-panels>
+              </div>
+              <v-container v-else fluid class="font-weight-regular text-light-emphasis text-center mb-4 p-4">
+                Поздравляем! У этого везунчика <br/>
+                нет запланированных суток.
+              </v-container>
+
               <v-divider/>
 
               <span class="text-h5">Текущие резервы</span>
               <v-divider/>
-              <v-expansion-panels
+              <div v-if="cadetStatistics['future_reserves'].length > 0">
+                <v-expansion-panels
                     v-for="(reserveData, i) in cadetStatistics['future_reserves']"
                     :key="i"
                   >
@@ -278,6 +286,15 @@
                       </v-expansion-panel-text>
                     </v-expansion-panel>
                   </v-expansion-panels>
+              </div>
+              <v-container v-else-if="cadetStatistics['future_duties'].length === 0" fluid class="font-weight-regular text-light-emphasis text-center mb-4 p-4">
+                Замечательно! Этот курсант <br/>
+                не состоит в резервах в том числе.
+              </v-container>
+              <v-container v-else fluid class="font-weight-regular text-light-emphasis text-center mb-4 p-4">
+                У этого курсанта <br/>
+                нет запланированных замен.
+              </v-container>
             </div>
           </v-card>
         </v-skeleton-loader>

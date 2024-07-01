@@ -74,7 +74,7 @@
 
                         <v-text-field
                           aria-errormessage="false"
-                          placeholder="Ваше имя"
+                          placeholder="Имя курсанта"
                           density="compact"
                           variant="outlined"
                           class="rounded-xl"
@@ -85,7 +85,7 @@
                           Фамилия
                         </div>
                         <v-text-field
-                          placeholder="Ваша фамилия"
+                          placeholder="Фамилия курсанта"
                           density="compact"
                           variant="outlined"
                           class="rounded-xl"
@@ -97,7 +97,7 @@
                           Отчество
                         </div>
                         <v-text-field
-                          placeholder="Ваше отчество"
+                          placeholder="Отчество курсанта"
                           density="compact"
                           variant="outlined"
                           class="rounded-xl"
@@ -355,6 +355,8 @@ export default {
 
       nameRules: [
         value => {
+
+          if (value?.length === 0) return 'Введите ваше имя'
           if (typeof value !== 'string') return 'Имя должно быть строкой'
           if (!/^[А-ЯЁ][а-яё]+$/.test(value)) return 'Имя должно начинаться с заглавной буквы и содержать только кириллицу'
           return true
@@ -362,6 +364,7 @@ export default {
       ],
       surnameRules: [
         value => {
+          if (value?.length === 0) return 'Введите вашу фамилию'
           if (typeof value !== 'string') return 'Фамилия должна быть строкой'
           if (!/^[А-ЯЁ][а-яё]+$/.test(value)) return 'Фамилия должна начинаться с заглавной буквы и содержать только кириллицу'
           return true
@@ -369,6 +372,7 @@ export default {
       ],
       patronymicRules: [
         value => {
+          if (value?.length === 0) return 'Введите ваше отчество'
           if (typeof value !== 'string') return 'Отчество должно быть строкой'
           if (!/^[А-ЯЁ][а-яё]+$/.test(value)) return 'Отчество должно начинаться с заглавной буквы и содержать только кириллицу'
           return true

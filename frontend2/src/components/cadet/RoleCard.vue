@@ -76,6 +76,8 @@
     </v-card-subtitle>-->
 
     <v-card-subtitle class="my-2 mb-1">
+<!--      <div>{{cadetData['cadet']['group']['name'] + ' взвод' + ' | ' +  cadetData['cadet']['course']['name'] + '-й курс'}}</div>
+      <div>{{ 'Ячейка: ' + cadetData['cadet']['pm_cell_id'] }}</div>-->
       <div>{{cadetData['cadet']['group']['name'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['cadet']['pm_cell_id']}}</div>
       <div>{{ cadetData['cadet']['course']['name'] + '-й курс'}}</div>
     </v-card-subtitle>

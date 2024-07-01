@@ -495,16 +495,16 @@ export default {
     formSubTitle(){
       switch (this.step){
         case 1: return "Позиция –– " + this.selectedCadetData['role']['name'];
-        case 2: return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group'] +
-             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group'] + ')'
+        case 2: return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group']['name'] +
+             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group']['name'] + ')'
         case 3: {
           if (this.isUpdated){
-            return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group'] +
-             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group'] + ')' + '✅☑'
+            return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group']['name'] +
+             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group']['name'] + ')' + '✅☑'
           }
           else {
-            return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group'] +
-             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group'] + ')' + '❌⚠'
+            return this.selectedCadetData['cadet']['surname'] + ' (' + this.selectedCadetData['cadet']['group']['name'] +
+             ')' + ' ⟶ ' +  this.confirmedCadet['surname'] + ' (' + this.confirmedCadet['group']['name'] + ')' + '❌⚠'
           }
         }
         default: return "Замена курсанта"

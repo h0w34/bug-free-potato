@@ -94,8 +94,7 @@
                   variant="outlined"
                 >
                   <div class="text-caption text-medium-emphasis  font-weight-light">
-                      {{(cadetData['position']['name']==='Замком взвода'? '🚨' :
-                      (cadetData['position']==='Командир отделения'? '⚡' : '🧃')) + cadetData['position']['name']}}
+                    {{ positionEmoji(cadetData['position']['name']) }}
                   </div>
             </v-chip>
             <v-menu
@@ -288,6 +287,16 @@
         }
       },
       methods:{
+        positionEmoji(position){
+          switch(position){
+            case 'Замком взвода': {
+              return '🚨' + position
+            }
+            case 'Командир отделения': return '⚡' + position
+            case 'Курсант': return '🧃' + position
+            default: return '❓' + position
+          }
+        },
         toggleCard(){
           this.$emit('select', this.cadetData)
           /*if(this.selected === false) this.$emit('select', this.cadetData)
