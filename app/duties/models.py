@@ -430,6 +430,9 @@ class Cadet(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
     surname = Column(String(50), nullable=False)
+    @property
+    def full_name(self):
+        return self.name + ' ' + self.surname
     patronymic = Column(String(50), nullable=True)
     sex = Column(Enum('M', 'F'), nullable=False)  # TODO: make nonnull
 

@@ -11,7 +11,7 @@ class UserDataService {
     }
   }
 
-  async getUserStatistics(username) {
+  /*async getUserStatistics(username) {
     try {
       const response = await http.get(`users/${username}/statistics`);
       return response.data;
@@ -19,7 +19,7 @@ class UserDataService {
       console.error(error);
       throw error;
     }
-  }
+  }*/
 
   async deleteUser(username) {
     try {

@@ -17,6 +17,7 @@
           <v-btn icon="mdi-close" variant="text" @click="closeDialog"></v-btn>
         </v-card-title>
 
+
 <!--        <div v-if="loading || !resourcesTree" class="mx-15 justify-content-around">
           <v-container >
             <v-skeleton-loader

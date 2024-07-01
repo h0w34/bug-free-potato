@@ -182,6 +182,10 @@
           </v-window-item>
 
           <v-window-item :key="4">
+              <DeleteCadetDialog
+                  :cadet-data="currentCadetData"
+                  @close="localCloseDeleteCadetDialog"
+              />
               <v-card>
                 <v-card-title class="d-flex align-center justify-space-between">
                   <div class="justify-content-start">
@@ -233,7 +237,7 @@
                               :key="i"
                               md-2
                             >
-                              <cadet-card :cadetData="cadetData"/>
+                              <cadet-card :cadetData="cadetData" @openDeleteCadetDialog="localOpenDeleteCadetDialog"/>
                             </v-col>
 <!--                            <v-col
                               cols="6"
@@ -260,10 +264,11 @@ import GroupCard from "@/components/resources/GroupCard";
 import CadetCard from "@/components/cadet/CadetCard";
 
 import AddCadetDialog from "@/components/cadet/AddCadetDialog";
+import DeleteCadetDialog from "@/components/cadet/DeleteCadetDialog";
 
 export default {
   name: "ResourcesPage",
-  components: {CadetCard, GroupCard, FacultyCard, LocationCard, AddCadetDialog},
+  components: {CadetCard, GroupCard, FacultyCard, LocationCard, AddCadetDialog, DeleteCadetDialog},
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -279,6 +284,8 @@ export default {
     window: 0,
     initiallyOpen: [],
     opened: [],
+    currentCadetData: null,
+
     }),
   computed: {
     // Implement your logic to determine the active nodes
@@ -331,7 +338,17 @@ export default {
 
 methods:{
     ...mapActions('ResourcesStore', ['fetchResourcesTree', /*'fetchResourcesData',*/ 'setSelectedIds', 'setSelectedResource']),
-    ...mapActions('layoutStore', ['openAddCadetDialog']),
+    ...mapActions('layoutStore', ['openAddCadetDialog', 'openDeleteCadetDialog', 'closeDeleteCadetDialog']),
+
+
+    localOpenDeleteCadetDialog(cadetData){
+      if(cadetData) this.currentCadetData = cadetData;
+      this.openDeleteCadetDialog()
+    },
+    localCloseDeleteCadetDialog(){
+      this.currentCadetData = null;
+      this.closeDeleteCadetDialog();
+    },
 
     navigateToBreadcrumbItem(item) {
       /*alert('the bread clikced item is...' + JSON.stringify(item))*/
@@ -396,6 +413,12 @@ methods:{
                     if (group) {
                       selectedResource = group;
                     }
+                  }
+                  else {
+                    //TODO:
+                    // this is because we have no separate window for courses and must ignore when one is selected
+                    // instead it must roll down to the anchor corresponding to this course at the faculty window
+                    selectedResource = faculty;
                   }
                 }
               }

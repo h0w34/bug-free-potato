@@ -13,6 +13,13 @@ from datetime import datetime, date
 from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+from app.users.models import User
+from app.duties.models import Cadet, Duty
+from datetime import datetime, timedelta, date
+
+from app.utils.create_users_for_cadets import generate_users_for_existing_cadets
+from sqlalchemy import func
+
 
 # ------- resources APIs ------- #
 
@@ -71,9 +78,10 @@ class PositionsResource(Resource):
         db.session.add(position)
         db.session.commit()
         return {
-           'message': f'Position {args.get("name")} successfully created',
-           'location': position.to_dict()
-        }, 201
+                   'message': f'Position {args.get("name")} successfully created',
+                   'location': position.to_dict()
+               }, 201
+
 
 # TODO: may add ranks resource (yet no real need since ranks dont change for years)
 
@@ -217,36 +225,79 @@ class CadetResource(Resource):
                        'course': course.to_dict()
                    }, 200
         except:
-            abort(500, message='Failed to edit the course')
+            abort(500, message='Failed to edit the course')'''
 
     def delete(self, cadet_id):
-        parser = reqparse.RequestParser()
-        parser.add_argument('delete_cadets', type=bool)
-        args = parser.parse_args()
+        '''parser = reqparse.RequestParser()
+        parser.add_argument('delete_cadets', type=bool, default=False)
+        args = parser.parse_args()'''
 
-        course = Course.query.get_or_404(course_id)
-        if 'delete_cadets' in args and args.get('delete_cadets') is True:
-            permitted_cadets = []
-            for cadet in course.cadets:
-                if cadet.future_duties:
-                    permitted_cadets.append(cadet)
-            if permitted_cadets:
-                # if all(cadet.future_duties for cadet in group.cadets):
-                abort(400, message='Cannot delete course as its cadets have active duties',
-                      cadets_with_active_duties=[cadet.to_dict() for cadet in permitted_cadets])
-            try:
-                cadets = course.cadets
-                db.session.delete(cadets)
-                db.session.commit()
-            except:
-                abort(500, message='Failed to delete cadets for the course. Retreating...')
+        cadet = Cadet.query.get_or_404(cadet_id)
+
+        '''# TODO: implement cascade deleting (needed?)
+        if args['delete_cadets']:
+            print('i just not deleted cadets!')'''
+        if cadet.future_duties:
+            abort(400, message='Cannot delete cadet that have active duties')
+
         try:
-            db.session.delete(course)
-            db.session.commit()
-            return {'message': f'Course deleted successfully'}, 200
+            if cadet.user:
+                for refresh_session in cadet.user.refresh_sessions:
+                    db.session.delete(refresh_session)
+                db.session.delete(cadet.user)  # user must always be present, just little check
 
+            db.session.delete(cadet)
+            db.session.commit()
+            return {'message': f'Cadet {cadet.full_name} deleted successfully'}, 200
         except:
-            abort(500, message='Failed to delete the course')'''
+            abort(500, message=f'Internal server error while deleting cadet {cadet.full_name}')
+
+
+class CadetStatisticsResource(Resource):
+    def get(self, cadet_id):
+        cadet = Cadet.query.get_or_404(cadet_id)
+
+        include_stats = request.args.get('stats', 'true').lower() == 'true'
+        include_future_duties = request.args.get('future_duties', 'true').lower() == 'true'
+        include_future_reserves = request.args.get('future_reserves', 'true').lower() == 'true'
+
+        curr_month_start_date = datetime.now().replace(day=1)
+        curr_month_end_date = (curr_month_start_date.replace(day=28) + timedelta(days=4)).replace(
+            day=1) - timedelta(days=1)
+        current_year = datetime.now().year
+        curr_year_start_date = date(current_year, 1, 1)
+        curr_year_end_date = date(current_year, 12, 31)
+
+        response = {}
+
+        if include_stats:
+            response['stats'] = {
+                'current_month': self.calculate_statistics(cadet, curr_month_start_date, curr_month_end_date),
+                'current_year': self.calculate_statistics(cadet, curr_year_start_date, curr_year_end_date)
+            }
+
+        if include_future_duties:
+            response['future_duties'] = [{'duty': duty.to_dict(), 'role': duty.get_role_by_cadet_id(cadet.id).to_dict()}
+                                        for duty in cadet.future_duties]
+
+        if include_future_reserves:
+            response['future_reserves'] = [reserve.to_dict() for reserve in cadet.future_reserves]
+
+        return response
+
+    @staticmethod
+    def calculate_statistics(cadet, start_date, end_date):
+        duties_count = cadet.duties.filter(Duty.date >= start_date, Duty.date <= end_date).count()
+        weekend_duties_count = cadet.duties.filter(func.extract('dow', Duty.date) >= 5).count()
+        replaced_count = cadet.replaced_by_date_count(start_date, end_date)
+        was_replaced_count = cadet.was_replaced_by_date_count(start_date, end_date)
+
+        return {
+            'duties_count': duties_count,
+            'weekend_duties_count': weekend_duties_count,
+            'replaced_count': replaced_count,
+            'was_replaced_count': was_replaced_count
+        }
 
 
 class LocationsResource(Resource):
@@ -290,9 +341,9 @@ class LocationResource(Resource):
 
             db.session.commit()
             return {
-               'message': f'Location {args.get("name")} successfully modified',
-               'location': location.to_dict()
-            }, 200
+                       'message': f'Location {args.get("name")} successfully modified',
+                       'location': location.to_dict()
+                   }, 200
         except:
             abort(500, message='Failed to edit the location')
 
@@ -321,7 +372,7 @@ class LocationResource(Resource):
         try:
             db.session.delete(location)
             db.session.commit()
-            return {'message': f'location deleted successfully'}
+            return {'message': f'location deleted successfully'}, 200
         except:
             abort(500, message='Failed to delete the location')
 
@@ -339,9 +390,9 @@ class FacultiesResource(Resource):
             db.session.add(faculty)
             db.session.commit()
             return {
-               'message': f'Faculty {args.get("name")} successfully created',
-               'faculty': faculty.to_dict()
-            }, 201
+                       'message': f'Faculty {args.get("name")} successfully created',
+                       'faculty': faculty.to_dict()
+                   }, 201
         except:
             abort(500, message='Failed to create a faculty')
 
@@ -417,9 +468,9 @@ class CoursesResource(Resource):
             db.session.add(course)
             db.session.commit()
             return {
-                   'message': f'Course {args.get("num")} at {faculty.name} faculty successfully created',
-                   'course': course.to_dict()
-                }, 201
+                       'message': f'Course {args.get("num")} at {faculty.name} faculty successfully created',
+                       'course': course.to_dict()
+                   }, 201
         except:
             abort(500, message='Failed to create a course')
 
@@ -446,15 +497,15 @@ class CourseResource(Resource):
             if args.get('id'):
                 if args.get('id') in [c.id for c in course.faculty.courses]:
                     abort(400, message=f'Cannot create a second {course_id} course'
-                                            f' for the same {course.faculty.name} faculty')
+                                       f' for the same {course.faculty.name} faculty')
                 course.id = args.get('id')
 
             db.session.add(course)
             db.session.commit()
             return {
-               'message': f'Course {course_id} successfully modified',
-               'course': course.to_dict()
-            }, 200
+                       'message': f'Course {course_id} successfully modified',
+                       'course': course.to_dict()
+                   }, 200
         except:
             abort(500, message='Failed to edit the course')
 
@@ -504,13 +555,12 @@ class GroupsResource(Resource):
             db.session.add(group)
             db.session.commit()
             return {
-                'message': f'Group {args.get("name")} at {args.get("course_id")} course '
-                            f'of {faculty.name} faculty successfully created',
-                'group': group.to_dict()
-            }, 201
+                       'message': f'Group {args.get("name")} at {args.get("course_id")} course '
+                                  f'of {faculty.name} faculty successfully created',
+                       'group': group.to_dict()
+                   }, 201
         except:
             abort(500, message='Failed to create a group')
-
 
 
 class GroupResource(Resource):
@@ -560,9 +610,9 @@ class GroupResource(Resource):
             db.session.commit()
 
             return {
-                   'message': f'Group {group.name} successfully modified',
-                   'course': group.to_dict()
-               }, 200
+                       'message': f'Group {group.name} successfully modified',
+                       'course': group.to_dict()
+                   }, 200
         except:
             abort(500, message='Failed to edit the group')
 

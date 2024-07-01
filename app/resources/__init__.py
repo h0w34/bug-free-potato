@@ -3,8 +3,8 @@ from flask_restful import Api
 from flask import request, jsonify
 
 from .api import ResourcesTreeResource, LocationResource, LocationsResource, CadetResource, CadetsResource,\
-    GroupResource, GroupsResource, CourseResource, CoursesResource, FacultyResource, FacultiesResource, \
-    PositionsResource
+    CadetStatisticsResource, GroupResource, GroupsResource, CourseResource, CoursesResource, FacultyResource, \
+    FacultiesResource, PositionsResource
 
 
 resources_bp = Blueprint('resources', __name__)
@@ -16,6 +16,7 @@ api.add_resource(LocationsResource, '/locations')
 
 api.add_resource(CadetResource, '/cadets/<cadet_id>')
 api.add_resource(CadetsResource, '/cadets')
+api.add_resource(CadetStatisticsResource, '/cadets/<cadet_id>/statistics')
 
 api.add_resource(GroupResource, '/groups/<group_id>')
 api.add_resource(GroupsResource, '/groups')

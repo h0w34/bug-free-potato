@@ -21,13 +21,11 @@ class UserResource(Resource):
         return {'user': user.to_dict(), 'cadet': user.cadet.to_dict()}
 
 
-# or CadetStatistics?
 class UserStatisticsResource(Resource):
     def get(self, username):
-        '''parser = reqparse.RequestParser()
-        parser.add_argument('start_date', type=str, required=True)
-        parser.add_argument('end_date', type=str, required=True)
-        args = parser.parse_args()'''
+        # TODO: get some stats like times online etc
+        ...
+        '''
         user: User = User.get_by_username(username)
         cadet: Cadet = user.cadet
         if user is None:
@@ -71,10 +69,10 @@ class UserStatisticsResource(Resource):
             'replaced_count': replaced_count,
             'was_replaced_count': was_replaced_count
             # some additional stats in future
-        }
+        }'''
 
 
-class CadetStatisticsService:
+'''class CadetStatisticsService:
     def __init__(self, session):
         self.session = session
 
@@ -92,7 +90,7 @@ class CadetStatisticsService:
             pass
         else:
             # Get all statistics
-            pass
+            pass'''
 
 
 class UserAdminResource(Resource):

@@ -76,10 +76,9 @@
         <v-divider class=" mx-4 mt-0 mb-3"/>
 
       </v-card>-->
-
       <v-card
         v-if="cadetData"
-        class="mx-auto rounded-xl"
+        class="mx-auto rounded-xl "
         width="250"
         hover
       >
@@ -100,10 +99,12 @@
                   </div>
             </v-chip>
             <v-menu
+              class="unselectable"
               v-if="!menuDisabled"
               v-model="menu"
               :close-on-content-click="false"
               location="end"
+              open-on-hover
             >
               <template v-slot:activator="{ props }">
                 <v-btn flat icon="mdi-dots-vertical" size="small" class="py-1" v-bind="props"></v-btn>
@@ -120,10 +121,9 @@
                     nav
                   >
                     <v-list-item
-                        @click="deleteUser"
+                        @click="openDeleteCadetDialog"
                         class=" rounded-4 my-0 py-0"
                         :value="1"
-
                     >
                       <div class="d-inline-flex text-medium-emphasis">
                         <v-icon color="red" class="mr-3" size="small" :style="{ opacity: 0.7 }">mdi-trash-can</v-icon>
@@ -263,9 +263,12 @@
   <script>
   //import editRoleDialog from "@/components/EditRoleDialog";
   import StaticDataService from "@/services/static-data.service";
+  /*import DeleteCadetDialog from "@/components/cadet/DeleteCadetDialog";
+  import {mapActions} from "vuex";*/
 
   export default {
     name: "CadetCard",
+    components: {/*DeleteCadetDialog*/},
     //components:{editRoleDialog}
       props:{
         cadetData:{
@@ -293,7 +296,18 @@
         getUserAvatarUrl(username) {
           return StaticDataService.getUserAvatarUrl(username);
         },
-      }
+        /*...mapActions('layoutStore', ['openDeleteCadetDialog']),*/
+        openDeleteCadetDialog(){
+          this.$emit('openDeleteCadetDialog', this.cadetData)
+        }
+      },
+    watch:{
+      /*cadetData:{
+        handler(){
+          alert(JSON.stringify(this.cadetData))
+        }
+      }*/
+    }
   }
   </script>
 

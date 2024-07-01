@@ -81,6 +81,31 @@ http.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+
+// if token is damaged or request is without a jwt then logout
+http.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      (error.response.data.error === 'invalid_token' || error.response.data.error === 'authorization_header')
+    ) {
+      try {
+        // Logout the user
+        await store.dispatch('authStore/logout');
+        await router.push('/login');
+      } catch (logoutError) {
+        console.error('Error logging out:', logoutError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 /*
 
 // Request interceptor to check and refresh tokens

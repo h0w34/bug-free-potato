@@ -37,14 +37,14 @@
                     <stats-chip
                       emoji="🗓️️"
                       text="Суток за месяц"
-                      :num="userStatistics['stats']['current_month']['duties_count']"
+                      :num="cadetStatistics['stats']['current_month']['duties_count']"
                     />
                   </v-col>
                   <v-col cols="auto">
                     <stats-chip
                       emoji="💤"
                       text="Суток на сб/вс"
-                      :num="userStatistics['stats']['current_month']['weekend_duties_count']"
+                      :num="cadetStatistics['stats']['current_month']['weekend_duties_count']"
                     />
                   </v-col>
                 </v-row>
@@ -53,14 +53,14 @@
                     <stats-chip
                       emoji="💫️"
                       text="Заменил"
-                      :num="userStatistics['stats']['current_month']['replaced_count']"
+                      :num="cadetStatistics['stats']['current_month']['replaced_count']"
                     />
                   </v-col>
                   <v-col cols="auto">
                     <stats-chip
                       emoji="💀"
                       text="Заменён"
-                      :num="userStatistics['stats']['current_month']['was_replaced_count']"
+                      :num="cadetStatistics['stats']['current_month']['was_replaced_count']"
                     />
                   </v-col>
                 </v-row>
@@ -70,14 +70,14 @@
                     <stats-chip
                       emoji="🗓"
                       text="Суток за год"
-                      :num="userStatistics['stats']['current_year']['duties_count']"
+                      :num="cadetStatistics['stats']['current_year']['duties_count']"
                     />
                   </v-col>
                   <v-col cols="auto">
                     <stats-chip
                       emoji="🛏️️"
                       text="Суток на сб/вс"
-                      :num="userStatistics['stats']['current_year']['weekend_duties_count']"
+                      :num="cadetStatistics['stats']['current_year']['weekend_duties_count']"
                     />
                   </v-col>
                 </v-row>
@@ -86,14 +86,14 @@
                     <stats-chip
                       emoji="🪃️"
                       text="Заменил"
-                      :num="userStatistics['stats']['current_year']['replaced_count']"
+                      :num="cadetStatistics['stats']['current_year']['replaced_count']"
                     />
                   </v-col>
                   <v-col cols="auto">
                     <stats-chip
                       emoji="🪦"
                       text="Заменён"
-                      :num="userStatistics['stats']['current_year']['was_replaced_count']"
+                      :num="cadetStatistics['stats']['current_year']['was_replaced_count']"
                     />
                   </v-col>
                 </v-row>
@@ -182,7 +182,7 @@
               <span class="text-h5">Ближайшие сутки</span>
               <v-divider/>
               <v-expansion-panels
-                    v-for="(dutyData, i) in userStatistics['future_duties']"
+                    v-for="(dutyData, i) in cadetStatistics['future_duties']"
                     :key="i"
                     :readonly="true"
                   >
@@ -235,7 +235,7 @@
               <span class="text-h5">Текущие резервы</span>
               <v-divider/>
               <v-expansion-panels
-                    v-for="(reserveData, i) in userStatistics['future_reserves']"
+                    v-for="(reserveData, i) in cadetStatistics['future_reserves']"
                     :key="i"
                   >
                     <v-expansion-panel class="rounded-3 mb-3">
@@ -304,6 +304,7 @@
 <script>
 /*import router from "@/router";*/
 import UserDataService from "@/services/user-data.service";
+import ResourcesService from "@/services/resources-data.service";
 import StatsChip from "@/components/user/StatsChip";
 import dateToString from "@/utils/date_utils";
 import CadetCardSmall from "@/components/cadet/CadetCardSmall";
@@ -321,7 +322,7 @@ export default {
       selectedDuty: {},
       error: false,
       userData: null,
-      userStatistics: null,
+      cadetStatistics: null,
       loading: true
     }
   },
@@ -368,10 +369,10 @@ export default {
           }
         }
       },
-      async fetchUserStatistics() {
-          if (this.username) {
+      async fetchCadetStatistics() {
+          if (this.userData) {
             try {
-              this.userStatistics = await UserDataService.getUserStatistics(this.username)
+              this.cadetStatistics = await ResourcesService.getCadetStatistics(this.userData['cadet']['id'])
             } catch (error) {
                this.error = true;
             }
@@ -388,7 +389,7 @@ export default {
         async handler(){
           this.loading = true;
           await this.fetchUserData()
-          await this.fetchUserStatistics()
+          await this.fetchCadetStatistics()
           this.loading = false
           console.log('selectedDutyId:', JSON.stringify(this.selectedDutyId ))
         } ,

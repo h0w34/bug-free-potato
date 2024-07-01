@@ -37,7 +37,29 @@ class ResourcesService {
     }
   }
 
+  async deleteCadet(cadetId){
+    try {
+      const response = await http.delete(`resources/cadets/${cadetId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 
+  async getCadetStatistics(cadetId, params = {}) {
+    try {
+      const response = await http.get(`resources/cadets/${cadetId}/statistics`, {params: params});
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 
   // No need for now as positions are send with the resources tree
   async getPositions() {
