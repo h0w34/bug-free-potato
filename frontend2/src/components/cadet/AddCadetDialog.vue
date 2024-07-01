@@ -145,11 +145,22 @@
                         clearable
                         placeholder="Рядовой полиции"
                         density="compact"
-                        :items="resourcesTree['university']?.['ranks'] ?? []"
+                        :items="allowedRanks"
                         variant="outlined"
                         v-model="selectedRank"
                         item-title="name"
-                      ></v-select>
+                      >
+<!--                        <template v-slot:selection="{ item }">
+                          {{ item.title }}
+                        </template>-->
+                        <template v-slot:item="{ props, item }">
+                          <v-list-item
+                            v-bind="props"
+                            :disabled="item.raw.disabled"
+                            :value="item"
+                          />
+                        </template>
+                      </v-select>
 
                       <div class="text-subtitle-1 text-medium-emphasis">
                         Должность
@@ -246,16 +257,21 @@
                 </div>
                 <div v-else>
                   <div class="text-h8 font-weight-regular text-medium-emphasis text-center">
+
                     Все сделано!<br>
                     Не забудьте сохранить логин и пароль. <br>
-                    Логин: {{ createdCadet['user']['username'] }}<br>
-                    Пароль: {{ createdCadetPassword }}
+
                   </div>
                   <v-divider/>
                   <div  class=" d-flex justify-content-center ">
                     <CadetCard :cadet-data="createdCadet? createdCadet : null" :menu-disabled="true"/>
                   </div>
-                </div>
+                  <v-divider/>
+                  <div class="text-h8 font-weight-regular text-medium-emphasis text-center">
+                    Логин: {{createdCadet['user']['username']}}<br>
+                    Пароль: {{createdCadetPassword}}
+                  </div>
+                  </div>
               </v-container>
             </v-stepper-window-item>
           </v-stepper-window>
@@ -268,7 +284,7 @@
                 color="primary"
                 variant="text"
                 @click="handlePrevClick"
-                :disabled="step === 0"
+                :disabled="step === 0 || step===2"
               >
                 Назад
               </v-btn>
@@ -281,7 +297,7 @@
                 @click="handleNextClick"
                 :disabled="nextStepDisabled"
               >
-                {{ step === 0 ? 'Далее' : (step === 1 ? 'Сохранить' : 'Понятно') }}
+                {{ step === 0 ? 'Далее' : (step === 1 ? 'Сохранить' : (error? 'Понятно' : 'Отлично')) }}
               </v-btn>
             </template>
           </v-stepper-actions>
@@ -297,7 +313,7 @@
 <script>
 
 
-import {mapState, mapActions} from "vuex";
+import {mapActions, mapState} from "vuex";
 import CadetCard from "@/components/cadet/CadetCard";
 import ResourcesService from "@/services/resources-data.service";
 
@@ -368,14 +384,28 @@ export default {
   },
 
   computed: {
-    stepperItems(){
+    ...mapState('layoutStore', ['addCadetDialog']),
+    ...mapState('ResourcesStore', ['resourcesTree', 'selectedIds']),
+    ...mapState('authStore', ['user']),
+
+    allowedRanks(){
+      if(this.resourcesTree['university']){
+        return this.resourcesTree['university']['ranks'].map(rank => ({
+          ...rank,
+          disabled: this.user['cadet']['rank']['id'] < rank.id
+        }))
+      }
+      else return []
+    },
+
+    /*stepperItems(){
       return [
         'Заполнить анкету',
         'Добавить данные',
         //'Привязать пользователя',
         this.error ? 'Ошибка!' : 'Готово!'
       ]
-    },
+    },*/
 
     nextStepDisabled(){
       if (this.step===0 && (!this.radios || !this.name || !this.surname)){
@@ -389,7 +419,6 @@ export default {
       }
       else return false;
     },
-
 
     selectedLocation(){
       return this.getLocationForFaculty(this.selectedFaculty, this.resourcesTree)
@@ -443,9 +472,6 @@ export default {
       return [];
     },
 
-    ...mapState('layoutStore', ['addCadetDialog']),
-    ...mapState('ResourcesStore', ['resourcesTree', 'selectedIds']),
-
     /*currentSubTitle() {
       if (this.dutyData) {
         const date = new Date(this.dutyData['date']);
@@ -457,9 +483,6 @@ export default {
       } else return '';
     },*/
 
-    nextButtonText(){
-      return false
-    }
   },
   methods: {
     ...mapActions('layoutStore', ['closeAddCadetDialog']),
@@ -471,20 +494,7 @@ export default {
           console.log('here we are at the NEXTH CLICK!!!!!!')
           //start timer
           try {
-            console.log('trying to AWAIT!!!!')
-            console.log('seleted ranka and position' ,this.selectedPosition.id, this.selectedRank.id, this.selectedGroup.id)
-            const response_data = await ResourcesService.createCadet(
-                {
-                  name: this.name,
-                  surname: this.surname,
-                  patronymic: this.patronymic,
-                  sex: this.radios,
-                  rank_id: this.selectedRank.id,
-                  position_id: this.selectedPosition.id,
-                  group_id: this.selectedGroup.id,
-                  pm_cell_id: this.selectedPMCell.id,
-                  ak_cell_id: this.selectedAKCell
-                });
+            const response_data = await this.sendCadetData()
             this.createdCadet = await response_data.cadet
             this.createdCadetPassword = await response_data.password
             this.step++;
@@ -503,6 +513,24 @@ export default {
         default: this.step++;
       }
     },
+
+    async sendCadetData(){
+      console.log('trying to AWAIT!!!!')
+      console.log('seleted ranka and position' ,this.selectedPosition.id, this.selectedRank.id, this.selectedGroup.id)
+      return await ResourcesService.createCadet(
+          {
+            name: this.name,
+            surname: this.surname,
+            patronymic: this.patronymic,
+            sex: this.radios,
+            rank_id: this.selectedRank.id,
+            position_id: this.selectedPosition.id,
+            group_id: this.selectedGroup.id,
+            pm_cell_id: this.selectedPMCell.id,
+            ak_cell_id: this.selectedAKCell
+          });
+    },
+
     handlePrevClick(){
       this.step--;
     },
@@ -665,6 +693,7 @@ export default {
     }*/
 
   },
+
   watch: {
 
     /*dutyDialog:{

@@ -74,6 +74,12 @@ const routes = [
         path: '/resources',
         name: 'resources',
         component: ResourcesPage,
+        /*props: route => ({
+          locationId: parseInt(route.query.location_id),
+          facultyId: parseInt(route.query.faculty_id),
+          courseId: parseInt(route.query.course_id),
+          groupId: parseInt(route.query.group_id)
+        }),*/
         meta: { requiresAuth: true, navbar: true, guest: false }
     },
     {

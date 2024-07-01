@@ -1,7 +1,8 @@
   const initialState = {
     sidebar: false,
     dutyDialog: false,
-    addCadetDialog: true,
+    addCadetDialog: false,
+    deleteCadetDialog: false,
   }
 
   export const layoutStore = {
@@ -32,6 +33,12 @@
       },
       closeAddCadetDialog({ commit }){
         commit('closeAddCadetDialog')
+      },
+      openDeleteCadetDialog({ commit }){
+        commit('openDeleteCadetDialog')
+      },
+      closeDeleteCadetDialog({ commit }){
+        commit('closeDeleteCadetDialog')
       }
     },
 
@@ -58,6 +65,12 @@
     },
     closeAddCadetDialog(state) {
       state.addCadetDialog = false;
+    },
+    openDeleteCadetDialog(state) {
+      state.deleteCadetDialog = true;
+    },
+    closeDeleteCadetDialog(state) {
+      state.deleteCadetDialog = false;
     }
   }
 };

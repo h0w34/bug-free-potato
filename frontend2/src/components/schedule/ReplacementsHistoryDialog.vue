@@ -140,9 +140,9 @@ export default {
   methods:{
     formPanelTitle(replacementData){
       return replacementData['replaced_cadet']['surname'] +
-          ' (' + replacementData['replaced_cadet']['group'] + ')' +
+          ' (' + replacementData['replaced_cadet']['group']['name'] + ')' +
           ' ⟶ ' +  replacementData['replacing_cadet']['surname']
-          + ' (' + replacementData['replacing_cadet']['group'] + ')'
+          + ' (' + replacementData['replacing_cadet']['group']['name'] + ')'
     },
     formatDate(dateString){
       return moment(dateString).format('ddd, D MMM YYYY HH:mm');

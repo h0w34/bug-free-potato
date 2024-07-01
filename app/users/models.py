@@ -55,7 +55,7 @@ class User(db.Model):
             'avatar': {
                 'url': self.avatar
             },
-            'cadet': self.cadet.to_dict_short()
+            'cadet': self.cadet.to_dict()
         }
 
     def to_dict_short(self):

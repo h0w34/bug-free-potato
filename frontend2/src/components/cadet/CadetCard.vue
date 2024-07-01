@@ -95,8 +95,8 @@
                   variant="outlined"
                 >
                   <div class="text-caption text-medium-emphasis  font-weight-light">
-                      {{(cadetData['position']==='Замком взвода'? '🚨' :
-                      (cadetData['position']==='Командир отделения'? '⚡' : '🧃')) + cadetData['position']}}
+                      {{(cadetData['position']['name']==='Замком взвода'? '🚨' :
+                      (cadetData['position']==='Командир отделения'? '⚡' : '🧃')) + cadetData['position']['name']}}
                   </div>
             </v-chip>
             <v-menu
@@ -112,7 +112,7 @@
                 <v-card
                   class="mx-auto rounded-4"
                   elevation="1"
-                  width="145"
+                  width="140"
                 >
                   <v-list
                     density="compact"
@@ -235,17 +235,17 @@
 <!--          <div>
             {{cadetData['pm_cell_id']+ '-я ячейка' }}
           </div>-->
-          <div>{{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
+          <div>{{cadetData['group']['name'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
         </v-card-subtitle>
         <v-card-text class="mt-0 pt-2">
           <div
               :style="{textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '75%'}"
           >
-            {{ '🎖️ '+ cadetData['rank']+' полиции' }}
+            {{ '🎖️ '+ cadetData['rank']['name']+' полиции' }}
           </div>
 <!--          <div>{{'🫂 '+ cadetData['group'] +' взвод'}}</div>-->
-          <div>{{'⚓ '+ cadetData['course'] +'-й курс'}}</div>
-          <div class="mb-2">{{ '👨‍💻 ' + cadetData['faculty'] }}</div>
+          <div>{{'⚓ '+ cadetData['course']['name'] +'-й курс'}}</div>
+          <div class="mb-2">{{ '👨‍💻 ' + cadetData['faculty']['name'] }}</div>
         </v-card-text>
 
         <v-divider class=" mx-4 mt-0 mb-3"/>

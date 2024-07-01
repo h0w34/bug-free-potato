@@ -128,7 +128,7 @@ export default {
           const roleIndex = Object.keys(day['cadets_with_roles']).indexOf(cadetId);
           const role = Object.values(this.headers)[roleIndex + 1]['key'];
           const cadet = day['cadets_with_roles'][cadetId]['cadet'];
-          duty[role] = `${cadet['surname']} : ${cadet.group}`;   // cadet's surname and group as the cells content
+          duty[role] = `${cadet['surname']} : ${cadet.group['name']}`;   // cadet's surname and group as the cells content
         });
         return duty;
       });

@@ -25,7 +25,7 @@
           <div class="text-h8">
             {{"@sobakayasobaka"}}
           </div>
-          <div>{{cadetData['group'] + ' ' +  'взвод'}}</div>
+          <div>{{cadetData['group']['name'] + ' ' +  'взвод'}}</div>
           {{ cadetData['pm_cell_id']+' ячейка'}}
         </v-card-subtitle>
       </v-card>

@@ -1,5 +1,6 @@
 <template>
  <v-card
+        @click="$emit('click', data)"
         v-if="data"
         class="mx-auto rounded-xl"
         min-width="300"

@@ -451,10 +451,16 @@ class Cadet(db.Model):
     group = relationship('Group', back_populates='cadets')
     course = relationship('Course', back_populates='cadets')
     faculty = relationship('Faculty', back_populates='cadets')
-    main_location = relationship('Location')  # direct relationship
+
+    # TODO: remove as the current location must be computed using faculty/group or smth
+    # main_location = relationship('Location')  # direct relationship
 
     duties = relationship('Duty', secondary='cadet_duty', back_populates='cadets', lazy='dynamic')
     reserves = relationship('ReserveCadetDuty', back_populates='cadet', lazy='dynamic')
+
+    @property
+    def main_location(self):
+        return self.faculty.location
 
     replaced_replacements = relationship(
         'DutyReplacement',
@@ -517,12 +523,12 @@ class Cadet(db.Model):
             'surname': self.surname,
             'username': self.user.username if self.user else '',
             'pm_cell_id': self.pm_cell_id,
-            'position': self.position.position_name,
-            'rank': self.rank.rank_name,
-            'faculty': self.faculty.name,
-            'course': self.course.name,
-            'group': self.group.name,
-            'main_location': self.main_location.address if self.main_location else '',
+            'position': self.position.to_dict(),
+            'rank': self.rank.to_dict(),
+            'faculty': self.faculty.to_dict(),
+            'course': self.course.to_dict(),
+            'group': self.group.to_dict(),
+            'main_location': self.main_location.to_dict() if self.main_location else '',
             'user': self.user.to_dict_short() if self.user else ''
         }
 
@@ -576,7 +582,7 @@ class Rank(db.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
+            'id': self.id,  # the greater the rank the higher the id
             'name': self.rank_name
         }
 

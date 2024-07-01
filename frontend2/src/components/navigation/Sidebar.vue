@@ -28,8 +28,6 @@
           </div>
       </v-list-item>
 
-
-
       <v-list density="compact" nav class="unselectable mx-3 pt-0">
         <v-divider class="mx-2 mt-1 mb-2" />
 
@@ -44,7 +42,7 @@
           </div>
         </v-list-item>
 
-        <v-list-item class="rounded py-0">
+        <v-list-item class="rounded py-0" @click="navigateYourGroup">
           <div class="d-inline-flex gap-2 text-center align-center">
             <v-icon size="small">
               mdi-account-group
@@ -96,11 +94,13 @@ export default {
 
   },
   methods: {
+    ...mapActions('layoutStore', ['closeSidebar']),
+    ...mapActions('authStore', ['logout']),
+
     navigateToProfile() {
       // Check if the sidebar is open
       if (this.$store.state.layoutStore.sidebar) {
-        // Dispatch the action to close the sidebar
-        this.$store.dispatch('layoutStore/closeSidebar');
+        this.closeSidebar();
       }
       // Navigate to the user profile page
        this.$router.push({ name: 'user', params: { username: this.user.username } });
@@ -111,8 +111,24 @@ export default {
       this.logout()
     },
 
-    ...mapActions('layoutStore', ['closeSidebar']),
-    ...mapActions('authStore', ['logout']),
+    async navigateYourGroup(){
+      try {
+        const { cadet } = this.user;
+        this.$router.push({
+          name: 'resources',
+          query: {
+            locationId: cadet.faculty.location_id,
+            facultyId: cadet.faculty.id,
+            courseId: cadet.course.id,
+            groupId: cadet.group.id,
+          },
+        });
+      } catch (error) {
+        console.error('Error navigating to resources page', error);
+        // Handle error case, e.g., display an error message to the user
+      }
+    },
+
     getUserAvatarUrl(username) {
       return StaticDataService.getUserAvatarUrl(username);
     },

@@ -19,7 +19,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 # TODO: May add a special marking col depending on curr jwt showing if the resource is available or not
 # or simply not to include it in json
 class ResourcesTreeResource(Resource):
+    @jwt_required()
     def get(self):
+        user = User.get_by_username(get_jwt_identity())
+
         university_data = {'name': 'Университет'}
         locations_data = []
         locations = Location.query.all()
@@ -49,6 +52,7 @@ class ResourcesTreeResource(Resource):
 
         university_data['locations'] = locations_data
         university_data['positions'] = [p.to_dict() for p in Position.query.order_by(Position.id.desc()).all()]
+        # university_data['ranks'] = [r.to_dict() for r in Rank.query.filter(Rank.id <= user.cadet.rank_id).all()]
         university_data['ranks'] = [r.to_dict() for r in Rank.query.all()]
         return {'university': university_data}, 200
 
@@ -75,7 +79,10 @@ class PositionsResource(Resource):
 
 
 class CadetsResource(Resource):
+    @jwt_required()
     def post(self):
+        user: User = User.get_by_username(get_jwt_identity())
+
         print('Handling the request!!!')
         # cannot create a cadet with no user for user page support
         # the user for the cadet either generated or registered manually
@@ -106,8 +113,8 @@ class CadetsResource(Resource):
         group = Group.query.get_or_404(args.get('group_id'), description='Group for the cadet not found')
         location = group.faculty.location
 
-        user = None
-        user_password = None
+        new_user = None
+        new_user_password = None
 
         if args.get('username'):
             user = User.get_by_username(args.get('username'))
@@ -117,7 +124,7 @@ class CadetsResource(Resource):
                 abort(400, message=f'Cadet creation failed. User {args.get("username")} already has a linked cadet')
         else:
             try:
-                user, user_password = generate_user()
+                new_user, new_user_password = generate_user()
             except:
                 abort(400, message=f'Cadet creation failed when generating a user')
 
@@ -132,6 +139,10 @@ class CadetsResource(Resource):
         if args.get('ak_cell_id') and args.get('ak_cell_id') not in [cell.id for cell in location.ak_cells]:
             abort(400, message=f'Not valid ak_cell_id for location {location.name}')
 
+        # privilege level control
+        if args.get('rank_id') > user.cadet.rank_id:
+            abort(403, message='Not enough rights to perform this action')
+
         try:
             cadet = Cadet(
                 name=args.get('name'),
@@ -142,7 +153,7 @@ class CadetsResource(Resource):
                 position_id=args.get('position_id'),
                 pm_cell_id=args.get('pm_cell_id'),
                 ak_cell_id=args.get('ak_cell_id'),
-                user=user,
+                user=new_user,
                 group=group,
                 faculty=group.faculty,
                 course=group.course
@@ -154,8 +165,8 @@ class CadetsResource(Resource):
                 'message': f'Cadet at {cadet.group.name} group successfully created',
                 'cadet': cadet.to_dict(),
             }
-            if user_password:
-                response['password'] = user_password
+            if new_user_password:
+                response['password'] = new_user_password
 
             return response, 201
         except:

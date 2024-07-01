@@ -29,32 +29,31 @@ export const ResourcesStore = {
       }
       const items = [];
 
-        if (state.resourcesTree) {
-          const university = state.resourcesTree.university;
-          items.push({ title: university.name, disabled: false, href: '#' });
-          console.log('For now selectedIds are... ', JSON.stringify(state.selectedIds))
-          if (state.selectedIds.locationId !== null) {
-            console.log('One down...')
-            console.log('university is... ', university)
-            console.log('selectedIds are...', state.selectedIds)
-            const location = university.locations.find((l) => l.id === state.selectedIds.locationId);
-            if (location) {
-              console.log('Two down...')
-              items.push({ title: location.name, disabled: false, href: '#' });
-              if (state.selectedIds.facultyId !== null) {
-                const faculty = location.faculties.find((f) => f.id === state.selectedIds.facultyId);
-                if (faculty) {
-                  console.log('Three down...')
-                  items.push({ title: faculty.name, disabled: false, href: '#' });
-                  if (state.selectedIds.courseId !== null) {
-                    const course = faculty.courses.find((c) => c.id === state.selectedIds.courseId);
-                    if (course) {
-                      items.push({ title: `${course.name} курс`, disabled: false, href: '#' });
-                      if (state.selectedIds.groupId !== null) {
-                        const group = course.groups.find((g) => g.id === state.selectedIds.groupId);
-                        if (group) {
-                          items.push({ title: `${group.name} взвод`, disabled: false, href: '#' });
-                        }
+      if (state.resourcesTree) {
+        const university = state.resourcesTree.university;
+        items.push({ title: university.name, disabled: false, href: '/resources' });
+        console.log('For now selectedIds are... ', JSON.stringify(state.selectedIds))
+        if (state.selectedIds.locationId !== null) {
+          console.log('One down...')
+          console.log('university is... ', university)
+          console.log('selectedIds are...', state.selectedIds)
+          const location = university.locations.find((l) => l.id === state.selectedIds.locationId);
+          if (location) {
+            console.log('Two down...')
+            items.push({ title: location.name, disabled: false, href: `/resources?locationId=${location.id}` });
+            if (state.selectedIds.facultyId !== null) {
+              const faculty = location.faculties.find((f) => f.id === state.selectedIds.facultyId);
+              if (faculty) {
+                console.log('Three down...')
+                items.push({ title: faculty.name, disabled: false, href: `/resources?locationId=${location.id}&facultyId=${faculty.id}` });
+                if (state.selectedIds.courseId !== null) {
+                  const course = faculty.courses.find((c) => c.id === state.selectedIds.courseId);
+                  if (course) {
+                    items.push({ title: `${course.name} курс`, disabled: false, href: `/resources?locationId=${location.id}&facultyId=${faculty.id}&courseId=${course.id}` });
+                    if (state.selectedIds.groupId !== null) {
+                      const group = course.groups.find((g) => g.id === state.selectedIds.groupId);
+                      if (group) {
+                        items.push({ title: `${group.name} взвод`, disabled: false, href: `/resources?locationId=${location.id}&facultyId=${faculty.id}&courseId=${course.id}&groupId=${group.id}` });
                       }
                     }
                   }
@@ -62,13 +61,15 @@ export const ResourcesStore = {
               }
             }
           }
-          else {
-            items.push({ title: 'Локации', disabled: false, href: '#' });
-          }
         }
-        console.log('the bread i got is: ', items)
-        return items;
-      },
+        else {
+          items.push({ title: 'Локации', disabled: true, href: '/resources' });
+        }
+      }
+      console.log('the bread i got is: ', items)
+      return items;
+    },
+
     treeviewItems(state) {
       // we save the raw item self additionally with its treeItem
       console.log('in the store tree!')

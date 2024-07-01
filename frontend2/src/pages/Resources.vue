@@ -8,9 +8,21 @@
         flat
     >
       <v-breadcrumbs
+          return-object
           v-if="breadcrumbItems"
           :items="breadcrumbItems"
-          class="mb-0 d-flex justify-content-center text-center align-center" >
+          class="mb-0 d-flex justify-content-center text-center align-center"
+      >
+        <template v-slot:item="{ item }">
+          <v-breadcrumbs-item
+            :to="item.href"
+            :disabled="item.disabled"
+            @click.prevent="navigateToBreadcrumbItem(item)"
+            style="text-decoration: none; color: black;"
+          >
+            {{ item.title }}
+          </v-breadcrumbs-item>
+        </template>
         <template v-slot:divider>
           <v-icon icon="mdi-chevron-right"></v-icon>
         </template>
@@ -67,7 +79,7 @@
                       :key="i"
                       md-2
                     >
-                      <location-card :data="locationData"/>
+                      <location-card :data="locationData" @click="handleResourceCardClick"/>
                     </v-col>
                     <v-col
                       cols="6"
@@ -178,7 +190,7 @@
                       <h5 class="ml-2 text-medium-emphasis">({{selectedResource['number_of_cadets']}} курсантов)</h5>
                     </div>
                     <h5 class=" text-medium-emphasis">
-                      Направление обучения: {{selectedResource?.['specialization']['name'] || 'не указано'}}
+                      Направление обучения: {{selectedResource?.['specialization']?.['name'] || 'не указано'}}
                     </h5>
                   </div>
                   <div
@@ -265,95 +277,8 @@ export default {
   data: () => ({
     /*addCadetDialog: false,*/
     window: 0,
-      items: [
-        {
-          title: 'Коптевская ул. 63',
-          disabled: false,
-          href: '#',
-        },
-        {
-          title: 'ФПСОИБ',
-          disabled: false,
-          href: '#',
-        },
-        {
-          title: '3 Курс',
-          disabled: false,
-          href: '#',
-        },
-        {
-          title: '913 взвод',
-          disabled: false,
-          href: '#',
-        }
-      ],
-      initiallyOpen: [],
-      files: {
-        html: 'mdi-language-html5',
-        js: 'mdi-nodejs',
-        json: 'mdi-code-json',
-        md: 'mdi-language-markdown',
-        pdf: 'mdi-file-pdf-box',
-        png: 'mdi-file-image',
-        txt: 'mdi-file-document-outline',
-        xls: 'mdi-file-excel',
-      },
-      tree: [],
-      /*breadcrumbItems: [],
-      treeviewItems: [],*/
-      items2: [
-        {
-          title: '.git',
-        },
-        {
-          title: 'node_modules',
-        },
-        {
-          title: 'public',
-          children: [
-            {
-              title: 'static',
-              children: [{
-                title: 'logo.png',
-                file: 'png',
-              }],
-            },
-            {
-              title: 'favicon.ico',
-              file: 'png',
-            },
-            {
-              title: 'index.html',
-              file: 'html',
-            },
-          ],
-        },
-        {
-          title: '.gitignore',
-          file: 'txt',
-        },
-        {
-          title: 'babel.config.js',
-          file: 'js',
-        },
-        {
-          title: 'package.json',
-          file: 'json',
-        },
-        {
-          title: 'README.md',
-          file: 'md',
-        },
-        {
-          title: 'vue.config.js',
-          file: 'js',
-        },
-        {
-          title: 'yarn.lock',
-          file: 'txt',
-        },
-      ],
-    opened: []
+    initiallyOpen: [],
+    opened: [],
     }),
   computed: {
     // Implement your logic to determine the active nodes
@@ -366,39 +291,137 @@ export default {
       return 1
     }
 
-    /*breadcrumbItems() {
-      return this.$store.getters['ResourcesStore/breadcrumbItems'](
-        this.selectedLocationId,
-        this.selectedFacultyId,
-        this.selectedCourseId,
-        this.selectedGroupId
-      );
-    },
-    treeviewItems() {
-      return this.$store.getters['ResourcesStore/treeviewItems'](this.selectedLocationId);
-    },*/
-
   },
   //TODO: too long page loading each time it's opened. Do smth with this hook
-  async created() {
-    console.log('Created the resources Page!')
+  async beforeMount() {
     if (!this.resourcesTree) await this.fetchResourcesTree();
-    this.setSelectedResource(this.resourcesTree['university'])
-/*
-    await this.fetchResourcesData();
-*/
+    await this.updateSelectedResource();
   },
 
+  /*beforeRouteUpdate(to, from, next) {
+    this.updateSelectedResource().then(() => {
+      next();
+    });
+  },*/
+
   watch: {
-    /*resourcesTree() {
-      this.updateBreadcrumbItems();
-      this.updateTreeItems();
+    '$route.query': {
+      handler: async function() {
+        await this.updateSelectedResource();
+      },
+      deep: true
+    }
+    /*'$route.query': {
+      handler: async function(newQuery, oldQuery) {
+        const { locationId, facultyId, courseId, groupId } = newQuery;
+
+        this.setSelectedIds({
+          locationId: locationId ? parseInt(locationId) : null,
+          facultyId: facultyId ? parseInt(facultyId) : null,
+          courseId: courseId ? parseInt(courseId) : null,
+          groupId: groupId ? parseInt(groupId) : null,
+        });
+
+        await this.setSelectedResourceFromIds();
+        await this.setWindowFromSelectedResource();
+      },
+      immediate: true,
     },*/
   },
 
 methods:{
     ...mapActions('ResourcesStore', ['fetchResourcesTree', /*'fetchResourcesData',*/ 'setSelectedIds', 'setSelectedResource']),
     ...mapActions('layoutStore', ['openAddCadetDialog']),
+
+    navigateToBreadcrumbItem(item) {
+      /*alert('the bread clikced item is...' + JSON.stringify(item))*/
+      const treeItem = this.findItemByTitle(this.treeviewItems, item.title);
+      /*alert(JSON.stringify(treeItem))*/
+      this.updateUrl(
+        treeItem.locationId,
+        treeItem.facultyId,
+        treeItem.courseId,
+        treeItem.groupId
+      );
+      this.updateSelectedResource();
+    },
+
+    async updateSelectedResource(){
+      const { locationId, facultyId, courseId, groupId } = this.$route.query;
+
+      console.log('QUERY IDs: ', locationId, facultyId, courseId, groupId)
+
+      this.setSelectedIds({
+        locationId: locationId ? parseInt(locationId) : null,
+        facultyId: facultyId ? parseInt(facultyId) : null,
+        courseId: courseId ? parseInt(courseId) : null,
+        groupId: groupId ? parseInt(groupId) : null,
+      });
+
+      console.log('Just set the ids from the query.')
+
+      if(!locationId){
+        console.log('whoops! no location id provided! Setting to university...')
+        this.setSelectedResource(this.resourcesTree['university'])
+      } else {
+        console.log('Gotcha! the location id is provided! Setting it to...', this.selectedResource)
+        await this.setSelectedResourceFromIds();
+      }
+
+      console.log('Setting the windows...')
+      await this.setWindowFromSelectedResource();
+
+      console.log('Created the resources Page!')
+    },
+
+    async setSelectedResourceFromIds() {
+      const { locationId, facultyId, courseId, groupId } = this.selectedIds;
+
+      // Find the corresponding resource based on the selected IDs
+      let selectedResource = this.resourcesTree.university;
+      if (locationId) {
+        const location = this.resourcesTree.university.locations.find((l) => l.id === locationId);
+        if (location) {
+          selectedResource = location;
+          if (facultyId) {
+            const faculty = location.faculties.find((f) => f.id === facultyId);
+            if (faculty) {
+              selectedResource = faculty;
+              if (courseId) {
+                const course = faculty.courses.find((c) => c.id === courseId);
+                if (course) {
+                  selectedResource = course;
+                  if (groupId) {
+                    const group = course.groups.find((g) => g.id === groupId);
+                    if (group) {
+                      selectedResource = group;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      // Set the selectedResource in the store
+      this.setSelectedResource(selectedResource);
+    },
+
+    setWindowFromSelectedResource() {
+      if (this.selectedResource['faculties']){
+        this.window = 1;
+      } else if (this.selectedResource['courses']){
+        this.window = 2;
+      } else if (this.selectedResource['groups']){
+        this.window = 2;
+      } else if (this.selectedResource['cadets']){
+        this.window = 4;
+      } else this.window = 0;
+    },
+
+    handleResourceCardClick(cardData){
+      console.log(cardData)
+    },
 
     handleTreeItemClick(nodeItem) {
       console.log(nodeItem)
@@ -429,9 +452,16 @@ methods:{
         courseId: treeItem?.courseId ?? null,
         groupId: treeItem?.groupId ?? null
       });
+      this.updateUrl(
+        treeItem?.locationId ?? null,
+        treeItem?.facultyId ?? null,
+        treeItem?.courseId ?? null,
+        treeItem?.groupId ?? null
+      );
       // simply pass the whole selected item, item.raw is a proxy to the original item in resourceList
       if(treeItem.kind !== 'course') this.setSelectedResource(treeItem.raw);
     },
+
     findItemByTitle(items, title) {
       for (const i of items) {
         if (i.title === title) return i;
@@ -442,15 +472,14 @@ methods:{
       }
       return null;
     },
+
     updateUrl(locationId, facultyId, courseId, groupId) {
-      this.router.replace({
-        query: {
-          locationId,
-          facultyId,
-          courseId,
-          groupId,
-        },
-      });
+      const query = {};
+      if (locationId) query.locationId = locationId;
+      if (facultyId) query.facultyId = facultyId;
+      if (courseId) query.courseId = courseId;
+      if (groupId) query.groupId = groupId;
+      this.router.replace({ query });
     },
   }
 }

@@ -148,10 +148,10 @@
                   <v-list class="d-flex justify-content-start">
                     <v-list-item>
                       <h6 class="mb-1"
-                      >{{ '🎖️ '+ user['cadet']['rank']+' полиции' }}</h6>
-                      <h6 class="mb-1">{{'🫂 '+ user['cadet']['group'] +' взвод'}}</h6>
-                      <h6 class="mb-1">{{'⚓ '+ user['cadet']['course'] +'-й курс'}}</h6>
-                      <h6 class="mb-3">{{ '👨‍💻 ' + user['cadet']['faculty'] }}</h6>
+                      >{{ '🎖️ '+ user['cadet']['rank']['name']+' полиции' }}</h6>
+                      <h6 class="mb-1">{{'🫂 '+ user['cadet']['group']['name'] +' взвод'}}</h6>
+                      <h6 class="mb-1">{{'⚓ '+ user['cadet']['course']['name'] +'-й курс'}}</h6>
+                      <h6 class="mb-3">{{ '👨‍💻 ' + user['cadet']['faculty']['name'] }}</h6>
                       <div class="gap-1 d-flex">
                         <div><v-chip color="danger">старожил</v-chip></div>
                         <div><v-chip color="secondary">пожилой</v-chip></div>
@@ -162,7 +162,7 @@
               </div>
           </v-card>
 
-          <CadetCard :cadet-data="user['cadet']"/>
+<!--          <CadetCard :cadet-data="user['cadet']"/>-->
         </v-skeleton-loader>
 
       </v-col>
@@ -310,11 +310,11 @@ import CadetCardSmall from "@/components/cadet/CadetCardSmall";
 import EditDutyDialog from "@/components/schedule/DutyDialog";
 import StaticDataService from "@/services/static-data.service";
 import {mapActions} from "vuex";
-import CadetCard from "@/components/cadet/CadetCard";
+/*import CadetCard from "@/components/cadet/CadetCard";*/
 
 export default {
   name: "ProfilePage",
-  components: {CadetCard, EditDutyDialog, CadetCardSmall, StatsChip},
+  components: {/*CadetCard,*/ EditDutyDialog, CadetCardSmall, StatsChip},
   data(){
     return {
       dutyDialog: false,

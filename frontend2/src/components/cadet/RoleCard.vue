@@ -76,8 +76,8 @@
     </v-card-subtitle>-->
 
     <v-card-subtitle class="my-2 mb-1">
-      <div>{{cadetData['cadet']['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['cadet']['pm_cell_id']}}</div>
-      <div>{{ cadetData['cadet']['course'] + '-й курс'}}</div>
+      <div>{{cadetData['cadet']['group']['name'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['cadet']['pm_cell_id']}}</div>
+      <div>{{ cadetData['cadet']['course']['name'] + '-й курс'}}</div>
     </v-card-subtitle>
 
     <v-card-text class="pt-0 mt-0">
@@ -96,7 +96,7 @@
           ></v-img-->
 
             <v-img
-                style="opacity: 0.85"
+                style="opacity: 0.95"
               alt="doggy"
               :src="getUserAvatarUrl(cadetData['cadet']['user']['username']/*['avatar']['url']*/)"
             ></v-img>

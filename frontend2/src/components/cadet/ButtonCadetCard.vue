@@ -30,7 +30,7 @@
                 label
                 variant="outlined"
               >
-                {{cadetData['faculty']}}
+                {{cadetData['faculty']['name']}}
               </v-chip>
             </div>
         </v-card-title>
@@ -45,7 +45,7 @@
             {{"@sobakayasobaka"}}
           </div>
 
-          <div>{{cadetData['group'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
+          <div>{{cadetData['group']['name'] + ' ' +  'взвод' + ' | ячейка: ' + cadetData['pm_cell_id']}}</div>
           <v-avatar
             class="ma-3"
            size="55"
